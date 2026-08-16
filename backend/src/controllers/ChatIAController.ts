@@ -1,0 +1,178 @@
+import { Request, Response } from 'express';
+import { ChatRepository } from '../models/repositories/ChatRepository';
+import { IAService } from '../services/IAService';
+import { AlertaRiesgoRepository } from '../models/repositories/AlertaRiesgoRepository';
+import { SocketService } from '../services/SocketService';
+import { AppError } from '../middleware/errorHandler';
+import { z } from 'zod';
+
+const mensajeSchema = z.object({
+  contenido: z.string().min(1).max(1000),
+  chatSessionId: z.number().optional(),
+});
+
+export class ChatIAController {
+  static async iniciarSesion(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.userId;
+
+      // Check if there's an active session
+      const activeSession = await ChatRepository.getActiveSessionByUsuario(userId);
+      
+      if (activeSession) {
+        return res.json(activeSession);
+      }
+
+      const session = await ChatRepository.createSession(userId);
+      res.status(201).json(session);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async enviarMensaje(req: Request, res: Response) {
+    try {
+      const { contenido, chatSessionId } = mensajeSchema.parse(req.body);
+      const userId = (req as any).user?.userId;
+
+      // Get or create session
+      let session;
+      if (chatSessionId) {
+        session = await ChatRepository.getSessionById(chatSessionId);
+      } else {
+        session = await ChatRepository.getActiveSessionByUsuario(userId);
+      }
+
+      if (!session) {
+        session = await ChatRepository.createSession(userId);
+      }
+
+      // Save user message
+      await ChatRepository.addMensaje(
+        { contenido, chatSessionId: session.id },
+        'usuario'
+      );
+
+      // Analyze sentiment
+      const sentimiento = await IAService.analyzeSentiment(contenido);
+
+      // Detect risk
+      const esRiesgoso = IAService.detectRisk(contenido);
+
+      // Generate alert if high risk
+      if (esRiesgoso) {
+        const alerta = await AlertaRiesgoRepository.generarAlertaChat(
+          session.id,
+          userId,
+          contenido.substring(0, 50)
+        );
+
+        if (alerta) {
+          SocketService.sendToPsychologists('nueva_alerta', alerta);
+        }
+      }
+
+      // Get conversation history
+      const mensajes = await ChatRepository.getMensajesBySession(session.id, 10);
+      const chatHistory = mensajes.map(m => ({
+        role: m.remitente === 'usuario' ? 'user' : 'assistant',
+        content: m.contenido,
+      }));
+
+      // Generate AI response
+      const respuestaIA = await IAService.generateResponse(contenido, chatHistory);
+
+      // Save AI message
+      const mensajeGuardado = await ChatRepository.addMensaje(
+        { contenido: respuestaIA, chatSessionId: session.id },
+        'ia'
+      );
+
+      // Update message with sentiment
+      const mensajeConSentimiento = await IAService.analyzeSentiment(respuestaIA);
+
+      res.json({
+        mensaje: {
+          id: mensajeGuardado.id,
+          contenido: respuestaIA,
+          remitente: 'ia',
+          sentimiento: mensajeConSentimiento,
+          fechaMensaje: mensajeGuardado.fechaMensaje,
+        },
+        sentimientoUsuario: sentimiento,
+        requiereAlerta: esRiesgoso,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Validation error', details: error.errors });
+      }
+      throw error;
+    }
+  }
+
+  static async analizarSentimiento(req: Request, res: Response) {
+    try {
+      const { mensaje } = req.body;
+      const sentimiento = await IAService.analyzeSentiment(mensaje);
+
+      res.json({ sentimiento });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async detectarRiesgo(req: Request, res: Response) {
+    try {
+      const { mensaje } = req.body;
+      const esRiesgoso = IAService.detectRisk(mensaje);
+
+      res.json({ esRiesgoso });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async generarRespuesta(req: Request, res: Response) {
+    try {
+      const { mensaje, contexto } = req.body;
+      const respuesta = await IAService.generateResponse(mensaje, contexto || []);
+
+      res.json({ respuesta });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getHistorial(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.userId;
+      const historial = await ChatRepository.getChatHistory(userId);
+
+      res.json(historial);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getMensajes(req: Request, res: Response) {
+    try {
+      const { sessionId } = req.params;
+      const mensajes = await ChatRepository.getMensajesBySession(parseInt(sessionId));
+
+      res.json(mensajes);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async cerrarSesion(req: Request, res: Response) {
+    try {
+      const { sessionId } = req.params;
+      await ChatRepository.closeSession(parseInt(sessionId));
+
+      res.json({ message: 'Session closed' });
+    } catch (error) {
+      throw error;
+    }
+  }
+}
