@@ -4,9 +4,9 @@
   "description": "Backend API for Wellness Mental Web App",
   "main": "dist/app.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "dev": "ts-node src/app.ts",
     "build": "tsc",
-    "start": "node dist/app.js",
+    "start": "ts-node src/app.ts",
     "generate:prisma": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
