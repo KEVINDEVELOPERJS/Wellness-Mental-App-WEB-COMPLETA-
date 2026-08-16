@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:18-alpine
 
 WORKDIR /app
 
@@ -8,8 +8,6 @@ RUN npm ci
 
 COPY . .
 
-RUN npx tsc
-
 EXPOSE 3001
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]
