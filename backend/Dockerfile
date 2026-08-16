@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN npm ci
 
 COPY . .
 
-RUN npm run build
+RUN npx tsc
 
 EXPOSE 3001
 
