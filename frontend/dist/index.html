@@ -11,8 +11,24 @@
     <link rel="modulepreload" crossorigin href="/assets/vendor-BjU5LUAW.js">
     <link rel="modulepreload" crossorigin href="/assets/ui-CipO2WS8.js">
     <link rel="stylesheet" crossorigin href="/assets/index-BVweAn50.css">
-  <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+  </head>
   <body>
     <div id="root"></div>
+  <script>
+    // Emergency cache clear script - will only run once
+    if (!sessionStorage.getItem('cacheCleared')) {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+            console.log('Emergency: Service worker unregistered');
+          }
+          sessionStorage.setItem('cacheCleared', 'true');
+          console.log('Emergency: Cache cleared, reloading...');
+          setTimeout(() => window.location.reload(true), 500);
+        });
+      }
+    }
+  </script>
   </body>
 </html>
