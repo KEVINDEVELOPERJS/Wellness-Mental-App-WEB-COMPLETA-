@@ -5,57 +5,58 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'icons/*.svg'],
-      manifest: {
-        name: 'Wellness Mental',
-        short_name: 'Wellness',
-        description: 'App de bienestar mental para estudiantes',
-        theme_color: '#4CAF50',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait',
-        icons: [
-          {
-            src: '/icons/icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-        ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/api\./i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-        ],
-        // Don't cache API calls to ensure fresh data
-        navigateFallback: null,
-        navigateFallbackDenylist: [/^\/api/],
-        // Force update to clear old caches
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
-      },
-    }),
+    // VitePWA DISABLED TEMPORARILY TO PREVENT CACHING ISSUES
+    // VitePWA({
+    //   registerType: 'autoUpdate',
+    //   includeAssets: ['icons/*.png', 'icons/*.svg'],
+    //   manifest: {
+    //     name: 'Wellness Mental',
+    //     short_name: 'Wellness',
+    //     description: 'App de bienestar mental para estudiantes',
+    //     theme_color: '#4CAF50',
+    //     background_color: '#ffffff',
+    //     display: 'standalone',
+    //     orientation: 'portrait',
+    //     icons: [
+    //       {
+    //         src: '/icons/icon-192x192.png',
+    //         sizes: '192x192',
+    //         type: 'image/png',
+    //       },
+    //       {
+    //         src: '/icons/icon-512x512.png',
+    //         sizes: '512x512',
+    //         type: 'image/png',
+    //       },
+    //     ],
+    //   },
+    //   workbox: {
+    //     globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+    //     runtimeCaching: [
+    //       {
+    //         urlPattern: /^https:\/\/api\./i,
+    //         handler: 'NetworkFirst',
+    //         options: {
+    //           cacheName: 'api-cache',
+    //           expiration: {
+    //             maxEntries: 100,
+    //             maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+    //           },
+    //           cacheableResponse: {
+    //             statuses: [0, 200],
+    //           },
+    //         },
+    //       },
+    //     ],
+    //     // Don't cache API calls to ensure fresh data
+    //     navigateFallback: null,
+    //     navigateFallbackDenylist: [/^\/api/],
+    //     // Force update to clear old caches
+    //     cleanupOutdatedCaches: true,
+    //     clientsClaim: true,
+    //     skipWaiting: true,
+    //   },
+    // }),
   ],
   server: {
     port: 5173,
