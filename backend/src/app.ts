@@ -34,18 +34,18 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for Render deployment
 app.set('trust proxy', true);
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-  crossOriginEmbedderPolicy: false,
-}));
+// Security middleware - TEMPORARILY DISABLED FOR DEBUGGING
+// app.use(helmet({
+//   contentSecurityPolicy: {
+//     directives: {
+//       defaultSrc: ["'self'"],
+//       styleSrc: ["'self'", "'unsafe-inline'"],
+//       scriptSrc: ["'self'"],
+//       imgSrc: ["'self'", "data:", "https:"],
+//     },
+//   },
+//   crossOriginEmbedderPolicy: false,
+// }));
 
 // CORS configuration - PERMISSIVE MODE FOR DEBUGGING
 app.use(cors({
@@ -56,6 +56,17 @@ app.use(cors({
   preflightContinue: false,
   optionsSuccessStatus: 204,
 }));
+
+// Add CORS logging middleware
+app.use((req, res, next) => {
+  console.log('CORS Headers:', {
+    origin: req.headers.origin,
+    method: req.method,
+    path: req.path,
+    'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+  });
+  next();
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -99,20 +110,7 @@ const server = createServer(app);
 // Initialize Socket.io
 const io = new SocketIOServer(server, {
   cors: {
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      // Normalize origin by removing trailing slash
-      const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-      const normalizedCorsOrigin = corsOrigin.endsWith('/') ? corsOrigin.slice(0, -1) : corsOrigin;
-      
-      if (normalizedOrigin === normalizedCorsOrigin) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: '*', // Allow all origins temporarily for debugging
     credentials: true,
   },
 });
@@ -132,7 +130,9 @@ try {
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 CORS origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
+  console.log(`🔗 CORS origin: * (PERMISSIVE MODE)`);
+  console.log(`🔧 Helmet security: DISABLED`);
+  console.log(`🔧 Rate limiting: DISABLED`);
 });
 
 // Graceful shutdown
