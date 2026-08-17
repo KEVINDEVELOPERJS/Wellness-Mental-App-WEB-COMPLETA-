@@ -45,8 +45,22 @@ app.use(helmet({
 }));
 
 // CORS configuration
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Normalize origin by removing trailing slash
+    const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+    const normalizedCorsOrigin = corsOrigin.endsWith('/') ? corsOrigin.slice(0, -1) : corsOrigin;
+    
+    if (normalizedOrigin === normalizedCorsOrigin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 
@@ -92,7 +106,20 @@ const server = createServer(app);
 // Initialize Socket.io
 const io = new SocketIOServer(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Normalize origin by removing trailing slash
+      const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+      const normalizedCorsOrigin = corsOrigin.endsWith('/') ? corsOrigin.slice(0, -1) : corsOrigin;
+      
+      if (normalizedOrigin === normalizedCorsOrigin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   },
 });
