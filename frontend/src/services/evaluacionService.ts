@@ -1,6 +1,9 @@
 import apiClient from './apiClient';
 import { Cuestionario, Respuesta, Resultado } from '../types/cuestionario';
 
+// VERSION 2026-08-17-21-35 - CRITICAL FIX
+console.log('EVALUACION SERVICE UPDATED - VERSION 2026-08-17-21-35');
+
 export const evaluacionService = {
   async getCuestionarios(): Promise<Cuestionario[]> {
     try {

@@ -5,6 +5,9 @@ import { useUIStore } from '../store/uiStore';
 import { Cuestionario, Pregunta, Respuesta } from '../types/cuestionario';
 import { Brain, Loader2, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 
+// VERSION 2026-08-17-21-35 - CRITICAL FIX
+console.log('EVALUACION PAGE UPDATED - VERSION 2026-08-17-21-35');
+
 export default function EvaluacionPage() {
   const navigate = useNavigate();
   const { addToast } = useUIStore();
