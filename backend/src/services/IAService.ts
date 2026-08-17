@@ -6,100 +6,166 @@ export interface ChatMessage {
 }
 
 export class IAService {
-  private static readonly API_KEY = process.env.OPENAI_API_KEY;
-  private static readonly API_URL = 'https://api.openai.com/v1/chat/completions';
-  private static readonly MODEL = 'gpt-3.5-turbo';
+  private static readonly API_KEY = process.env.GEMINI_API_KEY;
+  private static readonly API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+  private static readonly MODEL = 'gemini-pro';
 
   private static getSystemPrompt(): string {
-    return `Eres un asistente empático y amigable para adolescentes (13-18 años) que están experimentando estrés, ansiedad u otros desafíos emocionales. 
+    return `Eres un asistente psicológico empático y profesional especializado en apoyo emocional para adolescentes (13-18 años). Actúa como un mini psicólogo con capacitación en salud mental adolescente.
 
-TU ROL:
-- Escuchar activamente y mostrar empatía
-- Ofrecer apoyo emocional sin dar diagnósticos médicos
-- Sugerir técnicas de manejo del estrés y respiración
-- Fomentar la comunicación con padres/tutores cuando sea apropiado
-- Reconocer cuando se necesita ayuda profesional
+TU ROL PROFESIONAL:
+- Escucha activa y validación emocional
+- Apoyo psicológico basado en evidencia
+- Técnicas de manejo del estrés y ansiedad
+- Detección de señales de alerta en salud mental
+- Fomento de comunicación con familia y profesionales
 
-REGLAS IMPORTANTES:
-- NUNCA dar diagnósticos médicos o psicológicos
+ENFOQUE PARA DIFERENTES NIVELES:
+
+Para casos MODERADOS (depresión leve, ansiedad, estrés):
+- Validar los sentimientos del adolescente
+- Ofrecer técnicas de respiración y mindfulness
+- Sugerir actividades saludables (ejercicio, socialización)
+- Recomendar hablar con padres/tutores
+- Proporcionar recursos de apoyo escolar
+
+Para casos de ALTO RIESGO (pensamientos suicidas, depresión severa):
+- PRIORIDAD ABSOLUTA: Seguridad inmediata
+- Recomendar buscar ayuda profesional URGENTE
+- Sugerir líneas de ayuda (ej: 911, líneas de crisis)
+- Fomentar comunicación con adultos de confianza
+- NO intentar resolver sola/o el problema
+
+REGLAS ÉTICAS:
+- NUNCA dar diagnósticos médicos (eso es para profesionales)
 - NUNCA recetar medicamentos o tratamientos
-- SIEMPRE recomendar buscar ayuda profesional si el usuario expresa pensamientos suicidas
-- Mantener un tono amable, comprensivo y apropiado para adolescentes
-- Ser breve y directo (máximo 150 palabras por respuesta)
-- Usar lenguaje sencillo y accesible
+- SIEMPRI reconocer los límites de la IA
+- Mantener confidencialidad con excepciones de seguridad
+- Usar lenguaje empático, no clínico excesivo
+- Ser breve pero profundo (100-200 palabras por respuesta)
 
-SEÑALES DE ALERTA (deben activar recomendación de ayuda profesional):
-- Pensamientos de hacerse daño
-- Sentimientos de desesperanza extremos
-- Menciones de suicidio
-- Síntomas que interfieren significativamente con la vida diaria`;
+TÉCNICAS PSICOLÓGICAS A UTILIZAR:
+- Validación emocional ("Comprendo que te sientas así")
+- Reformulación positiva ("Aunque te sientas mal, hay esperanza")
+- Preguntas abiertas ("¿Qué te hace sentir mejor?")
+- Técnicas de grounding ("Describe 5 cosas que ves ahora")
+- Breves ejercicios de respiración
+
+SEÑALES DE ALERTA INMEDIATA (requieren acción):
+- Pensamientos de autolesión o suicidio
+- Desesperanza extremo o nihilismo
+- Planes específicos para hacerse daño
+- Aislamiento social completo
+- Cambios drásticos en comportamiento
+
+RESPUESTA EMPÁTICA TIPO:
+"Entiendo que estés pasando por un momento difícil. Tus sentimientos son válidos y no estás solo/a en esto. ¿Quieres contarme más sobre lo que te preocupa? Estoy aquí para escucharte y ayudarte a encontrar recursos que puedan apoyarte."`;
   }
 
   static async generateResponse(userMessage: string, conversationHistory: ChatMessage[]): Promise<string> {
     try {
-      const messages: ChatMessage[] = [
-        { role: 'system', content: this.getSystemPrompt() },
-        ...conversationHistory.slice(-10), // Keep last 10 messages for context
-        { role: 'user', content: userMessage },
+      // Convert OpenAI format to Gemini format
+      const geminiMessages = [
+        { role: 'user', parts: [{ text: this.getSystemPrompt() }] },
+        ...conversationHistory.slice(-10).map(msg => ({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
+        })),
+        { role: 'user', parts: [{ text: userMessage }] }
       ];
 
       const response = await axios.post(
-        this.API_URL,
+        `${this.API_URL}?key=${this.API_KEY}`,
         {
-          model: this.MODEL,
-          messages,
-          max_tokens: 300,
-          temperature: 0.7,
+          contents: geminiMessages,
+          generationConfig: {
+            maxOutputTokens: 300,
+            temperature: 0.7,
+          }
         },
         {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.API_KEY}`,
           },
-          timeout: 10000,
+          timeout: 15000,
         }
       );
 
-      return response.data.choices[0].message.content;
+      if (response.data.candidates && response.data.candidates[0]) {
+        return response.data.candidates[0].content.parts[0].text;
+      }
+
+      throw new Error('Invalid response from Gemini API');
     } catch (error) {
-      console.error('Error calling OpenAI API:', error);
-      return 'Lo siento, estoy teniendo dificultades para responder en este momento. Por favor, intenta nuevamente más tarde o habla con un adulto de confianza.';
+      console.error('Error calling Gemini API:', error);
+      return 'Entiendo que necesitas apoyo en este momento. Por favor, considera hablar con un adulto de confianza, un consejero escolar, o llamar a una línea de ayuda. Tu bienestar es importante y hay profesionales que pueden ayudarte.';
     }
   }
 
   static async analyzeSentiment(message: string): Promise<number> {
-    // Simple sentiment analysis (0.0 = negative, 1.0 = positive)
-    // In production, this would use a proper NLP service
-    const negativeWords = ['triste', 'ansioso', 'miedo', 'solo', 'desesperado', 'mal', 'mal', 'quiero morir', 'suicidio', 'hacerme daño'];
-    const positiveWords = ['feliz', 'bien', 'mejor', 'contento', 'tranquilo', 'aliviado', 'gracias'];
+    // Enhanced sentiment analysis with more psychological terms
+    const negativeWords = [
+      'triste', 'ansioso', 'miedo', 'solo', 'desesperado', 'mal', 'deprimido',
+      'quiero morir', 'suicidio', 'hacerme daño', 'vacío', 'sin esperanza',
+      'pesar', 'angustia', 'panico', 'desesperanza', 'aislado', 'inútil',
+      'culpa', 'verguenza', 'odio', 'daño', 'muerte', 'acabar'
+    ];
+    const positiveWords = [
+      'feliz', 'bien', 'mejor', 'contento', 'tranquilo', 'aliviado', 'gracias',
+      'esperanza', 'calma', 'paz', 'alegría', 'optimista', 'fortaleza',
+      'apoyo', 'comprendido', 'escuchado', 'valor', 'motivado'
+    ];
     
     const lowerMessage = message.toLowerCase();
     let score = 0.5; // neutral baseline
 
     negativeWords.forEach(word => {
-      if (lowerMessage.includes(word)) score -= 0.15;
+      if (lowerMessage.includes(word)) score -= 0.12;
     });
 
     positiveWords.forEach(word => {
       if (lowerMessage.includes(word)) score += 0.1;
     });
 
+    // Check for moderate depression indicators
+    const moderateIndicators = ['cansado', 'sin energía', 'no me gusta nada', 'tristeza', 'llorar'];
+    moderateIndicators.forEach(indicator => {
+      if (lowerMessage.includes(indicator)) score -= 0.08;
+    });
+
     // Clamp between 0 and 1
     return Math.max(0, Math.min(1, score));
   }
 
-  static detectRisk(message: string): boolean {
+  static detectRisk(message: string): 'ALTO' | 'MODERADO' | 'BAJO' {
     const highRiskPhrases = [
-      'quiero morir',
-      'suicidio',
-      'hacerme daño',
-      'acabar con todo',
-      'no quiero vivir',
-      'me quiero matar',
-      'me voy a matar',
+      'quiero morir', 'suicidio', 'hacerme daño', 'acabar con todo',
+      'no quiero vivir', 'me quiero matar', 'me voy a matar', 'plan',
+      'método', 'adiós', 'despedida', 'última vez'
+    ];
+
+    const moderateRiskPhrases = [
+      'deprimido', 'triste', 'solo', 'vacío', 'sin esperanza',
+      'cansado de vivir', 'no tiene sentido', 'desesperado',
+      'no puedo más', 'sufrir', 'dolor emocional'
     ];
 
     const lowerMessage = message.toLowerCase();
-    return highRiskPhrases.some(phrase => lowerMessage.includes(phrase));
+
+    if (highRiskPhrases.some(phrase => lowerMessage.includes(phrase))) {
+      return 'ALTO';
+    }
+
+    if (moderateRiskPhrases.some(phrase => lowerMessage.includes(phrase))) {
+      return 'MODERADO';
+    }
+
+    return 'BAJO';
+  }
+
+  static getRiskLevel(sentiment: number): 'ALTO' | 'MODERADO' | 'BAJO' {
+    if (sentiment < 0.3) return 'ALTO';
+    if (sentiment < 0.5) return 'MODERADO';
+    return 'BAJO';
   }
 }
