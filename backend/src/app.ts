@@ -34,39 +34,28 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for Render deployment
 app.set('trust proxy', true);
 
-// Security middleware - TEMPORARILY DISABLED FOR DEBUGGING
-// app.use(helmet({
-//   contentSecurityPolicy: {
-//     directives: {
-//       defaultSrc: ["'self'"],
-//       styleSrc: ["'self'", "'unsafe-inline'"],
-//       scriptSrc: ["'self'"],
-//       imgSrc: ["'self'", "data:", "https:"],
-//     },
-//   },
-//   crossOriginEmbedderPolicy: false,
-// }));
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
 
-// CORS configuration - PERMISSIVE MODE FOR DEBUGGING
+// CORS configuration - PERMISSIVE MODE FOR PRODUCTION
 app.use(cors({
-  origin: '*', // Allow all origins temporarily for debugging
+  origin: '*', // Allow all origins for production
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   preflightContinue: false,
   optionsSuccessStatus: 204,
 }));
-
-// Add CORS logging middleware
-app.use((req, res, next) => {
-  console.log('CORS Headers:', {
-    origin: req.headers.origin,
-    method: req.method,
-    path: req.path,
-    'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
-  });
-  next();
-});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

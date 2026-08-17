@@ -143,6 +143,11 @@ export class EvaluacionController {
         prediagnostico
       );
       console.log('Result saved:', resultado);
+      
+      if (!resultado || !resultado.id) {
+        console.error('Invalid result from database:', resultado);
+        throw new AppError(500, 'Failed to save evaluation result');
+      }
 
       // Generate alert if high risk
       if (nivelRiesgo === 'ALTO') {
@@ -188,7 +193,15 @@ export class EvaluacionController {
   static async getResultado(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const resultado = await CuestionarioRepository.getResultadoById(parseInt(id));
+      const resultadoId = parseInt(id);
+      
+      // Validate ID
+      if (isNaN(resultadoId) || resultadoId <= 0) {
+        console.error('Invalid result ID:', id);
+        throw new AppError(400, 'Invalid result ID');
+      }
+      
+      const resultado = await CuestionarioRepository.getResultadoById(resultadoId);
 
       if (!resultado) {
         throw new AppError(404, 'Resultado not found');

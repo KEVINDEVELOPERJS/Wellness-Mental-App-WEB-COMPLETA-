@@ -101,7 +101,7 @@ export default function EvaluacionPage() {
         message: 'Tus resultados han sido guardados',
       });
       
-      if (resultado && resultado.id) {
+      if (resultado && resultado.id && !isNaN(resultado.id)) {
         console.log('Navigating to result:', resultado.id);
         navigate(`/evaluacion/resultado/${resultado.id}`);
       } else {
@@ -111,6 +111,8 @@ export default function EvaluacionPage() {
           title: 'Error',
           message: 'No se recibió un ID de resultado válido',
         });
+        // Navigate back to evaluation list instead of breaking
+        setTimeout(() => navigate('/evaluacion'), 2000);
       }
     } catch (error) {
       console.error('Error submitting evaluation:', error);

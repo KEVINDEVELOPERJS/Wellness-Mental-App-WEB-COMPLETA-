@@ -79,6 +79,12 @@ export const evaluacionService = {
         respuestas,
       });
       console.log('Response from guardarEvaluacion:', response.data);
+      
+      if (!response.data.resultado || !response.data.resultado.id) {
+        console.error('Invalid response structure:', response.data);
+        throw new Error('Invalid response: missing result or result.id');
+      }
+      
       return response.data.resultado;
     } catch (error) {
       console.error('Error in guardarEvaluacion:', error);
