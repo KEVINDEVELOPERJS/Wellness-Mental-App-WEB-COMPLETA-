@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: wellness-mental-backend
+    env: node
+    buildCommand: cd backend && yarn install
+    startCommand: cd backend && yarn start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: CORS_ORIGIN
+        value: https://wellness-mental-app-web-completa.vercel.app
+    plan: free
