@@ -64,6 +64,15 @@ RESPUESTA EMPÁTICA TIPO:
 
   static async generateResponse(userMessage: string, conversationHistory: ChatMessage[]): Promise<string> {
     try {
+      // Check if API key is available
+      if (!this.API_KEY) {
+        console.error('GEMINI_API_KEY is not configured');
+        return 'Lo siento, el servicio de IA no está configurado correctamente. Por favor, contacta al administrador.';
+      }
+
+      console.log('Calling Gemini API with message:', userMessage);
+      console.log('API Key configured:', !!this.API_KEY);
+
       // Convert OpenAI format to Gemini format
       const geminiMessages = [
         { role: 'user', parts: [{ text: this.getSystemPrompt() }] },
@@ -73,6 +82,8 @@ RESPUESTA EMPÁTICA TIPO:
         })),
         { role: 'user', parts: [{ text: userMessage }] }
       ];
+
+      console.log('Sending to Gemini:', JSON.stringify(geminiMessages, null, 2));
 
       const response = await axios.post(
         `${this.API_URL}?key=${this.API_KEY}`,
@@ -87,17 +98,29 @@ RESPUESTA EMPÁTICA TIPO:
           headers: {
             'Content-Type': 'application/json',
           },
-          timeout: 15000,
+          timeout: 20000,
         }
       );
 
+      console.log('Gemini response:', JSON.stringify(response.data, null, 2));
+
       if (response.data.candidates && response.data.candidates[0]) {
-        return response.data.candidates[0].content.parts[0].text;
+        const text = response.data.candidates[0].content.parts[0].text;
+        console.log('Generated response:', text);
+        return text;
       }
 
+      console.error('Invalid response structure from Gemini:', response.data);
       throw new Error('Invalid response from Gemini API');
     } catch (error) {
       console.error('Error calling Gemini API:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error details:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+        });
+      }
       return 'Entiendo que necesitas apoyo en este momento. Por favor, considera hablar con un adulto de confianza, un consejero escolar, o llamar a una línea de ayuda. Tu bienestar es importante y hay profesionales que pueden ayudarte.';
     }
   }

@@ -56,15 +56,21 @@ export class ChatIAController {
       // Analyze sentiment
       const sentimiento = await IAService.analyzeSentiment(contenido);
 
-      // Detect risk
-      const esRiesgoso = IAService.detectRisk(contenido);
+      // Detect risk level
+      const nivelRiesgo = IAService.detectRisk(contenido);
+      const nivelRiesgoPorSentimiento = IAService.getRiskLevel(sentimiento);
+      
+      // Use the higher risk level
+      const nivelRiesgoFinal = nivelRiesgo === 'ALTO' || nivelRiesgoPorSentimiento === 'ALTO' ? 'ALTO' :
+                            nivelRiesgo === 'MODERADO' || nivelRiesgoPorSentimiento === 'MODERADO' ? 'MODERADO' : 'BAJO';
 
-      // Generate alert if high risk
-      if (esRiesgoso) {
+      // Generate alert if high or moderate risk
+      if (nivelRiesgoFinal === 'ALTO' || nivelRiesgoFinal === 'MODERADO') {
         const alerta = await AlertaRiesgoRepository.generarAlertaChat(
           session.id,
           userId,
-          contenido.substring(0, 50)
+          contenido.substring(0, 50),
+          nivelRiesgoFinal
         );
 
         if (alerta) {
@@ -100,7 +106,8 @@ export class ChatIAController {
           fechaMensaje: mensajeGuardado.fechaMensaje,
         },
         sentimientoUsuario: sentimiento,
-        requiereAlerta: esRiesgoso,
+        nivelRiesgo: nivelRiesgoFinal,
+        requiereAlerta: nivelRiesgoFinal === 'ALTO' || nivelRiesgoFinal === 'MODERADO',
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

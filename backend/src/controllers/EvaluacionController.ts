@@ -160,7 +160,7 @@ export class EvaluacionController {
           id: resultado.id,
           puntaje,
           nivelRiesgo,
-          prediagnostico,
+          prediagnostico: prediagnostico, // Send the raw diagnosis, not encrypted
           fechaEvaluacion: resultado.fechaEvaluacion,
         },
       });
