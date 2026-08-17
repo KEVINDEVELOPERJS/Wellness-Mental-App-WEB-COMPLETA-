@@ -23,13 +23,16 @@ export default function EvaluacionPage() {
 
   const loadCuestionarios = async () => {
     try {
+      console.log('Loading cuestionarios...');
       const data = await evaluacionService.getCuestionarios();
+      console.log('Cuestionarios loaded:', data);
       setCuestionarios(data);
     } catch (error) {
+      console.error('Error loading cuestionarios:', error);
       addToast({
         type: 'error',
         title: 'Error',
-        message: 'No se pudieron cargar los cuestionarios',
+        message: 'No se pudieron cargar los cuestionarios. Por favor verifica tu conexión.',
       });
     } finally {
       setIsLoading(false);
@@ -99,8 +102,10 @@ export default function EvaluacionPage() {
       });
       
       if (resultado && resultado.id) {
+        console.log('Navigating to result:', resultado.id);
         navigate(`/evaluacion/resultado/${resultado.id}`);
       } else {
+        console.error('Invalid result:', resultado);
         addToast({
           type: 'error',
           title: 'Error',

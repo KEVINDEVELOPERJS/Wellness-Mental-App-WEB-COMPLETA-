@@ -23,17 +23,20 @@ export default function ChatIAPage() {
 
   const initializeChat = async () => {
     try {
+      console.log('Initializing chat session...');
       const session = await chatService.iniciarSesion();
+      console.log('Chat session created:', session);
       setChatSessionId(session.id);
       
       // Load recent messages
       const recentMensajes = await chatService.getMensajes(session.id);
       setMensajes(recentMensajes.reverse());
     } catch (error) {
+      console.error('Error initializing chat:', error);
       addToast({
         type: 'error',
         title: 'Error',
-        message: 'No se pudo inicializar el chat',
+        message: 'No se pudo inicializar el chat. Por favor verifica tu conexión.',
       });
     }
   };
@@ -50,10 +53,12 @@ export default function ChatIAPage() {
     setIsLoading(true);
 
     try {
+      console.log('Sending message:', userMessage);
       const response = await chatService.enviarMensaje({
         contenido: userMessage,
         chatSessionId: chatSessionId || undefined,
       });
+      console.log('Message response:', response);
 
       // Add user message
       setMensajes(prev => [...prev, {
@@ -85,10 +90,11 @@ export default function ChatIAPage() {
       }, 1000 + Math.random() * 1000);
 
     } catch (error) {
+      console.error('Error sending message:', error);
       addToast({
         type: 'error',
         title: 'Error',
-        message: 'No se pudo enviar el mensaje',
+        message: 'No se pudo enviar el mensaje. Por favor verifica tu conexión.',
       });
     } finally {
       setIsLoading(false);

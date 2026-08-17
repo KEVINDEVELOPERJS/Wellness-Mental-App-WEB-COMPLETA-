@@ -30,13 +30,16 @@ export default function ResultadoEvaluacionPage() {
 
   const loadResultado = async (resultadoId: number) => {
     try {
+      console.log('Loading resultado:', resultadoId);
       const data = await evaluacionService.getResultado(resultadoId);
+      console.log('Resultado loaded:', data);
       setResultado(data);
     } catch (error) {
+      console.error('Error loading resultado:', error);
       addToast({
         type: 'error',
         title: 'Error',
-        message: 'No se pudo cargar el resultado',
+        message: 'No se pudo cargar el resultado. Por favor verifica tu conexión.',
       });
       navigate('/evaluacion');
     } finally {
