@@ -94,6 +94,7 @@ export default function EvaluacionPage() {
       );
       
       console.log('Evaluation result:', resultado);
+      console.log('Result ID:', resultado.id, 'Type:', typeof resultado.id);
       
       addToast({
         type: 'success',
@@ -101,7 +102,7 @@ export default function EvaluacionPage() {
         message: 'Tus resultados han sido guardados',
       });
       
-      if (resultado && resultado.id && !isNaN(resultado.id)) {
+      if (resultado && resultado.id && typeof resultado.id === 'number' && !isNaN(resultado.id)) {
         console.log('Navigating to result:', resultado.id);
         navigate(`/evaluacion/resultado/${resultado.id}`);
       } else {
@@ -109,7 +110,7 @@ export default function EvaluacionPage() {
         addToast({
           type: 'error',
           title: 'Error',
-          message: 'No se recibió un ID de resultado válido',
+          message: 'No se recibió un ID de resultado válido. Por favor intenta nuevamente.',
         });
         // Navigate back to evaluation list instead of breaking
         setTimeout(() => navigate('/evaluacion'), 2000);
@@ -119,7 +120,7 @@ export default function EvaluacionPage() {
       addToast({
         type: 'error',
         title: 'Error',
-        message: 'No se pudo guardar la evaluación',
+        message: 'No se pudo guardar la evaluación. Por favor intenta nuevamente.',
       });
     } finally {
       setIsSubmitting(false);

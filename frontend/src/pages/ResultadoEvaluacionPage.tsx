@@ -25,17 +25,25 @@ export default function ResultadoEvaluacionPage() {
   useEffect(() => {
     if (id) {
       const resultadoId = parseInt(id);
-      if (isNaN(resultadoId)) {
-        console.error('Invalid result ID:', id);
+      if (isNaN(resultadoId) || resultadoId <= 0) {
+        console.error('Invalid result ID:', id, 'Parsed:', resultadoId);
         addToast({
           type: 'error',
           title: 'Error',
-          message: 'ID de resultado inválido',
+          message: 'ID de resultado inválido. Por favor intenta realizar la evaluación nuevamente.',
         });
         navigate('/evaluacion');
         return;
       }
       loadResultado(resultadoId);
+    } else {
+      console.error('No ID provided in URL params');
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'No se proporcionó un ID de resultado. Por favor intenta realizar la evaluación nuevamente.',
+      });
+      navigate('/evaluacion');
     }
   }, [id]);
 

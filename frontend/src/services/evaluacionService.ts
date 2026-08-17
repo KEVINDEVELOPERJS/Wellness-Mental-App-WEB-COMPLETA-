@@ -79,10 +79,25 @@ export const evaluacionService = {
         respuestas,
       });
       console.log('Response from guardarEvaluacion:', response.data);
+      console.log('Response structure:', {
+        hasResultado: !!response.data.resultado,
+        resultadoKeys: response.data.resultado ? Object.keys(response.data.resultado) : [],
+        resultadoId: response.data.resultado?.id,
+        resultadoIdType: typeof response.data.resultado?.id
+      });
       
-      if (!response.data.resultado || !response.data.resultado.id) {
-        console.error('Invalid response structure:', response.data);
-        throw new Error('Invalid response: missing result or result.id');
+      if (!response.data.resultado) {
+        console.error('Invalid response structure - missing resultado:', response.data);
+        throw new Error('Invalid response: missing result object');
+      }
+      
+      if (!response.data.resultado.id || typeof response.data.resultado.id !== 'number') {
+        console.error('Invalid response structure - invalid id:', {
+          id: response.data.resultado.id,
+          idType: typeof response.data.resultado.id,
+          fullResultado: response.data.resultado
+        });
+        throw new Error(`Invalid response: result.id is invalid (value: ${response.data.resultado.id}, type: ${typeof response.data.resultado.id})`);
       }
       
       return response.data.resultado;
@@ -104,7 +119,11 @@ export const evaluacionService = {
 
   async getResultado(id: number): Promise<Resultado> {
     try {
-      console.log('Calling getResultado with id:', id);
+      console.log('Calling getResultado with id:', id, 'Type:', typeof id);
+      if (typeof id !== 'number' || isNaN(id) || id <= 0) {
+        throw new Error(`Invalid result ID: ${id} (type: ${typeof id})`);
+      }
+      
       const response = await apiClient.get<Resultado>(`/evaluacion/resultados/${id}`);
       console.log('Response from getResultado:', response.data);
       return response.data;

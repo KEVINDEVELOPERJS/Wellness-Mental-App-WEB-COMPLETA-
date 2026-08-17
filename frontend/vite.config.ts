@@ -47,6 +47,9 @@ export default defineConfig({
             },
           },
         ],
+        // Don't cache API calls to ensure fresh data
+        navigateFallback: null,
+        navigateFallbackDenylist: [/^\/api/],
       },
     }),
   ],

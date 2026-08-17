@@ -143,6 +143,7 @@ export class EvaluacionController {
         prediagnostico
       );
       console.log('Result saved:', resultado);
+      console.log('Result ID type:', typeof resultado.id, 'Result ID value:', resultado.id);
       
       if (!resultado || !resultado.id) {
         console.error('Invalid result from database:', resultado);
@@ -197,14 +198,22 @@ export class EvaluacionController {
       
       // Validate ID
       if (isNaN(resultadoId) || resultadoId <= 0) {
-        console.error('Invalid result ID:', id);
-        throw new AppError(400, 'Invalid result ID');
+        console.error('Invalid result ID:', id, 'Params:', req.params);
+        // Return 400 instead of throwing to prevent server crash
+        return res.status(400).json({ 
+          error: 'Invalid result ID',
+          message: `ID "${id}" is not a valid number`,
+          receivedId: id
+        });
       }
       
       const resultado = await CuestionarioRepository.getResultadoById(resultadoId);
 
       if (!resultado) {
-        throw new AppError(404, 'Resultado not found');
+        return res.status(404).json({ 
+          error: 'Resultado not found',
+          message: `Result with ID ${resultadoId} does not exist`
+        });
       }
 
       res.json(resultado);
