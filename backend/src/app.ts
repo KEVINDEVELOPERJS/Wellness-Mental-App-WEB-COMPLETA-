@@ -73,8 +73,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Audit logging
 app.use(auditLog);
 
-// Rate limiting (apply to all routes)
-app.use(apiRateLimit);
+// Rate limiting (apply to all routes) - DISABLED FOR DEBUGGING
+// app.use(apiRateLimit);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
@@ -131,6 +131,7 @@ server.listen(PORT, () => {
   console.log(`🔗 CORS origin: * (PERMISSIVE MODE)`);
   console.log(`🔧 Helmet security: DISABLED`);
   console.log(`🔧 Rate limiting: DISABLED`);
+  console.log(`🔧 Updated: ${new Date().toISOString()}`);
 });
 
 // Graceful shutdown
