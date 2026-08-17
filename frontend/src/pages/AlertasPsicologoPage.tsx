@@ -335,7 +335,7 @@ export default function AlertasPsicologoPage() {
 function StatCard({ label, value, color, bgColor }: any) {
   return (
     <div className={`${bgColor} rounded-xl p-4 border`}>
-      <p className="text-2xl font-bold ${color}`}>{value}</p>
+      <p className={`text-2xl font-bold ${color}`}>{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );

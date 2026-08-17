@@ -170,8 +170,7 @@ export default function JuegosPage() {
             .filter(logro => !logros.find(ul => ul.logroId === logro.id))
             .map((logro) => (
               <AchievementCard key={logro.id} logro={logro} locked />
-            ))
-          )}
+            ))}
         </div>
       </div>
     </div>
