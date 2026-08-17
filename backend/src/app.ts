@@ -55,13 +55,18 @@ app.use(cors({
     const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
     const normalizedCorsOrigin = corsOrigin.endsWith('/') ? corsOrigin.slice(0, -1) : corsOrigin;
     
+    console.log('CORS check:', { normalizedOrigin, normalizedCorsOrigin });
+    
     if (normalizedOrigin === normalizedCorsOrigin) {
       callback(null, true);
     } else {
+      console.log('CORS blocked:', { normalizedOrigin, normalizedCorsOrigin });
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Body parsing middleware
