@@ -66,12 +66,14 @@ RESPUESTA EMPÁTICA TIPO:
     try {
       // Check if API key is available
       if (!this.API_KEY) {
-        console.error('GEMINI_API_KEY is not configured');
-        return 'Lo siento, el servicio de IA no está configurado correctamente. Por favor, contacta al administrador.';
+        console.error('GEMINI_API_KEY is not configured in environment variables');
+        console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('API') || k.includes('GEMINI')));
+        return 'Lo siento, el servicio de IA no está configurado correctamente. Por favor, contacta al administrador para configurar la API key de Gemini.';
       }
 
       console.log('Calling Gemini API with message:', userMessage);
       console.log('API Key configured:', !!this.API_KEY);
+      console.log('API Key length:', this.API_KEY.length);
 
       // Convert OpenAI format to Gemini format
       const geminiMessages = [
@@ -83,7 +85,7 @@ RESPUESTA EMPÁTICA TIPO:
         { role: 'user', parts: [{ text: userMessage }] }
       ];
 
-      console.log('Sending to Gemini:', JSON.stringify(geminiMessages, null, 2));
+      console.log('Sending to Gemini (message count):', geminiMessages.length);
 
       const response = await axios.post(
         `${this.API_URL}?key=${this.API_KEY}`,
@@ -98,15 +100,15 @@ RESPUESTA EMPÁTICA TIPO:
           headers: {
             'Content-Type': 'application/json',
           },
-          timeout: 20000,
+          timeout: 30000, // Increased timeout
         }
       );
 
-      console.log('Gemini response:', JSON.stringify(response.data, null, 2));
+      console.log('Gemini response status:', response.status);
 
       if (response.data.candidates && response.data.candidates[0]) {
         const text = response.data.candidates[0].content.parts[0].text;
-        console.log('Generated response:', text);
+        console.log('Generated response length:', text.length);
         return text;
       }
 

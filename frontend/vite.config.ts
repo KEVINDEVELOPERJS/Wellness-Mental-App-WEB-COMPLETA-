@@ -50,6 +50,10 @@ export default defineConfig({
         // Don't cache API calls to ensure fresh data
         navigateFallback: null,
         navigateFallbackDenylist: [/^\/api/],
+        // Force update to clear old caches
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
       },
     }),
   ],
