@@ -12,20 +12,6 @@ const apiClient = axios.create({
   withCredentials: true, // Important for CORS with credentials
 });
 
-// Request interceptor to add auth token
-apiClient.interceptors.request.use(
-  (config) => {
-    const { accessToken } = useAuthStore.getState();
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
 // Response interceptor to handle token refresh
 apiClient.interceptors.response.use(
   (response) => response,

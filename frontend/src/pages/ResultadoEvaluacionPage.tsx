@@ -24,7 +24,18 @@ export default function ResultadoEvaluacionPage() {
 
   useEffect(() => {
     if (id) {
-      loadResultado(parseInt(id));
+      const resultadoId = parseInt(id);
+      if (isNaN(resultadoId)) {
+        console.error('Invalid result ID:', id);
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: 'ID de resultado inválido',
+        });
+        navigate('/evaluacion');
+        return;
+      }
+      loadResultado(resultadoId);
     }
   }, [id]);
 
