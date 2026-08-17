@@ -17,6 +17,13 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  // Ensure CORS headers are present on error responses
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       error: err.message,
@@ -57,6 +64,13 @@ export const errorHandler = (
 };
 
 export const notFound = (req: Request, res: Response) => {
+  // Ensure CORS headers are present on 404 responses
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
   res.status(404).json({
     error: 'Not found',
     message: `Route ${req.method} ${req.path} not found`,

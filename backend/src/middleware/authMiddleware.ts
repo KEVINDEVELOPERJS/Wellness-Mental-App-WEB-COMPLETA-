@@ -14,6 +14,12 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      // Ensure CORS headers are present on auth error responses
+      const origin = req.headers.origin;
+      if (origin) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
       return res.status(401).json({ error: 'No token provided' });
     }
 
@@ -22,6 +28,12 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     // Check if token is blacklisted
     const isBlacklisted = await JwtService.isTokenBlacklisted(token);
     if (isBlacklisted) {
+      // Ensure CORS headers are present on auth error responses
+      const origin = req.headers.origin;
+      if (origin) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
       return res.status(401).json({ error: 'Token has been revoked' });
     }
 
@@ -30,6 +42,12 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     next();
   } catch (error) {
+    // Ensure CORS headers are present on auth error responses
+    const origin = req.headers.origin;
+    if (origin) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+    }
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
@@ -37,10 +55,22 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 export const authorize = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
+      // Ensure CORS headers are present on auth error responses
+      const origin = req.headers.origin;
+      if (origin) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
     if (!roles.includes(req.user.rol)) {
+      // Ensure CORS headers are present on auth error responses
+      const origin = req.headers.origin;
+      if (origin) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
@@ -51,6 +81,12 @@ export const authorize = (roles: string[]) => {
 export const authorizeSelfOrRole = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
+      // Ensure CORS headers are present on auth error responses
+      const origin = req.headers.origin;
+      if (origin) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
@@ -60,6 +96,12 @@ export const authorizeSelfOrRole = (roles: string[]) => {
     if (req.user.userId === targetUserId || roles.includes(req.user.rol)) {
       next();
     } else {
+      // Ensure CORS headers are present on auth error responses
+      const origin = req.headers.origin;
+      if (origin) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
   };

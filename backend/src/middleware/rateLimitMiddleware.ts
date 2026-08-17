@@ -22,6 +22,7 @@ export const authRateLimit = rateLimit({
   message: 'Too many authentication attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS', // Skip rate limiting for CORS preflight requests
 });
 
 export const apiRateLimit = rateLimit({
@@ -30,6 +31,7 @@ export const apiRateLimit = rateLimit({
   message: 'Too many requests, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS', // Skip rate limiting for CORS preflight requests
 });
 
 export const strictRateLimit = rateLimit({
@@ -38,6 +40,7 @@ export const strictRateLimit = rateLimit({
   message: 'Rate limit exceeded, please slow down',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS', // Skip rate limiting for CORS preflight requests
 });
 
 export const alertRateLimit = rateLimit({
@@ -46,4 +49,5 @@ export const alertRateLimit = rateLimit({
   message: 'Too many alert requests, please wait',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS', // Skip rate limiting for CORS preflight requests
 });
