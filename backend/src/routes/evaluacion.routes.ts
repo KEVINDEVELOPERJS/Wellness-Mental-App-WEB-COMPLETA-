@@ -15,7 +15,7 @@ router.post('/validar', authenticate, EvaluacionController.validarRespuestas);
 router.post('/calcular', authenticate, EvaluacionController.calcularPuntaje);
 router.post('/clasificar', authenticate, EvaluacionController.clasificarRiesgo);
 router.post('/prediagnostico', authenticate, EvaluacionController.generarPrediagnostico);
-router.post('/guardar', authenticate, /* apiRateLimit, */ EvaluacionController.guardarEvaluacion); // TEMPORARILY DISABLED RATE LIMIT
+router.post('/guardar', authenticate, apiRateLimit, EvaluacionController.guardarEvaluacion);
 router.get('/resultados', authenticate, EvaluacionController.getResultados);
 router.get('/resultados/:id', authenticate, EvaluacionController.getResultado);
 

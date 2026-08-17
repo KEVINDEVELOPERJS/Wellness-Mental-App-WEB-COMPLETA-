@@ -64,8 +64,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Audit logging
 app.use(auditLog);
 
-// Rate limiting (apply to all routes) - TEMPORARILY DISABLED FOR DEBUGGING
-// app.use(apiRateLimit);
+// Rate limiting (apply to all routes)
+app.use(apiRateLimit);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

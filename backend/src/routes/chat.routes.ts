@@ -7,7 +7,7 @@ const router = Router();
 
 // Protected routes
 router.post('/sesion', authenticate, ChatIAController.iniciarSesion);
-router.post('/mensaje', authenticate, /* apiRateLimit, */ ChatIAController.enviarMensaje); // TEMPORARILY DISABLED RATE LIMIT
+router.post('/mensaje', authenticate, apiRateLimit, ChatIAController.enviarMensaje);
 router.post('/analizar', authenticate, ChatIAController.analizarSentimiento);
 router.post('/riesgo', authenticate, ChatIAController.detectarRiesgo);
 router.post('/respuesta', authenticate, ChatIAController.generarRespuesta);
