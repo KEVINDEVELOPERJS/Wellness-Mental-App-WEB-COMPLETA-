@@ -35,6 +35,15 @@ export class CuestionarioRepository {
     });
   }
 
+  static async delete(id: number): Promise<void> {
+    await prisma.pregunta.deleteMany({
+      where: { cuestionarioId: id },
+    });
+    await prisma.cuestionario.delete({
+      where: { id },
+    });
+  }
+
   static async addPregunta(cuestionarioId: number, pregunta: Omit<Pregunta, 'id'>): Promise<Pregunta> {
     return prisma.pregunta.create({
       data: {

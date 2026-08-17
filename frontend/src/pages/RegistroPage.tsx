@@ -18,6 +18,8 @@ export default function RegistroPage() {
     edad: '',
     grado: '',
     telefono: '',
+    rol: 'ESTUDIANTE',
+    codigoVerificacion: '',
   });
   
   const [validations, setValidations] = useState({
@@ -28,6 +30,7 @@ export default function RegistroPage() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [consentimiento, setConsentimiento] = useState(false);
+  const [showPsicologoFields, setShowPsicologoFields] = useState(false);
 
   const validateEmail = async (email: string) => {
     if (email.length < 3) return;
@@ -82,23 +85,36 @@ export default function RegistroPage() {
       return;
     }
 
-    const edad = parseInt(formData.edad);
-    if (edad < 13 || edad > 18) {
-      addToast({
-        type: 'error',
-        title: 'Edad no válida',
-        message: 'Debes tener entre 13 y 18 años',
-      });
-      return;
-    }
+    // Validación específica para psicólogos
+    if (formData.rol === 'PSICOLOGO') {
+      if (formData.codigoVerificacion !== 'Wellness-psicologo') {
+        addToast({
+          type: 'error',
+          title: 'Código de verificación incorrecto',
+          message: 'El código de verificación para psicólogos no es válido',
+        });
+        return;
+      }
+    } else {
+      // Validaciones para estudiantes
+      const edad = parseInt(formData.edad);
+      if (edad < 13 || edad > 18) {
+        addToast({
+          type: 'error',
+          title: 'Edad no válida',
+          message: 'Debes tener entre 13 y 18 años',
+        });
+        return;
+      }
 
-    if (edad < 16 && !consentimiento) {
-      addToast({
-        type: 'error',
-        title: 'Consentimiento requerido',
-        message: 'Se requiere consentimiento parental para menores de 16 años',
-      });
-      return;
+      if (edad < 16 && !consentimiento) {
+        addToast({
+          type: 'error',
+          title: 'Consentimiento requerido',
+          message: 'Se requiere consentimiento parental para menores de 16 años',
+        });
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -109,9 +125,11 @@ export default function RegistroPage() {
         nombre: formData.nombre,
         email: formData.email,
         password: formData.password,
-        edad,
-        grado: formData.grado,
+        edad: formData.rol === 'PSICOLOGO' ? 25 : parseInt(formData.edad), // Edad diferente para psicólogos
+        grado: formData.rol === 'PSICOLOGO' ? 'PROFESIONAL' : formData.grado,
         telefono: formData.telefono || undefined,
+        rol: formData.rol,
+        codigoVerificacion: formData.codigoVerificacion,
       });
       
       setAuth(response.usuario, response.accessToken, response.refreshToken);
@@ -165,6 +183,27 @@ export default function RegistroPage() {
 
           {/* Registration Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Rol Selection */}
+            <div>
+              <label htmlFor="rol" className="block text-sm font-medium text-gray-700 mb-2">
+                Tipo de Registro
+              </label>
+              <select
+                id="rol"
+                name="rol"
+                value={formData.rol}
+                onChange={(e) => {
+                  handleChange(e);
+                  setShowPsicologoFields(e.target.value === 'PSICOLOGO');
+                }}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+              >
+                <option value="ESTUDIANTE">Estudiante</option>
+                <option value="PSICOLOGO">Psicólogo</option>
+              </select>
+            </div>
+
             <div>
               <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">
                 Nombre Completo
@@ -264,47 +303,72 @@ export default function RegistroPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Campos específicos para estudiantes */}
+            {formData.rol === 'ESTUDIANTE' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="edad" className="block text-sm font-medium text-gray-700 mb-2">
+                    Edad
+                  </label>
+                  <input
+                    id="edad"
+                    name="edad"
+                    type="number"
+                    min="13"
+                    max="18"
+                    value={formData.edad}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                    placeholder="13-18"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="grado" className="block text-sm font-medium text-gray-700 mb-2">
+                    Grado
+                  </label>
+                  <select
+                    id="grado"
+                    name="grado"
+                    value={formData.grado}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                  >
+                    <option value="">Seleccionar</option>
+                    <option value="1° Secundaria">1° Secundaria</option>
+                    <option value="2° Secundaria">2° Secundaria</option>
+                    <option value="3° Secundaria">3° Secundaria</option>
+                    <option value="4° Secundaria">4° Secundaria</option>
+                    <option value="5° Secundaria">5° Secundaria</option>
+                    <option value="6° Secundaria">6° Secundaria</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Campos específicos para psicólogos */}
+            {showPsicologoFields && (
               <div>
-                <label htmlFor="edad" className="block text-sm font-medium text-gray-700 mb-2">
-                  Edad
+                <label htmlFor="codigoVerificacion" className="block text-sm font-medium text-gray-700 mb-2">
+                  Código de Verificación del Personal
                 </label>
                 <input
-                  id="edad"
-                  name="edad"
-                  type="number"
-                  min="13"
-                  max="18"
-                  value={formData.edad}
+                  id="codigoVerificacion"
+                  name="codigoVerificacion"
+                  type="password"
+                  value={formData.codigoVerificacion}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                  placeholder="13-18"
+                  placeholder="Ingresa el código de verificación"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Requerido para verificar credenciales profesionales
+                </p>
               </div>
-
-              <div>
-                <label htmlFor="grado" className="block text-sm font-medium text-gray-700 mb-2">
-                  Grado
-                </label>
-                <select
-                  id="grado"
-                  name="grado"
-                  value={formData.grado}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                >
-                  <option value="">Seleccionar</option>
-                  <option value="1° Secundaria">1° Secundaria</option>
-                  <option value="2° Secundaria">2° Secundaria</option>
-                  <option value="3° Secundaria">3° Secundaria</option>
-                  <option value="4° Secundaria">4° Secundaria</option>
-                  <option value="5° Secundaria">5° Secundaria</option>
-                  <option value="6° Secundaria">6° Secundaria</option>
-                </select>
-              </div>
-            </div>
+            )}
 
             <div>
               <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-2">

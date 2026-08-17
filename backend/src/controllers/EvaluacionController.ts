@@ -39,6 +39,90 @@ export class EvaluacionController {
     }
   }
 
+  static async crearCuestionario(req: Request, res: Response) {
+    try {
+      const cuestionarioSchema = z.object({
+        titulo: z.string().min(1).max(200),
+        descripcion: z.string().min(1).max(1000),
+        categoria: z.string().min(1).max(50),
+        preguntas: z.array(z.object({
+          texto: z.string().min(1).max(500),
+          tipo: z.enum(['LIKERT', 'ABIERTA', 'OPCION_MULTIPLE']),
+          opciones: z.array(z.string()).optional(),
+          peso: z.number().min(1).max(10),
+        })),
+      });
+
+      const data = cuestionarioSchema.parse(req.body);
+      
+      // Create questionnaire first
+      const cuestionario = await CuestionarioRepository.create({
+        titulo: data.titulo,
+        descripcion: data.descripcion,
+        categoria: data.categoria,
+        estado: 'borrador',
+      });
+
+      // Add questions
+      for (let i = 0; i < data.preguntas.length; i++) {
+        await CuestionarioRepository.addPregunta(cuestionario.id, {
+          ...data.preguntas[i],
+          orden: i + 1,
+        });
+      }
+
+      // Return complete questionnaire with questions
+      const cuestionarioCompleto = await CuestionarioRepository.findById(cuestionario.id);
+      res.status(201).json(cuestionarioCompleto);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Validation error', details: error.errors });
+      }
+      throw error;
+    }
+  }
+
+  static async actualizarCuestionario(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const cuestionarioSchema = z.object({
+        titulo: z.string().min(1).max(200).optional(),
+        descripcion: z.string().min(1).max(1000).optional(),
+        categoria: z.string().min(1).max(50).optional(),
+        preguntas: z.array(z.object({
+          texto: z.string().min(1).max(500),
+          tipo: z.enum(['LIKERT', 'ABIERTA', 'OPCION_MULTIPLE']),
+          opciones: z.array(z.string()).optional(),
+          peso: z.number().min(1).max(10),
+        })).optional(),
+      });
+
+      const data = cuestionarioSchema.parse(req.body);
+      const cuestionario = await CuestionarioRepository.update(parseInt(id), data);
+
+      if (!cuestionario) {
+        throw new AppError(404, 'Cuestionario not found');
+      }
+
+      res.json(cuestionario);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Validation error', details: error.errors });
+      }
+      throw error;
+    }
+  }
+
+  static async eliminarCuestionario(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      await CuestionarioRepository.delete(parseInt(id));
+      res.status(204).send();
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async validarRespuestas(req: Request, res: Response) {
     try {
       const { cuestionarioId, respuestas } = respuestasSchema.parse(req.body);

@@ -21,6 +21,8 @@ router.get('/resultados/:id', authenticate, EvaluacionController.getResultado);
 
 // Psychologist only routes
 router.post('/cuestionarios', authenticate, authorize(['PSICOLOGO', 'ADMIN']), EvaluacionController.crearCuestionario);
+router.put('/cuestionarios/:id', authenticate, authorize(['PSICOLOGO', 'ADMIN']), EvaluacionController.actualizarCuestionario);
+router.delete('/cuestionarios/:id', authenticate, authorize(['PSICOLOGO', 'ADMIN']), EvaluacionController.eliminarCuestionario);
 router.patch('/cuestionarios/:id/publicar', authenticate, authorize(['PSICOLOGO', 'ADMIN']), EvaluacionController.publicarCuestionario);
 
 export default router;

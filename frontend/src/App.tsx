@@ -3,6 +3,7 @@ import { useAuthStore } from './store/authStore';
 import LoginPage from './pages/LoginPage';
 import RegistroPage from './pages/RegistroPage';
 import DashboardPage from './pages/DashboardPage';
+import DashboardPsicologoPage from './pages/DashboardPsicologoPage';
 import EvaluacionPage from './pages/EvaluacionPage';
 import ResultadoEvaluacionPage from './pages/ResultadoEvaluacionPage';
 import ChatIAPage from './pages/ChatIAPage';
@@ -13,6 +14,7 @@ import PerfilPage from './pages/PerfilPage';
 import NotificacionesPage from './pages/NotificacionesPage';
 import InformePadresPage from './pages/InformePadresPage';
 import AlertasPsicologoPage from './pages/AlertasPsicologoPage';
+import CrearCuestionarioPage from './pages/CrearCuestionarioPage';
 import MainLayout from './components/layout/MainLayout';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -20,6 +22,20 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  
+  return <MainLayout>{children}</MainLayout>;
+}
+
+function RoleBasedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {
+  const { isAuthenticated, user } = useAuthStore();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (!allowedRoles.includes(user?.rol || '')) {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return <MainLayout>{children}</MainLayout>;
@@ -64,6 +80,14 @@ function App() {
             <ProtectedRoute>
               <DashboardPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard-psicologo"
+          element={
+            <RoleBasedRoute allowedRoles={['PSICOLOGO']}>
+              <DashboardPsicologoPage />
+            </RoleBasedRoute>
           }
         />
         <Route
@@ -141,9 +165,17 @@ function App() {
         <Route
           path="/alertas-psicologo"
           element={
-            <ProtectedRoute>
+            <RoleBasedRoute allowedRoles={['PSICOLOGO']}>
               <AlertasPsicologoPage />
-            </ProtectedRoute>
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/crear-cuestionario"
+          element={
+            <RoleBasedRoute allowedRoles={['PSICOLOGO']}>
+              <CrearCuestionarioPage />
+            </RoleBasedRoute>
           }
         />
 

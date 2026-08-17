@@ -33,8 +33,14 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Redirect psychologists to their specific dashboard
+    if (user?.rol === 'PSICOLOGO') {
+      navigate('/dashboard-psicologo');
+      return;
+    }
+    
     loadDashboardData();
-  }, []);
+  }, [user, navigate]);
 
   const loadDashboardData = async () => {
     try {

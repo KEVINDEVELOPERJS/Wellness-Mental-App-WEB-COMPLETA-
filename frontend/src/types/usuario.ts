@@ -18,6 +18,8 @@ export interface UsuarioDTO {
   edad: number;
   grado: string;
   telefono?: string;
+  rol?: 'ESTUDIANTE' | 'PSICOLOGO';
+  codigoVerificacion?: string;
 }
 
 export interface AuthResponse {

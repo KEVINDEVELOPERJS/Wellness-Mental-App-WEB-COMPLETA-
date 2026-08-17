@@ -11,9 +11,11 @@ const registroSchema = z.object({
   nombre: z.string().min(2).max(100),
   email: z.string().email(),
   password: z.string().min(8).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain uppercase, lowercase, and number'),
-  edad: z.number().min(13).max(18),
+  edad: z.number().min(13).max(100),
   grado: z.string().min(1).max(50),
   telefono: z.string().optional(),
+  rol: z.enum(['ESTUDIANTE', 'PSICOLOGO']).default('ESTUDIANTE'),
+  codigoVerificacion: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -32,10 +34,17 @@ export class AuthController {
         throw new AppError(400, 'Email already registered');
       }
 
-      // Validate age
-      const edadValida = await UsuarioRepository.validateAge(data.edad);
-      if (!edadValida) {
-        throw new AppError(400, 'Age must be between 13 and 18');
+      // Validate psychologist verification code
+      if (data.rol === 'PSICOLOGO') {
+        if (data.codigoVerificacion !== 'Wellness-psicologo') {
+          throw new AppError(403, 'Invalid verification code for psychologist registration');
+        }
+      } else {
+        // Validate age for students
+        const edadValida = await UsuarioRepository.validateAge(data.edad, data.rol);
+        if (!edadValida) {
+          throw new AppError(400, 'Age must be between 13 and 18 for students');
+        }
       }
 
       // Create user
@@ -56,8 +65,8 @@ export class AuthController {
         },
       });
 
-      // Send verification email if under 16
-      if (data.edad < 16) {
+      // Send verification email if under 16 (for students only)
+      if (data.rol === 'ESTUDIANTE' && data.edad < 16) {
         const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         await EmailService.sendVerificationEmail(data.email, verificationCode);
       }
