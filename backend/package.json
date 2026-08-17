@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node src/app.ts",
     "build": "tsc",
-    "start": "node -r ts-node/register src/app.ts",
+    "start": "ts-node src/app.ts",
     "generate:prisma": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
@@ -31,7 +31,8 @@
     "web-push": "^3.6.6",
     "zod": "^3.22.4",
     "date-fns": "^3.0.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
