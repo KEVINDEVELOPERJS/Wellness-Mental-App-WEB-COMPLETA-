@@ -44,29 +44,17 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration
+// CORS configuration - temporarily more permissive for debugging
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Normalize origin by removing trailing slash
-    const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-    const normalizedCorsOrigin = corsOrigin.endsWith('/') ? corsOrigin.slice(0, -1) : corsOrigin;
-    
-    console.log('CORS check:', { normalizedOrigin, normalizedCorsOrigin });
-    
-    if (normalizedOrigin === normalizedCorsOrigin) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked:', { normalizedOrigin, normalizedCorsOrigin });
-      callback(new Error('Not allowed by CORS'));
-    }
+    // Temporarily allow all origins for debugging
+    console.log('CORS request from:', origin);
+    callback(null, true);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
 // Body parsing middleware

@@ -134,6 +134,7 @@ export class EvaluacionController {
       );
 
       // Save result
+      console.log('Saving result:', { userId, cuestionarioId, puntaje, nivelRiesgo, prediagnostico });
       const resultado = await CuestionarioRepository.guardarResultado(
         userId,
         cuestionarioId,
@@ -141,6 +142,7 @@ export class EvaluacionController {
         nivelRiesgo,
         prediagnostico
       );
+      console.log('Result saved:', resultado);
 
       // Generate alert if high risk
       if (nivelRiesgo === 'ALTO') {

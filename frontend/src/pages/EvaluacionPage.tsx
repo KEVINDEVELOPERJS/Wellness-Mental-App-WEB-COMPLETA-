@@ -84,10 +84,13 @@ export default function EvaluacionPage() {
 
     setIsSubmitting(true);
     try {
+      console.log('Submitting evaluation:', { cuestionarioId: selectedCuestionario.id, respuestas });
       const resultado = await evaluacionService.guardarEvaluacion(
         selectedCuestionario.id,
         respuestas
       );
+      
+      console.log('Evaluation result:', resultado);
       
       addToast({
         type: 'success',
@@ -95,8 +98,17 @@ export default function EvaluacionPage() {
         message: 'Tus resultados han sido guardados',
       });
       
-      navigate(`/evaluacion/resultado/${resultado.id}`);
+      if (resultado && resultado.id) {
+        navigate(`/evaluacion/resultado/${resultado.id}`);
+      } else {
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: 'No se recibió un ID de resultado válido',
+        });
+      }
     } catch (error) {
+      console.error('Error submitting evaluation:', error);
       addToast({
         type: 'error',
         title: 'Error',
