@@ -2,8 +2,8 @@ services:
   - type: web
     name: wellness-mental-backend
     env: node
-    buildCommand: cd backend && yarn install
-    startCommand: cd backend && yarn start
+    buildCommand: yarn install
+    startCommand: yarn start
     envVars:
       - key: NODE_ENV
         value: production
