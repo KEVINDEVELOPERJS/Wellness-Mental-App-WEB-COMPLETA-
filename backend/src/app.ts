@@ -44,13 +44,29 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration - temporarily more permissive for debugging
+// CORS configuration - specifically configured for Vercel frontend
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const allowedOrigins = [
+  'https://wellness-mental-app-web-completa.vercel.app',
+  'http://localhost:5173',
+  corsOrigin
+];
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Temporarily allow all origins for debugging
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
     console.log('CORS request from:', origin);
-    callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // For debugging, temporarily allow all origins
+      console.log('Origin not in allowed list, but allowing for debugging:', origin);
+      callback(null, true);
+    }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
