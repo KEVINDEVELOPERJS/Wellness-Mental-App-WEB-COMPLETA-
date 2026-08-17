@@ -23,6 +23,11 @@ export const authRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => req.method === 'OPTIONS', // Skip rate limiting for CORS preflight requests
+  skipFailedRequests: true, // Don't count failed requests against the limit
+  keyGenerator: (req) => {
+    // Use IP address, handling proxy headers properly
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
 });
 
 export const apiRateLimit = rateLimit({
@@ -32,6 +37,11 @@ export const apiRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => req.method === 'OPTIONS', // Skip rate limiting for CORS preflight requests
+  skipFailedRequests: true, // Don't count failed requests against the limit
+  keyGenerator: (req) => {
+    // Use IP address, handling proxy headers properly
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
 });
 
 export const strictRateLimit = rateLimit({
@@ -41,6 +51,11 @@ export const strictRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => req.method === 'OPTIONS', // Skip rate limiting for CORS preflight requests
+  skipFailedRequests: true, // Don't count failed requests against the limit
+  keyGenerator: (req) => {
+    // Use IP address, handling proxy headers properly
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
 });
 
 export const alertRateLimit = rateLimit({
@@ -50,4 +65,9 @@ export const alertRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => req.method === 'OPTIONS', // Skip rate limiting for CORS preflight requests
+  skipFailedRequests: true, // Don't count failed requests against the limit
+  keyGenerator: (req) => {
+    // Use IP address, handling proxy headers properly
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
 });
