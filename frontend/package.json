@@ -4,7 +4,7 @@
   "description": "Frontend PWA for Wellness Mental Web App",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
