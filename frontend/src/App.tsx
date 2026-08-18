@@ -15,6 +15,7 @@ import NotificacionesPage from './pages/NotificacionesPage';
 import InformePadresPage from './pages/InformePadresPage';
 import AlertasPsicologoPage from './pages/AlertasPsicologoPage';
 import CrearCuestionarioPage from './pages/CrearCuestionarioPage';
+import GeminiConfigTest from './components/GeminiConfigTest';
 import MainLayout from './components/layout/MainLayout';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -176,6 +177,14 @@ function App() {
             <RoleBasedRoute allowedRoles={['PSICOLOGO']}>
               <CrearCuestionarioPage />
             </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/test-gemini"
+          element={
+            <ProtectedRoute>
+              <GeminiConfigTest />
+            </ProtectedRoute>
           }
         />
 

@@ -66,14 +66,21 @@ RESPUESTA EMPÁTICA TIPO:
     try {
       // Check if API key is available
       if (!this.API_KEY) {
+        console.error('=== GEMINI API KEY CONFIGURATION ERROR ===');
         console.error('GEMINI_API_KEY is not configured in environment variables');
-        console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('API') || k.includes('GEMINI')));
+        console.error('All environment variables:', Object.keys(process.env));
+        console.error('API-related env vars:', Object.keys(process.env).filter(k => k.includes('API') || k.includes('GEMINI') || k.includes('KEY')));
+        console.error('NODE_ENV:', process.env.NODE_ENV);
+        console.error('=====================================');
         return 'Lo siento, el servicio de IA no está configurado correctamente. Por favor, contacta al administrador para configurar la API key de Gemini.';
       }
 
+      console.log('=== GEMINI API CALL ===');
       console.log('Calling Gemini API with message:', userMessage);
       console.log('API Key configured:', !!this.API_KEY);
       console.log('API Key length:', this.API_KEY.length);
+      console.log('API Key prefix:', this.API_KEY.substring(0, 10) + '...');
+      console.log('=======================');
 
       // Convert OpenAI format to Gemini format
       const geminiMessages = [
@@ -105,25 +112,52 @@ RESPUESTA EMPÁTICA TIPO:
       );
 
       console.log('Gemini response status:', response.status);
+      console.log('Gemini response data:', JSON.stringify(response.data).substring(0, 500));
 
       if (response.data.candidates && response.data.candidates[0]) {
         const text = response.data.candidates[0].content.parts[0].text;
         console.log('Generated response length:', text.length);
+        console.log('Generated response preview:', text.substring(0, 100) + '...');
         return text;
       }
 
       console.error('Invalid response structure from Gemini:', response.data);
       throw new Error('Invalid response from Gemini API');
     } catch (error) {
+      console.error('=== GEMINI API ERROR ===');
       console.error('Error calling Gemini API:', error);
+      
       if (axios.isAxiosError(error)) {
         console.error('Axios error details:', {
           status: error.response?.status,
           statusText: error.response?.statusText,
           data: error.response?.data,
+          message: error.message,
+          code: error.code,
         });
+        
+        // Specific error handling
+        if (error.response?.status === 401) {
+          console.error('API KEY INVALID - Check your GEMINI_API_KEY in Render environment variables');
+          return 'Lo siento, hay un problema con la configuración de la API de IA. Por favor contacta al administrador.';
+        }
+        
+        if (error.response?.status === 429) {
+          console.error('RATE LIMIT EXCEEDED - Too many requests to Gemini API');
+          return 'El servicio de IA está temporalmente ocupado. Por favor intenta de nuevo en unos minutos.';
+        }
+        
+        if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+          console.error('NETWORK ERROR - Cannot connect to Gemini API');
+          return 'Hay problemas de conexión con el servicio de IA. Por favor verifica tu conexión a internet.';
+        }
       }
-      return 'Entiendo que necesitas apoyo en este momento. Por favor, considera hablar con un adulto de confianza, un consejero escolar, o llamar a una línea de ayuda. Tu bienestar es importante y hay profesionales que pueden ayudarte.';
+      
+      console.error('Error type:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('======================');
+      
+      // Fallback empathetic response
+      return this.getFallbackResponse(userMessage);
     }
   }
 
@@ -192,5 +226,18 @@ RESPUESTA EMPÁTICA TIPO:
     if (sentiment < 0.3) return 'ALTO';
     if (sentiment < 0.5) return 'MODERADO';
     return 'BAJO';
+  }
+
+  private static getFallbackResponse(userMessage: string): string {
+    // Detect if user message indicates crisis
+    const lowerMessage = userMessage.toLowerCase();
+    const crisisIndicators = ['quiero morir', 'suicidio', 'hacerme daño', 'acabar con todo', 'no quiero vivir'];
+    
+    if (crisisIndicators.some(indicator => lowerMessage.includes(indicator))) {
+      return 'Entiendo que estás pasando por un momento muy difícil. Por favor, considera hablar con un adulto de confianza, un consejero escolar, o llamar a una línea de ayuda como 911. Tu bienestar es importante y hay profesionales que pueden ayudarte.';
+    }
+    
+    // General empathetic fallback
+    return 'Entiendo que necesitas apoyo en este momento. Por favor, considera hablar con un adulto de confianza, un consejero escolar, o llamar a una línea de ayuda. Tu bienestar es importante y hay profesionales que pueden ayudarte.';
   }
 }

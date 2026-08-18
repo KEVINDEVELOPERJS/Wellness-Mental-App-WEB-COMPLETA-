@@ -182,4 +182,30 @@ export class ChatIAController {
       throw error;
     }
   }
+
+  static async testGeminiConfig(req: Request, res: Response) {
+    try {
+      const geminiKey = process.env.GEMINI_API_KEY;
+      
+      const configStatus = {
+        configured: !!geminiKey,
+        keyLength: geminiKey ? geminiKey.length : 0,
+        keyPrefix: geminiKey ? geminiKey.substring(0, 10) + '...' : 'N/A',
+        nodeEnv: process.env.NODE_ENV,
+        allEnvVars: Object.keys(process.env).filter(k => k.includes('API') || k.includes('GEMINI') || k.includes('KEY')),
+      };
+
+      console.log('=== GEMINI CONFIG TEST ===');
+      console.log('Config Status:', configStatus);
+      console.log('========================');
+
+      res.json(configStatus);
+    } catch (error) {
+      console.error('Error testing Gemini config:', error);
+      res.status(500).json({ 
+        error: 'Error testing configuration',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
 }

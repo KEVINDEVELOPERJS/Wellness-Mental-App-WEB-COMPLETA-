@@ -14,5 +14,6 @@ router.post('/respuesta', authenticate, ChatIAController.generarRespuesta);
 router.get('/historial', authenticate, ChatIAController.getHistorial);
 router.get('/mensajes/:sessionId', authenticate, ChatIAController.getMensajes);
 router.delete('/sesion/:sessionId', authenticate, ChatIAController.cerrarSesion);
+router.get('/test-gemini-config', authenticate, ChatIAController.testGeminiConfig);
 
 export default router;

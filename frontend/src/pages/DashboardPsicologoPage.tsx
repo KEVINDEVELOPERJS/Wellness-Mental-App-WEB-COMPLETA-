@@ -320,6 +320,19 @@ export default function DashboardPsicologoPage() {
           </div>
           <p className="text-sm text-muted-foreground">Interactuar con el asistente de IA</p>
         </button>
+
+        <button
+          onClick={() => navigate('/test-gemini')}
+          className="p-6 bg-card rounded-xl border hover:border-primary transition-colors text-left"
+        >
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+              <Activity className="h-5 w-5 text-green-500" />
+            </div>
+            <span className="font-semibold">Probar Configuración Gemini</span>
+          </div>
+          <p className="text-sm text-muted-foreground">Verificar que la API key esté configurada correctamente</p>
+        </button>
       </div>
     </div>
   );
