@@ -87,11 +87,11 @@ export default function RegistroPage() {
 
     // Validación específica para psicólogos
     if (formData.rol === 'PSICOLOGO') {
-      if (formData.codigoVerificacion !== 'Wellness-psicologo') {
+      if (formData.codigoVerificacion !== 'Wellness-Psicologo') {
         addToast({
           type: 'error',
           title: 'Código de verificación incorrecto',
-          message: 'El código de verificación para psicólogos no es válido',
+          message: 'El código de verificación para psicólogos no es válido. Usa: Wellness-Psicologo',
         });
         return;
       }
@@ -197,11 +197,16 @@ export default function RegistroPage() {
                   setShowPsicologoFields(e.target.value === 'PSICOLOGO');
                 }}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors bg-white"
               >
-                <option value="ESTUDIANTE">Estudiante</option>
-                <option value="PSICOLOGO">Psicólogo</option>
+                <option value="ESTUDIANTE">👨‍🎓 Estudiante (13-18 años)</option>
+                <option value="PSICOLOGO">👨‍⚕️ Psicólogo (Profesional)</option>
               </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.rol === 'PSICOLOGO' 
+                  ? 'Registro para profesionales de la salud mental' 
+                  : 'Registro para estudiantes de secundaria'}
+              </p>
             </div>
 
             <div>
@@ -350,23 +355,28 @@ export default function RegistroPage() {
 
             {/* Campos específicos para psicólogos */}
             {showPsicologoFields && (
-              <div>
-                <label htmlFor="codigoVerificacion" className="block text-sm font-medium text-gray-700 mb-2">
-                  Código de Verificación del Personal
-                </label>
-                <input
-                  id="codigoVerificacion"
-                  name="codigoVerificacion"
-                  type="password"
-                  value={formData.codigoVerificacion}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                  placeholder="Ingresa el código de verificación"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Requerido para verificar credenciales profesionales
-                </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                <div>
+                  <label htmlFor="codigoVerificacion" className="block text-sm font-medium text-gray-700 mb-2">
+                    🔐 Código de Verificación del Personal
+                  </label>
+                  <input
+                    id="codigoVerificacion"
+                    name="codigoVerificacion"
+                    type="password"
+                    value={formData.codigoVerificacion}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white"
+                    placeholder="Ingresa el código de verificación"
+                  />
+                  <p className="text-xs text-blue-600 mt-1">
+                    💡 Código requerido: <strong>Wellness-Psicologo</strong>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Este código verifica que eres un profesional de la salud mental autorizado
+                  </p>
+                </div>
               </div>
             )}
 

@@ -36,7 +36,7 @@ export class AuthController {
 
       // Validate psychologist verification code
       if (data.rol === 'PSICOLOGO') {
-        if (data.codigoVerificacion !== 'Wellness-psicologo') {
+        if (data.codigoVerificacion !== 'Wellness-Psicologo') {
           throw new AppError(403, 'Invalid verification code for psychologist registration');
         }
       } else {

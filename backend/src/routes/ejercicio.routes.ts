@@ -6,18 +6,18 @@ import { apiRateLimit } from '../middleware/rateLimitMiddleware';
 const router = Router();
 
 // Public routes
-router.get('/ejercicios', EjercicioController.getEjercicios);
-router.get('/ejercicios/:id', EjercicioController.getEjercicio);
-router.get('/ejercicios/tipo/:tipo', EjercicioController.getEjerciciosPorTipo);
+router.get('/', EjercicioController.getEjercicios);
+router.get('/:id', EjercicioController.getEjercicio);
+router.get('/tipo/:tipo', EjercicioController.getEjerciciosPorTipo);
 
 // Protected routes
-router.post('/ejercicios/:id/iniciar', authenticate, EjercicioController.iniciarEjercicio);
-router.post('/ejercicios/progreso', authenticate, apiRateLimit, EjercicioController.registrarProgreso);
-router.get('/ejercicios/progreso', authenticate, EjercicioController.getProgreso);
-router.get('/ejercicios/racha', authenticate, EjercicioController.getRacha);
-router.get('/ejercicios/tiempo-hoy', authenticate, EjercicioController.getTiempoHoy);
+router.post('/:id/iniciar', authenticate, EjercicioController.iniciarEjercicio);
+router.post('/progreso', authenticate, apiRateLimit, EjercicioController.registrarProgreso);
+router.get('/progreso', authenticate, EjercicioController.getProgreso);
+router.get('/racha', authenticate, EjercicioController.getRacha);
+router.get('/tiempo-hoy', authenticate, EjercicioController.getTiempoHoy);
 
 // Psychologist only routes
-router.post('/ejercicios', authenticate, authorize(['PSICOLOGO', 'ADMIN']), EjercicioController.crearEjercicio);
+router.post('/', authenticate, authorize(['PSICOLOGO', 'ADMIN']), EjercicioController.crearEjercicio);
 
 export default router;
