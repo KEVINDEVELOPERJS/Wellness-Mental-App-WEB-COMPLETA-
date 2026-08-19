@@ -24,6 +24,11 @@ export class EjercicioController {
   static async getEjercicio(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      
+      if (!id || isNaN(parseInt(id))) {
+        throw new AppError(400, 'Invalid exercise ID');
+      }
+      
       const ejercicio = await EjercicioRepository.findById(parseInt(id));
 
       if (!ejercicio) {
