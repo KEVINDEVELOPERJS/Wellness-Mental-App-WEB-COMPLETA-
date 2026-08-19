@@ -34,7 +34,17 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for Render deployment
 app.set('trust proxy', true);
 
-// Security middleware
+// CORS configuration - MUST BE BEFORE other middleware
+app.use(cors({
+  origin: '*', // Allow all origins for production
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}));
+
+// Security middleware - AFTER CORS
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -47,15 +57,14 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration - PERMISSIVE MODE FOR PRODUCTION
-app.use(cors({
-  origin: '*', // Allow all origins for production
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-}));
+// Explicit CORS headers for all responses
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // Handle preflight requests explicitly
 app.options('*', (req, res) => {
