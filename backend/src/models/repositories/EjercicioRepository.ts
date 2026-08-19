@@ -9,6 +9,9 @@ export class EjercicioRepository {
   }
 
   static async findById(id: number): Promise<Ejercicio | null> {
+    if (!id || isNaN(id)) {
+      return null;
+    }
     return prisma.ejercicio.findUnique({
       where: { id },
     });

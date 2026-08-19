@@ -14,6 +14,7 @@ router.post('/validar-edad', AuthController.validarEdad);
 
 // Protected routes
 router.post('/logout', authenticate, AuthController.logout);
+router.get('/logout', authenticate, AuthController.logout); // Support both methods
 router.get('/me', authenticate, AuthController.me);
 
 export default router;

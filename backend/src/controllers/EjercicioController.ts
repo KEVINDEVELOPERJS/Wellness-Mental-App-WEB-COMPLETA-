@@ -25,15 +25,20 @@ export class EjercicioController {
     try {
       const { id } = req.params;
       
+      if (!id) {
+        return res.status(400).json({ error: 'ID is required' });
+      }
+      
       const ejercicio = await EjercicioRepository.findById(parseInt(id));
 
       if (!ejercicio) {
-        throw new AppError(404, 'Ejercicio not found');
+        return res.status(404).json({ error: 'Ejercicio not found' });
       }
 
       res.json(ejercicio);
     } catch (error) {
-      throw error;
+      console.error('Error in getEjercicio:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   }
 
