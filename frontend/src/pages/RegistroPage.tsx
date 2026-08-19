@@ -128,7 +128,7 @@ export default function RegistroPage() {
         edad: formData.rol === 'PSICOLOGO' ? 25 : parseInt(formData.edad), // Edad diferente para psicólogos
         grado: formData.rol === 'PSICOLOGO' ? 'PROFESIONAL' : formData.grado,
         telefono: formData.telefono || undefined,
-        rol: formData.rol,
+        rol: formData.rol as 'ESTUDIANTE' | 'PSICOLOGO',
         codigoVerificacion: formData.codigoVerificacion,
       });
       
