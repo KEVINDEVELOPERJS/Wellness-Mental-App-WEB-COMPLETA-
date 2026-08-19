@@ -9,7 +9,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important for CORS with credentials
+  withCredentials: false, // Disabled to fix CORS issues
 });
 
 // Response interceptor to handle token refresh

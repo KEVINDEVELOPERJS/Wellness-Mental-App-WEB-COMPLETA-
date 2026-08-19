@@ -34,24 +34,21 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for Render deployment
 app.set('trust proxy', true);
 
-// CORS configuration - DISABLED HELMET TEMPORARILY TO FIX CORS
-app.use(cors({
-  origin: '*', // Allow all origins for production
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-}));
+// DISABLED CORS MIDDLEWARE - USING MANUAL HEADERS ONLY
+// app.use(cors({
+//   origin: '*',
+//   credentials: false,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+// });
 
-// Explicit CORS headers for ALL responses (no helmet interference)
+// Manual CORS headers for ALL responses
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
   
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.sendStatus(204);
     return;
@@ -59,19 +56,6 @@ app.use((req, res, next) => {
   
   next();
 });
-
-// Security middleware - DISABLED TEMPORARILY
-// app.use(helmet({
-//   contentSecurityPolicy: {
-//     directives: {
-//       defaultSrc: ["'self'"],
-//       styleSrc: ["'self'", "'unsafe-inline'"],
-//       scriptSrc: ["'self'"],
-//       imgSrc: ["'self'", "data:", "https:"],
-//     },
-//   },
-//   crossOriginEmbedderPolicy: false,
-// }));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
