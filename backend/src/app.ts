@@ -88,12 +88,12 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/evaluacion', evaluacionRoutes);
 app.use('/api/chat', chatRoutes);
-app.use('/api', ejercicioRoutes);
+app.use('/api/ejercicios', ejercicioRoutes);
 app.use('/api/comunidad', comunidadRoutes);
 app.use('/api/gamificacion', gamificacionRoutes);
-app.use('/api', informeRoutes);
-app.use('/api', alertaRoutes);
-app.use('/api', perfilRoutes);
+app.use('/api/informes', informeRoutes);
+app.use('/api/alertas', alertaRoutes);
+app.use('/api/perfil', perfilRoutes);
 
 // 404 handler
 app.use(notFound);
