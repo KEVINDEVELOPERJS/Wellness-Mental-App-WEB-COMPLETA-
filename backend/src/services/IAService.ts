@@ -7,7 +7,7 @@ export interface ChatMessage {
 
 export class IAService {
   private static readonly API_KEY = process.env.GEMINI_API_KEY;
-  private static readonly API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
+  private static readonly API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
   private static getSystemPrompt(): string {
     return `Eres un asistente psicológico empático y profesional especializado en apoyo emocional para adolescentes (13-18 años). Tu prioridad es ofrecer apoyo emocional genuino y compasivo.
