@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { apiClient } from '../services/apiClient';
+import apiClient from '../services/apiClient';
 import { CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface ConfigStatus {
