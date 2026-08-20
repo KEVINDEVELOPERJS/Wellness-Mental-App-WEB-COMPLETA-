@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
 import { useUIStore } from '../store/uiStore';
-import { Brain, Loader2, Check, X } from 'lucide-react';
+import { Loader2, Check, X } from 'lucide-react';
 
 export default function RegistroPage() {
   const navigate = useNavigate();
@@ -173,9 +173,11 @@ export default function RegistroPage() {
           {/* Logo and Header */}
           <div className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="bg-primary rounded-full p-4">
-                <Brain className="h-12 w-12 text-white" />
-              </div>
+              <img 
+                src="/images/wellness-icon.png" 
+                alt="Wellness Mental Icon" 
+                className="h-20 w-20 object-contain"
+              />
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Crear Cuenta</h1>
             <p className="text-gray-600 mt-2">Únete a Wellness Mental</p>

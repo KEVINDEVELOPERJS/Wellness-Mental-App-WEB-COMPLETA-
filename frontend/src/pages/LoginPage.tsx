@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
 import { useUIStore } from '../store/uiStore';
-import { Brain, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -49,9 +49,11 @@ export default function LoginPage() {
           {/* Logo and Header */}
           <div className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="bg-primary rounded-full p-4">
-                <Brain className="h-12 w-12 text-white" />
-              </div>
+              <img 
+                src="/images/wellness-icon.png" 
+                alt="Wellness Mental Icon" 
+                className="h-20 w-20 object-contain"
+              />
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Wellness Mental</h1>
             <p className="text-gray-600 mt-2">Tu espacio para el bienestar emocional</p>
@@ -120,14 +122,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
-              <strong>Para estudiantes de 13-18 años</strong>
-              <br />
-              Tu bienestar mental es importante. Estamos aquí para apoyarte.
-            </p>
-          </div>
+
         </div>
 
         {/* Footer */}
