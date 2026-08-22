@@ -32,6 +32,7 @@ const navigation = [
 ];
 
 const psychologistNavigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Alertas', href: '/alertas-psicologo', icon: Shield },
 ];
 
@@ -60,54 +61,31 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   const isActiveRoute = (href: string) => location.pathname === href;
 
-  const renderNavigation = () => (
-    <nav className="space-y-1">
-      {navigation.map((item) => (
-        <button
-          key={item.name}
-          onClick={() => {
-            navigate(item.href);
-            setMobileMenuOpen(false);
-          }}
-          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-            isActiveRoute(item.href)
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-          }`}
-        >
-          <item.icon className="h-5 w-5" />
-          <span>{item.name}</span>
-        </button>
-      ))}
-      
-      {user?.rol === 'PSICOLOGO' && (
-        <>
-          <div className="pt-4 pb-2">
-            <p className="px-4 text-xs font-semibold text-muted-foreground uppercase">
-              Psicólogo
-            </p>
-          </div>
-          {psychologistNavigation.map((item) => (
-            <button
-              key={item.name}
-              onClick={() => {
-                navigate(item.href);
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                isActiveRoute(item.href)
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              }`}
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.name}</span>
-            </button>
-          ))}
-        </>
-      )}
-    </nav>
-  );
+  const renderNavigation = () => {
+    const navItems = user?.rol === 'PSICOLOGO' ? psychologistNavigation : navigation;
+    
+    return (
+      <nav className="space-y-1">
+        {navItems.map((item) => (
+          <button
+            key={item.name}
+            onClick={() => {
+              navigate(item.href);
+              setMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+              isActiveRoute(item.href)
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            }`}
+          >
+            <item.icon className="h-5 w-5" />
+            <span>{item.name}</span>
+          </button>
+        ))}
+      </nav>
+    );
+  };
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
@@ -225,7 +203,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <header className="flex items-center justify-between p-6 border-b bg-card">
             <div>
               <h2 className="text-2xl font-bold">
-                {navigation.find((item) => isActiveRoute(item.href))?.name || 'Dashboard'}
+                {(user?.rol === 'PSICOLOGO' ? psychologistNavigation : navigation).find((item) => isActiveRoute(item.href))?.name || 'Dashboard'}
               </h2>
             </div>
             

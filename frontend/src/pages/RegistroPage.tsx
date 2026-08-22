@@ -19,7 +19,6 @@ export default function RegistroPage() {
     grado: '',
     telefono: '',
     rol: 'ESTUDIANTE',
-    codigoVerificacion: '',
   });
   
   const [validations, setValidations] = useState({
@@ -85,18 +84,9 @@ export default function RegistroPage() {
       return;
     }
 
-    // Validación específica para psicólogos
-    if (formData.rol === 'PSICOLOGO') {
-      if (formData.codigoVerificacion !== 'Wellness-Psicologo') {
-        addToast({
-          type: 'error',
-          title: 'Código de verificación incorrecto',
-          message: 'El código de verificación para psicólogos no es válido. Usa: Wellness-Psicologo',
-        });
-        return;
-      }
-    } else {
+    // Validaciones para estudiantes
       // Validaciones para estudiantes
+    if (formData.rol === 'ESTUDIANTE') {
       const edad = parseInt(formData.edad);
       if (edad < 13 || edad > 18) {
         addToast({
@@ -116,6 +106,7 @@ export default function RegistroPage() {
         return;
       }
     }
+    }
 
     setIsLoading(true);
     setLoading(true);
@@ -125,11 +116,10 @@ export default function RegistroPage() {
         nombre: formData.nombre,
         email: formData.email,
         password: formData.password,
-        edad: formData.rol === 'PSICOLOGO' ? 25 : parseInt(formData.edad), // Edad diferente para psicólogos
+        edad: formData.rol === 'PSICOLOGO' ? 25 : parseInt(formData.edad),
         grado: formData.rol === 'PSICOLOGO' ? 'PROFESIONAL' : formData.grado,
         telefono: formData.telefono || undefined,
         rol: formData.rol as 'ESTUDIANTE' | 'PSICOLOGO',
-        codigoVerificacion: formData.codigoVerificacion,
       });
       
       setAuth(response.usuario, response.accessToken, response.refreshToken);
@@ -355,32 +345,10 @@ export default function RegistroPage() {
               </div>
             )}
 
-            {/* Campos específicos para psicólogos */}
-            {showPsicologoFields && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-                <div>
-                  <label htmlFor="codigoVerificacion" className="block text-sm font-medium text-gray-700 mb-2">
-                    🔐 Código de Verificación del Personal
-                  </label>
-                  <input
-                    id="codigoVerificacion"
-                    name="codigoVerificacion"
-                    type="password"
-                    value={formData.codigoVerificacion}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white"
-                    placeholder="Ingresa el código de verificación"
-                  />
-                  <p className="text-xs text-blue-600 mt-1">
-                    💡 Código requerido: <strong>Wellness-Psicologo</strong>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Este código verifica que eres un profesional de la salud mental autorizado
-                  </p>
-                </div>
-              </div>
-            )}
+            {/* Consentimiento solo para estudiantes menores de 16 */}
+            {formData.rol === 'ESTUDIANTE' && parseInt(formData.edad) < 16 && (
+
+
 
             <div>
               <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-2">
@@ -397,7 +365,7 @@ export default function RegistroPage() {
               />
             </div>
 
-            {parseInt(formData.edad) < 16 && (
+
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <label className="flex items-start space-x-3">
                   <input
