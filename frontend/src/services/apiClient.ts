@@ -22,6 +22,18 @@ const refreshApiClient = axios.create({
   withCredentials: false,
 });
 
+// Add request interceptor to include auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    const { accessToken } = useAuthStore.getState();
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Response interceptor to handle token refresh
 apiClient.interceptors.response.use(
   (response) => response,
@@ -56,6 +68,9 @@ apiClient.interceptors.response.use(
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return apiClient(originalRequest);
+        } else {
+          // No refresh token available, logout
+          logout();
         }
       } catch (refreshError) {
         // Refresh failed, logout user

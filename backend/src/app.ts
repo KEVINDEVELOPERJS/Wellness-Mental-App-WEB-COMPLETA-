@@ -34,23 +34,25 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for Render deployment
 app.set('trust proxy', true);
 
-// CORS configuration - Updated to handle preflight requests properly
+// TEMPORARY: Permissive CORS for debugging
 app.use(cors({
-  origin: ['https://wellness-mental-app-web-completa.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+  origin: '*',
   credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204
 }));
 
-// Handle preflight requests explicitly
-app.options('*', cors({
-  origin: ['https://wellness-mental-app-web-completa.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
-  credentials: false,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+// Manual CORS headers as backup
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -94,7 +96,7 @@ const server = createServer(app);
 // Initialize Socket.io
 const io = new SocketIOServer(server, {
   cors: {
-    origin: ['https://wellness-mental-app-web-completa.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+    origin: '*',
     credentials: true,
   },
 });
@@ -114,7 +116,7 @@ try {
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 CORS origins: ${['https://wellness-mental-app-web-completa.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'].join(', ')}`);
+  console.log(`🔗 CORS origin: * (PERMISSIVE MODE FOR DEBUGGING)`);
   console.log(`🔧 Helmet security: DISABLED`);
   console.log(`🔧 Rate limiting: DISABLED`);
   console.log(`🔧 Updated: ${new Date().toISOString()}`);

@@ -5,14 +5,6 @@ import { authRateLimit } from '../middleware/rateLimitMiddleware';
 
 const router = Router();
 
-// Handle preflight requests for refresh-token
-router.options('/refresh-token', (req, res) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.sendStatus(204);
-});
-
 // Public routes
 router.post('/registro', authRateLimit, AuthController.registrar);
 router.post('/login', authRateLimit, AuthController.login);
