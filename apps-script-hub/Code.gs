@@ -6,6 +6,9 @@ const CONFIG = {
   // URL del backend para recibir alertas
   BACKEND_URL: 'https://wellness-mental-app-web-completa.onrender.com/api/alertas/hub',
   
+  // URL del backend para obtener psicólogos
+  PSYCHOLOGISTS_URL: 'https://wellness-mental-app-web-completa.onrender.com/api/alertas/psychologists',
+  
   // Intervalo de verificación en milisegundos (5 minutos)
   CHECK_INTERVAL: 5 * 60 * 1000,
   
@@ -38,11 +41,11 @@ function setupTrigger() {
  */
 function checkForAlerts() {
   try {
-    const response = UrlFetchApp.fetch(CONFIG.BACKEND_URL, {
+    const apiKey = getAuthToken();
+    const response = UrlFetchApp.fetch(CONFIG.BACKEND_URL + '?api_key=' + apiKey, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + getAuthToken()
+        'Content-Type': 'application/json'
       },
       muteHttpExceptions: true
     });
@@ -53,6 +56,8 @@ function checkForAlerts() {
       if (data.alertas && data.alertas.length > 0) {
         processAlerts(data.alertas);
       }
+    } else {
+      Logger.log('Error fetching alerts: ' + response.getResponseCode() + ' - ' + response.getContentText());
     }
   } catch (error) {
     Logger.log('Error verificando alertas: ' + error.toString());
@@ -130,11 +135,39 @@ function generateAlertEmail(alerta, psicologoNombre) {
 }
 
 /**
- * Obtener lista de psicólogos registrados
- * En producción, esto debería leer de una Google Sheet o base de datos
+ * Obtener lista de psicólogos registrados del backend
  */
 function getPsychologistEmails() {
-  // Ejemplo de psicólogos - en producción leer de Google Sheet
+  try {
+    const apiKey = getAuthToken();
+    const response = UrlFetchApp.fetch(CONFIG.PSYCHOLOGISTS_URL + '?api_key=' + apiKey, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      muteHttpExceptions: true
+    });
+    
+    if (response.getResponseCode() === 200) {
+      const data = JSON.parse(response.getContentText());
+      if (data.psicologos && data.psicologos.length > 0) {
+        return data.psicologos;
+      }
+    }
+    
+    // Fallback to hardcoded list if backend fails
+    Logger.log('Using fallback psychologist list');
+    return getFallbackPsychologists();
+  } catch (error) {
+    Logger.log('Error fetching psychologists from backend: ' + error.toString());
+    return getFallbackPsychologists();
+  }
+}
+
+/**
+ * Lista de respaldo de psicólogos en caso de fallo del backend
+ */
+function getFallbackPsychologists() {
   return [
     { email: 'psicologo1@wellness.com', nombre: 'Dr. García' },
     { email: 'psicologo2@wellness.com', nombre: 'Dra. Martínez' },
@@ -156,8 +189,52 @@ function getAuthToken() {
  */
 function setupProperties() {
   PropertiesService.getScriptProperties()
-    .setProperty('API_KEY', 'your-api-key-here')
-    .setProperty('BACKEND_URL', CONFIG.BACKEND_URL);
+    .setProperty('API_KEY', 'wellness-mental-apps-script-key')
+    .setProperty('BACKEND_URL', CONFIG.BACKEND_URL)
+    .setProperty('PSYCHOLOGISTS_URL', CONFIG.PSYCHOLOGISTS_URL);
+  
+  Logger.log('Properties configured successfully');
+}
+
+/**
+ * Endpoint GET para verificar estado del script (acceso web)
+ */
+function doGet(e) {
+  try {
+    const action = e.parameter.action;
+    
+    if (action === 'status') {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'active',
+        timestamp: new Date().toISOString(),
+        pendingAlerts: pendingAlerts.length,
+        backendUrl: CONFIG.BACKEND_URL
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (action === 'test') {
+      // Test email sending
+      testAlert();
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        message: 'Test alert sent'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Default response
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'active',
+      message: 'Wellness Mental Alert Hub is running',
+      availableActions: ['status', 'test'],
+      documentation: 'Use ?action=status or ?action=test'
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 /**
