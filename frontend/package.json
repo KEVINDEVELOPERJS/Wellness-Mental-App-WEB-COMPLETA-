@@ -11,7 +11,8 @@
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "postinstall": "chmod +x node_modules/.bin/* || true"
+    "postinstall": "chmod +x node_modules/.bin/* || true",
+    "vercel-build": "npm install && npm run build"
   },
   "dependencies": {
     "react": "^18.2.0",
