@@ -249,15 +249,21 @@ export class EvaluacionController {
 
       // Generate alert if high risk
       if (nivelRiesgo === 'ALTO') {
+        console.log('🚨 HIGH RISK DETECTED - Generating alert for resultado:', resultado.id, 'user:', userId);
         const alerta = await AlertaRiesgoRepository.generarAlertaEvaluacion(
           resultado.id,
           userId
         );
 
         if (alerta) {
+          console.log('✅ Alert generated successfully, ID:', alerta.id);
           // Notify psychologists via Socket.io
           SocketService.sendToPsychologists('nueva_alerta', alerta);
+        } else {
+          console.warn('⚠️ Alert generation returned null');
         }
+      } else {
+        console.log('ℹ️ Risk level:', nivelRiesgo, '- No alert generated');
       }
 
       res.json({

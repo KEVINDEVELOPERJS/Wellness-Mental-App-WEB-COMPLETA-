@@ -110,18 +110,27 @@ export class AlertaRiesgoRepository {
   }
 
   static async generarAlertaEvaluacion(resultadoId: number, estudianteId: number): Promise<AlertaRiesgo | null> {
+    console.log('🚨 Starting alert generation for resultado:', resultadoId, 'estudiante:', estudianteId);
+    
     const resultado = await prisma.resultado.findUnique({
       where: { id: resultadoId },
       include: { cuestionario: true },
     });
 
-    if (!resultado || resultado.nivelRiesgo !== 'ALTO') return null;
+    if (!resultado || resultado.nivelRiesgo !== 'ALTO') {
+      console.log('⚠️ No alert generated - resultado null or not high risk. Resultado:', resultado?.nivelRiesgo);
+      return null;
+    }
+
+    console.log('✅ High risk detected, creating alert for:', resultado.nivelRiesgo);
 
     // Get student information for email before creating alert
     const estudiante = await prisma.usuario.findUnique({
       where: { id: estudianteId },
       select: { nombre: true, email: true }
     });
+
+    console.log('👤 Student info:', estudiante?.nombre, estudiante?.email);
 
     const alerta = await this.create({
       estudianteId,
@@ -131,6 +140,8 @@ export class AlertaRiesgoRepository {
       resultadoId,
     });
 
+    console.log('✅ Alert created with ID:', alerta.id);
+
     // Send automatic email notification to ALL registered psychologists
     try {
       if (estudiante) {
@@ -139,7 +150,15 @@ export class AlertaRiesgoRepository {
           select: { email: true, nombre: true }
         });
 
+        console.log('👨‍⚕️ Found psychologists:', psicologos.length);
+        psicologos.forEach(p => console.log('   -', p.nombre, p.email));
+
+        if (psicologos.length === 0) {
+          console.warn('⚠️ No active psychologists found in database');
+        }
+
         for (const psicologo of psicologos) {
+          console.log('📧 Sending email to:', psicologo.email);
           await EmailService.sendAlertEmail(psicologo.email, {
             studentName: estudiante.nombre,
             riskLevel: resultado.nivelRiesgo,
@@ -147,10 +166,13 @@ export class AlertaRiesgoRepository {
             timestamp: new Date().toISOString(),
             excerpt: `Evaluación ${resultado.cuestionario.titulo} con puntaje ${resultado.puntaje}`,
           });
+          console.log('✅ Email sent to:', psicologo.email);
         }
+      } else {
+        console.warn('⚠️ No student information found for email');
       }
     } catch (error) {
-      console.error('Failed to send automatic email notification:', error);
+      console.error('❌ Failed to send automatic email notification:', error);
     }
 
     // Send real-time notification via Socket.io

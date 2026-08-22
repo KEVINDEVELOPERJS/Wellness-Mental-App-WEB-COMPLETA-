@@ -11,9 +11,14 @@ export class EmailService {
     const smtpUser = process.env.SMTP_USER;
     const smtpPassword = process.env.SMTP_PASSWORD;
 
+    console.log('🔧 Email Service Configuration Check:');
+    console.log('   SMTP_HOST:', smtpHost ? '✅ Set' : '❌ Missing');
+    console.log('   SMTP_USER:', smtpUser ? '✅ Set' : '❌ Missing');
+    console.log('   SMTP_PASSWORD:', smtpPassword ? '✅ Set' : '❌ Missing');
+
     // Check if SMTP is properly configured
     if (!smtpHost || !smtpUser || !smtpPassword) {
-      console.warn('Email service not configured: Missing SMTP credentials. Email sending will be disabled.');
+      console.warn('⚠️ Email service not configured: Missing SMTP credentials. Email sending will be disabled.');
       this.isConfigured = false;
       return;
     }
@@ -29,9 +34,9 @@ export class EmailService {
         },
       });
       this.isConfigured = true;
-      console.log('Email service initialized successfully');
+      console.log('✅ Email service initialized successfully with host:', smtpHost);
     } catch (error) {
-      console.error('Failed to initialize email service:', error);
+      console.error('❌ Failed to initialize email service:', error);
       this.isConfigured = false;
     }
   }
@@ -108,10 +113,11 @@ export class EmailService {
     timestamp: string;
     excerpt: string;
   }): Promise<void> {
+    console.log('📧 EmailService.sendAlertEmail called for:', toEmail);
     this.ensureInitialized();
     
     if (!this.transporter) {
-      console.warn('Email service not configured, skipping alert email');
+      console.warn('⚠️ Email service not configured, skipping alert email to:', toEmail);
       return;
     }
 
@@ -133,9 +139,11 @@ export class EmailService {
         `,
       };
 
+      console.log('📤 Sending email via SMTP to:', toEmail);
       await this.transporter.sendMail(mailOptions);
+      console.log('✅ Email sent successfully to:', toEmail);
     } catch (error) {
-      console.error('Failed to send alert email:', error);
+      console.error('❌ Failed to send alert email to:', toEmail, 'Error:', error);
       // Don't throw error to prevent blocking alert system
     }
   }
