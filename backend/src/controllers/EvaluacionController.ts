@@ -247,21 +247,29 @@ export class EvaluacionController {
         return;
       }
 
-      // Generate alert if high risk
+      // Generate alert if high risk (async, non-blocking)
       if (nivelRiesgo === 'ALTO') {
         console.log('🚨 HIGH RISK DETECTED - Generating alert for resultado:', resultado.id, 'user:', userId);
-        const alerta = await AlertaRiesgoRepository.generarAlertaEvaluacion(
-          resultado.id,
-          userId
-        );
+        
+        // Generate alert in background
+        setImmediate(async () => {
+          try {
+            const alerta = await AlertaRiesgoRepository.generarAlertaEvaluacion(
+              resultado.id,
+              userId
+            );
 
-        if (alerta) {
-          console.log('✅ Alert generated successfully, ID:', alerta.id);
-          // Notify psychologists via Socket.io
-          SocketService.sendToPsychologists('nueva_alerta', alerta);
-        } else {
-          console.warn('⚠️ Alert generation returned null');
-        }
+            if (alerta) {
+              console.log('✅ Alert generated successfully, ID:', alerta.id);
+              // Notify psychologists via Socket.io
+              SocketService.sendToPsychologists('nueva_alerta', alerta);
+            } else {
+              console.warn('⚠️ Alert generation returned null');
+            }
+          } catch (error) {
+            console.error('❌ Error generating alert:', error);
+          }
+        });
       } else {
         console.log('ℹ️ Risk level:', nivelRiesgo, '- No alert generated');
       }

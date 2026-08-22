@@ -142,38 +142,54 @@ export class AlertaRiesgoRepository {
 
     console.log('✅ Alert created with ID:', alerta.id);
 
-    // Send automatic email notification to ALL registered psychologists
+    // Send real-time notification via Socket.io (non-blocking)
     try {
-      if (estudiante) {
-        const psicologos = await prisma.usuario.findMany({
-          where: { rol: 'PSICOLOGO', estado: 'ACTIVO' },
-          select: { email: true, nombre: true }
-        });
-
-        console.log('👨‍⚕️ Found psychologists:', psicologos.length);
-        psicologos.forEach(p => console.log('   -', p.nombre, p.email));
-
-        if (psicologos.length === 0) {
-          console.warn('⚠️ No active psychologists found in database');
-        }
-
-        for (const psicologo of psicologos) {
-          console.log('📧 Sending email to:', psicologo.email);
-          await EmailService.sendAlertEmail(psicologo.email, {
-            studentName: estudiante.nombre,
-            riskLevel: resultado.nivelRiesgo,
-            type: 'evaluacion',
-            timestamp: new Date().toISOString(),
-            excerpt: `Evaluación ${resultado.cuestionario.titulo} con puntaje ${resultado.puntaje}`,
-          });
-          console.log('✅ Email sent to:', psicologo.email);
-        }
-      } else {
-        console.warn('⚠️ No student information found for email');
+      const alertaConEstudiante = await this.findById(alerta.id);
+      if (alertaConEstudiante) {
+        SocketService.sendToPsychologists('nueva_alerta', alertaConEstudiante);
+        
+        // Send push notification to registered psychologists (async)
+        this.sendPushNotificationsToPsychologists(alertaConEstudiante);
       }
     } catch (error) {
-      console.error('❌ Failed to send automatic email notification:', error);
+      console.error('Failed to send socket notification:', error);
     }
+
+    // Send automatic email notification to ALL registered psychologists (async, non-blocking)
+    // This runs in background and doesn't block the API response
+    setImmediate(async () => {
+      try {
+        if (estudiante) {
+          const psicologos = await prisma.usuario.findMany({
+            where: { rol: 'PSICOLOGO', estado: 'ACTIVO' },
+            select: { email: true, nombre: true }
+          });
+
+          console.log('👨‍⚕️ Found psychologists:', psicologos.length);
+          psicologos.forEach(p => console.log('   -', p.nombre, p.email));
+
+          if (psicologos.length === 0) {
+            console.warn('⚠️ No active psychologists found in database');
+          }
+
+          for (const psicologo of psicologos) {
+            console.log('📧 Sending email to:', psicologo.email);
+            await EmailService.sendAlertEmail(psicologo.email, {
+              studentName: estudiante.nombre,
+              riskLevel: resultado.nivelRiesgo,
+              type: 'evaluacion',
+              timestamp: new Date().toISOString(),
+              excerpt: `Evaluación ${resultado.cuestionario.titulo} con puntaje ${resultado.puntaje}`,
+            });
+            console.log('✅ Email sent to:', psicologo.email);
+          }
+        } else {
+          console.warn('⚠️ No student information found for email');
+        }
+      } catch (error) {
+        console.error('❌ Failed to send automatic email notification:', error);
+      }
+    });
 
     // Send real-time notification via Socket.io
     try {
@@ -192,29 +208,32 @@ export class AlertaRiesgoRepository {
   }
 
   private static async sendPushNotificationsToPsychologists(alerta: AlertaRiesgo): Promise<void> {
-    try {
-      // In a real implementation, this would get psychologist push subscriptions from database
-      // For now, we'll use a placeholder to demonstrate the functionality
-      console.log('Push notifications would be sent to psychologists for alert:', alerta.id);
-      
-      // Example implementation (would require database schema changes):
-      // const psicologos = await prisma.usuario.findMany({
-      //   where: { rol: 'PSICOLOGO' },
-      //   select: { pushSubscription: true }
-      // });
-      // const subscriptions = psicologos
-      //   .map(p => p.pushSubscription)
-      //   .filter((sub): sub is any => sub !== null);
-      // if (subscriptions.length > 0) {
-      //   await WebPushService.sendBulkNotifications(subscriptions, {
-      //     title: `🚨 ALERTA DE ALTO RIESGO`,
-      //     body: `Nueva alerta para estudiante: ${alerta.estudiante.nombre}`,
-      //     data: { alertaId: alerta.id, type: 'high_risk_alert' }
-      //   });
-      // }
-    } catch (error) {
-      console.error('Failed to send push notifications:', error);
-    }
+    // Make this non-blocking as well
+    setImmediate(async () => {
+      try {
+        // In a real implementation, this would get psychologist push subscriptions from database
+        // For now, we'll use a placeholder to demonstrate the functionality
+        console.log('Push notifications would be sent to psychologists for alert:', alerta.id);
+        
+        // Example implementation (would require database schema changes):
+        // const psicologos = await prisma.usuario.findMany({
+        //   where: { rol: 'PSICOLOGO' },
+        //   select: { pushSubscription: true }
+        // });
+        // const subscriptions = psicologos
+        //   .map(p => p.pushSubscription)
+        //   .filter((sub): sub is any => sub !== null);
+        // if (subscriptions.length > 0) {
+        //   await WebPushService.sendBulkNotifications(subscriptions, {
+        //     title: `🚨 ALERTA DE ALTO RIESGO`,
+        //     body: `Nueva alerta para estudiante: ${alerta.estudiante.nombre}`,
+        //     data: { alertaId: alerta.id, type: 'high_risk_alert' }
+        //   });
+        // }
+      } catch (error) {
+        console.error('Failed to send push notifications:', error);
+      }
+    });
   }
 
   static async generarAlertaChat(chatSessionId: number, estudianteId: number, extracto: string, nivelRiesgo: string = 'ALTO'): Promise<AlertaRiesgo> {
@@ -226,35 +245,52 @@ export class AlertaRiesgoRepository {
       chatSessionId,
     });
 
-    // Send automatic email notification to ALL registered psychologists for high-risk alerts
-    if (nivelRiesgo === 'ALTO') {
-      try {
-        // Get student information for email
-        const estudiante = await prisma.usuario.findUnique({
-          where: { id: estudianteId },
-          select: { nombre: true, email: true }
-        });
+    // Send real-time notification via Socket.io (non-blocking)
+    try {
+      const alertaConEstudiante = await this.findById(alerta.id);
+      if (alertaConEstudiante) {
+        SocketService.sendToPsychologists('nueva_alerta', alertaConEstudiante);
         
-        if (estudiante) {
-          // Get ALL registered psychologists
-          const psicologos = await prisma.usuario.findMany({
-            where: { rol: 'PSICOLOGO', estado: 'ACTIVO' },
-            select: { email: true, nombre: true }
-          });
-
-          for (const psicologo of psicologos) {
-            await EmailService.sendAlertEmail(psicologo.email, {
-              studentName: estudiante.nombre,
-              riskLevel: alerta.nivelRiesgo,
-              type: alerta.tipo,
-              timestamp: alerta.timestamp.toISOString(),
-              excerpt: alerta.extracto,
-            });
-          }
+        // Send push notifications for high-risk alerts (async)
+        if (nivelRiesgo === 'ALTO') {
+          this.sendPushNotificationsToPsychologists(alertaConEstudiante);
         }
-      } catch (error) {
-        console.error('Failed to send automatic email notification:', error);
       }
+    } catch (error) {
+      console.error('Failed to send socket notification:', error);
+    }
+
+    // Send automatic email notification to ALL registered psychologists for high-risk alerts (async)
+    if (nivelRiesgo === 'ALTO') {
+      setImmediate(async () => {
+        try {
+          // Get student information for email
+          const estudiante = await prisma.usuario.findUnique({
+            where: { id: estudianteId },
+            select: { nombre: true, email: true }
+          });
+          
+          if (estudiante) {
+            // Get ALL registered psychologists
+            const psicologos = await prisma.usuario.findMany({
+              where: { rol: 'PSICOLOGO', estado: 'ACTIVO' },
+              select: { email: true, nombre: true }
+            });
+
+            for (const psicologo of psicologos) {
+              await EmailService.sendAlertEmail(psicologo.email, {
+                studentName: estudiante.nombre,
+                riskLevel: alerta.nivelRiesgo,
+                type: alerta.tipo,
+                timestamp: alerta.timestamp.toISOString(),
+                excerpt: alerta.extracto,
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to send automatic email notification:', error);
+        }
+      });
     }
 
     // Send real-time notification via Socket.io

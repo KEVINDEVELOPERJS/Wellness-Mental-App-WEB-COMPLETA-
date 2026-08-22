@@ -5,8 +5,11 @@ import { useUIStore } from '../store/uiStore';
 import { Cuestionario, Pregunta, Respuesta } from '../types/cuestionario';
 import { Brain, Loader2, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 
-// VERSION 2026-08-17-21-35 - CRITICAL FIX
-console.log('EVALUACION PAGE UPDATED - VERSION 2026-08-17-21-35');
+// VERSION 2026-08-22-23-00 - PERFORMANCE FIX - Async email sending
+console.log('EVALUACION PAGE UPDATED - VERSION 2026-08-22-23-00 - ASYNC EMAIL FIX');
+console.log('WELLNESS MENTAL APP - VERSION 2026-08-22-23-00 - ASYNC EMAIL FIX - CACHE BREAK FORCED');
+console.log('DEPLOYMENT TIMESTAMP:', new Date().toISOString());
+console.log('BUILD ID: async-email-fix');
 
 export default function EvaluacionPage() {
   const navigate = useNavigate();

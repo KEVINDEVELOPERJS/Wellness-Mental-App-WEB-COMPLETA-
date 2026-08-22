@@ -1,8 +1,11 @@
 import apiClient from './apiClient';
 import { Cuestionario, Respuesta, Resultado } from '../types/cuestionario';
 
-// VERSION 2026-08-17-21-35 - CRITICAL FIX
-console.log('EVALUACION SERVICE UPDATED - VERSION 2026-08-17-21-35');
+// VERSION 2026-08-22-23-00 - PERFORMANCE FIX - Async email sending
+console.log('EVALUACION SERVICE UPDATED - VERSION 2026-08-22-23-00 - ASYNC EMAIL FIX');
+console.log('WELLNESS MENTAL APP - VERSION 2026-08-22-23-00 - ASYNC EMAIL FIX - CACHE BREAK FORCED');
+console.log('DEPLOYMENT TIMESTAMP:', new Date().toISOString());
+console.log('BUILD ID: async-email-fix');
 
 export const evaluacionService = {
   async getCuestionarios(): Promise<Cuestionario[]> {
@@ -75,12 +78,18 @@ export const evaluacionService = {
   },
 
   async guardarEvaluacion(cuestionarioId: number, respuestas: Respuesta[]): Promise<Resultado> {
+    const startTime = Date.now();
     try {
       console.log('Calling guardarEvaluacion with:', { cuestionarioId, respuestas });
+      console.log('🕐 Starting evaluation submission at:', new Date().toISOString());
+      
       const response = await apiClient.post<{ resultado: Resultado }>('/evaluacion/guardar', {
         cuestionarioId,
         respuestas,
       });
+      
+      const duration = Date.now() - startTime;
+      console.log('✅ Evaluation submission completed in:', duration, 'ms');
       console.log('Response from guardarEvaluacion:', response.data);
       console.log('Response structure:', {
         hasResultado: !!response.data.resultado,
@@ -105,6 +114,8 @@ export const evaluacionService = {
       
       return response.data.resultado;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error('❌ Evaluation submission failed after:', duration, 'ms');
       console.error('Error in guardarEvaluacion:', error);
       throw error;
     }

@@ -5,7 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://wellness-mental-ap
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // Increased timeout for better reliability
+  timeout: 60000, // Increased to 60 seconds for evaluation requests
   headers: {
     'Content-Type': 'application/json',
   },
