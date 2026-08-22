@@ -17,6 +17,10 @@ export interface AlertaRiesgo {
   chatSessionId?: number;
   ipOrigen?: string;
   userAgent?: string;
+  evaluacion?: {
+    puntaje: number;
+    prediagnostico?: string;
+  };
 }
 
 export interface AuditoriaAlerta {

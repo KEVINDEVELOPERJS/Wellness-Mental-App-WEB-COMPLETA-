@@ -187,7 +187,7 @@ export default function ResultadoEvaluacionPage() {
           <span>Prediagnóstico</span>
         </h3>
         <p className="text-muted-foreground leading-relaxed">
-          {resultado.prediagnostico}
+          {resultado?.prediagnostico || 'Sin prediagnóstico disponible'}
         </p>
       </div>
 

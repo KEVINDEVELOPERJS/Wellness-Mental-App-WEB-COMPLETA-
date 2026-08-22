@@ -23,9 +23,9 @@ interface AlertaRiesgo {
     nombre: string;
     grado: string;
   };
-  evaluacion: {
+  evaluacion?: {
     puntaje: number;
-    prediagnostico: string;
+    prediagnostico?: string;
   };
   fechaCreacion: string;
 }
@@ -197,7 +197,7 @@ export default function DashboardPsicologoPage() {
                       {alerta.estado}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">{alerta.evaluacion.prediagnostico}</p>
+                  <p className="text-sm text-gray-600 mt-2">{alerta.evaluacion?.prediagnostico || 'Sin prediagnóstico'}</p>
                 </div>
               ))}
             </div>
@@ -249,7 +249,7 @@ export default function DashboardPsicologoPage() {
                         {alerta.estado}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">{alerta.evaluacion.prediagnostico}</p>
+                    <p className="text-sm text-gray-600 mt-2">{alerta.evaluacion?.prediagnostico || 'Sin prediagnóstico'}</p>
                   </div>
                 ))}
             </div>
