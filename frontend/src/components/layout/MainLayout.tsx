@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
+import { authService } from '../../services/authService';
 import { 
   Home, 
   Brain, 
@@ -48,11 +49,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     const { refreshToken } = useAuthStore.getState();
     if (refreshToken) {
       try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
-        });
+        await authService.logout(refreshToken);
       } catch (error) {
         console.error('Logout error:', error);
       }
