@@ -14,3 +14,6 @@ tsconfig.json
 postcss.config.js
 tailwind.config.js
 vite.config.ts
+index.html
+package.json
+package-lock.json
