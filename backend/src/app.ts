@@ -21,6 +21,7 @@ import informeRoutes from './routes/informe.routes';
 import alertaRoutes from './routes/alerta.routes';
 import alertaHubRoutes from './routes/alertaHub.routes';
 import perfilRoutes from './routes/perfil.routes';
+import testRoutes from './routes/test.routes';
 
 // Import services
 import { SocketService } from './services/SocketService';
@@ -85,6 +86,7 @@ app.use('/api/informes', informeRoutes);
 app.use('/api/alertas', alertaRoutes);
 app.use('/api/alertas', alertaHubRoutes);
 app.use('/api/perfil', perfilRoutes);
+app.use('/api/test', testRoutes);
 
 // 404 handler
 app.use(notFound);
