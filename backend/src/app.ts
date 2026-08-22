@@ -34,23 +34,23 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for Render deployment
 app.set('trust proxy', true);
 
-// DISABLED CORS MIDDLEWARE - USING MANUAL HEADERS ONLY
-// app.use(cors({
-//   origin: '*',
-//   credentials: false,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-// });
-
-// CORS configuration
+// CORS configuration - Updated to handle preflight requests properly
 app.use(cors({
   origin: ['https://wellness-mental-app-web-completa.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
   credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
-
+// Handle preflight requests explicitly
+app.options('*', cors({
+  origin: ['https://wellness-mental-app-web-completa.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -94,7 +94,7 @@ const server = createServer(app);
 // Initialize Socket.io
 const io = new SocketIOServer(server, {
   cors: {
-    origin: '*', // Allow all origins temporarily for debugging
+    origin: ['https://wellness-mental-app-web-completa.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
     credentials: true,
   },
 });
@@ -114,7 +114,7 @@ try {
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 CORS origin: * (PERMISSIVE MODE)`);
+  console.log(`🔗 CORS origins: ${['https://wellness-mental-app-web-completa.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'].join(', ')}`);
   console.log(`🔧 Helmet security: DISABLED`);
   console.log(`🔧 Rate limiting: DISABLED`);
   console.log(`🔧 Updated: ${new Date().toISOString()}`);

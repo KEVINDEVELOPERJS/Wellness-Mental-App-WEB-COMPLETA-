@@ -12,6 +12,16 @@ const apiClient = axios.create({
   withCredentials: false, // Disabled to fix CORS issues
 });
 
+// Create a separate axios instance for refresh token to avoid interceptor loops
+const refreshApiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: false,
+});
+
 // Response interceptor to handle token refresh
 apiClient.interceptors.response.use(
   (response) => response,
@@ -36,12 +46,12 @@ apiClient.interceptors.response.use(
         const { refreshToken, setTokens, logout } = useAuthStore.getState();
         
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
+          const response = await refreshApiClient.post('/auth/refresh-token', {
             refreshToken,
           });
 
-          const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
-          setTokens(newAccessToken, newRefreshToken);
+          const { accessToken: newAccessToken } = response.data;
+          setTokens(newAccessToken, refreshToken);
 
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -49,6 +59,7 @@ apiClient.interceptors.response.use(
         }
       } catch (refreshError) {
         // Refresh failed, logout user
+        console.error('Token refresh failed:', refreshError);
         logout();
         return Promise.reject(refreshError);
       }
