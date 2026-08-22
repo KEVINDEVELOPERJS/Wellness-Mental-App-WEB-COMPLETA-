@@ -363,7 +363,8 @@ export default function RegistroPage() {
               />
             </div>
 
-
+            {/* Consentimiento solo para estudiantes menores de 16 */}
+            {formData.rol === 'ESTUDIANTE' && parseInt(formData.edad) < 16 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <label className="flex items-start space-x-3">
                   <input
@@ -378,6 +379,7 @@ export default function RegistroPage() {
                   </span>
                 </label>
               </div>
+            )}
             )}
 
             <button
