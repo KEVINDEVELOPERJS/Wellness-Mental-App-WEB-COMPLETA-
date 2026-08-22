@@ -57,12 +57,28 @@ export class EmailService {
     if (this.sendGridConfigured) return;
 
     const sendGridApiKey = process.env.SENDGRID_API_KEY;
+    const emailFrom = process.env.EMAIL_FROM;
 
     console.log('🔧 SendGrid Configuration Check:');
     console.log('   SENDGRID_API_KEY:', sendGridApiKey ? '✅ Set' : '❌ Missing');
+    console.log('   EMAIL_FROM:', emailFrom || '❌ Missing (required for SendGrid)');
+
+    // Temporarily disable SendGrid until properly configured
+    console.warn('⚠️ SendGrid temporarily disabled due to 403 errors');
+    console.warn('⚠️ System will use SMTP fallback instead');
+    this.sendGridConfigured = false;
+    this.useSendGrid = false;
+    return;
 
     if (!sendGridApiKey) {
       console.warn('⚠️ SendGrid not configured: Missing API key');
+      this.sendGridConfigured = false;
+      this.useSendGrid = false;
+      return;
+    }
+
+    if (!emailFrom) {
+      console.warn('⚠️ SendGrid not configured: Missing EMAIL_FROM (sender must be verified in SendGrid)');
       this.sendGridConfigured = false;
       this.useSendGrid = false;
       return;
@@ -73,6 +89,7 @@ export class EmailService {
       this.sendGridConfigured = true;
       this.useSendGrid = true;
       console.log('✅ SendGrid initialized successfully');
+      console.log('📧 Will send from:', emailFrom);
     } catch (error) {
       console.error('❌ Failed to initialize SendGrid:', error);
       this.sendGridConfigured = false;
@@ -279,7 +296,27 @@ export class EmailService {
       `,
     };
 
-    await sgMail.send(msg);
+    try {
+      await sgMail.send(msg);
+    } catch (error: any) {
+      console.error('❌ SendGrid API Error Details:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.body,
+        statusCode: error.response?.statusCode
+      });
+      
+      // Specific guidance for common errors
+      if (error.code === 403) {
+        console.error('🔧 SendGrid 403 Forbidden - Possible causes:');
+        console.error('   1. EMAIL_FROM not verified in SendGrid');
+        console.error('   2. API Key lacks "Mail Send" permissions');
+        console.error('   3. API Key is invalid or expired');
+        console.error('   Current EMAIL_FROM:', process.env.EMAIL_FROM);
+      }
+      
+      throw error;
+    }
   }
 
   private static async retryWithDifferentConfig(toEmail: string, alertData: any): Promise<void> {
