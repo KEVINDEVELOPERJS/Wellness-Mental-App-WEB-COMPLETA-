@@ -6,18 +6,18 @@ import { alertRateLimit } from '../middleware/rateLimitMiddleware';
 const router = Router();
 
 // Protected routes
-router.post('/alertas/evaluacion', authenticate, AlertaController.generarAlertaEvaluacion);
-router.post('/alertas/chat', authenticate, AlertaController.generarAlertaChat);
-router.post('/alertas/manual', authenticate, authorize(['PSICOLOGO', 'ADMIN']), alertRateLimit, AlertaController.crearAlertaManual);
-router.get('/alertas', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAlertas);
-router.get('/alertas/pendientes', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAlertasPendientes);
-router.get('/alertas/:id', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAlerta);
-router.patch('/alertas/:id', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.actualizarEstado);
-router.get('/alertas/:id/auditoria', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAuditoria);
-router.post('/alertas/:id/notificacion', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.enviarNotificacionPush);
-router.post('/alertas/:id/email', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.enviarEmailPrioritario);
-router.get('/alertas/estudiante/:estudianteId', authenticate, AlertaController.getAlertasByEstudiante);
-router.get('/alertas/psicologo', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAlertasByPsicologo);
-router.post('/alertas/:id/auditoria', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.registrarAuditoria);
+router.post('/evaluacion', authenticate, AlertaController.generarAlertaEvaluacion);
+router.post('/chat', authenticate, AlertaController.generarAlertaChat);
+router.post('/manual', authenticate, authorize(['PSICOLOGO', 'ADMIN']), alertRateLimit, AlertaController.crearAlertaManual);
+router.get('/', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAlertas);
+router.get('/pendientes', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAlertasPendientes);
+router.get('/:id', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAlerta);
+router.patch('/:id', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.actualizarEstado);
+router.get('/:id/auditoria', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAuditoria);
+router.post('/:id/notificacion', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.enviarNotificacionPush);
+router.post('/:id/email', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.enviarEmailPrioritario);
+router.get('/estudiante/:estudianteId', authenticate, AlertaController.getAlertasByEstudiante);
+router.get('/psicologo', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAlertasByPsicologo);
+router.post('/:id/auditoria', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.registrarAuditoria);
 
 export default router;

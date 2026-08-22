@@ -7,12 +7,12 @@ export const informeService = {
   },
 
   async getInforme(token: string): Promise<any> {
-    const response = await apiClient.get(`/informe/${token}`);
+    const response = await apiClient.get(`/informes/${token}`);
     return response.data;
   },
 
   async getInformePDF(token: string): Promise<Blob> {
-    const response = await apiClient.get(`/informe/${token}/pdf`, {
+    const response = await apiClient.get(`/informes/${token}/pdf`, {
       responseType: 'blob',
     });
     return response.data;
@@ -29,7 +29,7 @@ export const informeService = {
   },
 
   async registrarAcceso(token: string): Promise<void> {
-    await apiClient.post(`/informe/${token}/acceso`);
+    await apiClient.post(`/informes/${token}/acceso`);
   },
 
   async getInformesByPadre(): Promise<any[]> {
