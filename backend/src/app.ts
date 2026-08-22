@@ -19,6 +19,7 @@ import comunidadRoutes from './routes/comunidad.routes';
 import gamificacionRoutes from './routes/gamificacion.routes';
 import informeRoutes from './routes/informe.routes';
 import alertaRoutes from './routes/alerta.routes';
+import alertaHubRoutes from './routes/alertaHub.routes';
 import perfilRoutes from './routes/perfil.routes';
 
 // Import services
@@ -82,6 +83,7 @@ app.use('/api/comunidad', comunidadRoutes);
 app.use('/api/gamificacion', gamificacionRoutes);
 app.use('/api/informes', informeRoutes);
 app.use('/api/alertas', alertaRoutes);
+app.use('/api/alertas', alertaHubRoutes);
 app.use('/api/perfil', perfilRoutes);
 
 // 404 handler

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { comunidadService } from '../services/comunidadService';
 import { useUIStore } from '../store/uiStore';
 import { PostComunidad, PostDTO } from '../types/comunidad';
@@ -10,11 +11,13 @@ import {
   Loader2,
   Plus,
   Filter,
-  TrendingUp
+  TrendingUp,
+  Video
 } from 'lucide-react';
 
 export default function ComunidadPage() {
   const { addToast } = useUIStore();
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<PostComunidad[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [selectedCategoria, setSelectedCategoria] = useState<string>('');
@@ -110,18 +113,27 @@ export default function ComunidadPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Comunidad</h1>
+          <h1 className="text-3xl font-bold mb-2">Comunidad y Foros</h1>
           <p className="text-muted-foreground">
-            Comparte experiencias y apóyate mutuamente
+            Comparte experiencias y participa en foros de discusión
           </p>
         </div>
-        <button
-          onClick={() => setShowNewPost(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Nuevo Post</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => navigate('/videos')}
+            className="flex items-center space-x-2 px-4 py-2 bg-secondary rounded-lg hover:bg-accent transition-colors"
+          >
+            <Video className="h-4 w-4" />
+            <span>Ver Videos</span>
+          </button>
+          <button
+            onClick={() => setShowNewPost(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nuevo Post</span>
+          </button>
+        </div>
       </div>
 
       {/* Category Filter */}

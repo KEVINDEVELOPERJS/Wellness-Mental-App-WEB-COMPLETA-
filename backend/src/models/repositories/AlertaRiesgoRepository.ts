@@ -131,18 +131,23 @@ export class AlertaRiesgoRepository {
       resultadoId,
     });
 
-    // Send automatic email notification for high-risk alerts
+    // Send automatic email notification to ALL registered psychologists
     try {
       if (estudiante) {
-        const psicologoEmail = process.env.PSICOLOGO_EMAIL || 'psicologo@wellness.com';
-        
-        await EmailService.sendAlertEmail(psicologoEmail, {
-          studentName: estudiante.nombre,
-          riskLevel: resultado.nivelRiesgo,
-          type: 'evaluacion',
-          timestamp: new Date().toISOString(),
-          excerpt: `Evaluación ${resultado.cuestionario.titulo} con puntaje ${resultado.puntaje}`,
+        const psicologos = await prisma.usuario.findMany({
+          where: { rol: 'PSICOLOGO', estado: 'ACTIVO' },
+          select: { email: true, nombre: true }
         });
+
+        for (const psicologo of psicologos) {
+          await EmailService.sendAlertEmail(psicologo.email, {
+            studentName: estudiante.nombre,
+            riskLevel: resultado.nivelRiesgo,
+            type: 'evaluacion',
+            timestamp: new Date().toISOString(),
+            excerpt: `Evaluación ${resultado.cuestionario.titulo} con puntaje ${resultado.puntaje}`,
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to send automatic email notification:', error);
@@ -199,7 +204,7 @@ export class AlertaRiesgoRepository {
       chatSessionId,
     });
 
-    // Send automatic email notification for high-risk alerts
+    // Send automatic email notification to ALL registered psychologists for high-risk alerts
     if (nivelRiesgo === 'ALTO') {
       try {
         // Get student information for email
@@ -209,16 +214,21 @@ export class AlertaRiesgoRepository {
         });
         
         if (estudiante) {
-          // Get psychologist email (in real implementation, would get assigned psychologist)
-          const psicologoEmail = process.env.PSICOLOGO_EMAIL || 'psicologo@wellness.com';
-          
-          await EmailService.sendAlertEmail(psicologoEmail, {
-            studentName: estudiante.nombre,
-            riskLevel: alerta.nivelRiesgo,
-            type: alerta.tipo,
-            timestamp: alerta.timestamp.toISOString(),
-            excerpt: alerta.extracto,
+          // Get ALL registered psychologists
+          const psicologos = await prisma.usuario.findMany({
+            where: { rol: 'PSICOLOGO', estado: 'ACTIVO' },
+            select: { email: true, nombre: true }
           });
+
+          for (const psicologo of psicologos) {
+            await EmailService.sendAlertEmail(psicologo.email, {
+              studentName: estudiante.nombre,
+              riskLevel: alerta.nivelRiesgo,
+              type: alerta.tipo,
+              timestamp: alerta.timestamp.toISOString(),
+              excerpt: alerta.extracto,
+            });
+          }
         }
       } catch (error) {
         console.error('Failed to send automatic email notification:', error);

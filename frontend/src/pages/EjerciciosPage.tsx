@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ejercicioService } from '../services/ejercicioService';
 import { useUIStore } from '../store/uiStore';
 import { Ejercicio } from '../types/ejercicio';
@@ -9,7 +9,9 @@ import {
   CheckCircle, 
   TrendingUp,
   Loader2,
-  Flame
+  Flame,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 export default function EjerciciosPage() {
@@ -22,6 +24,9 @@ export default function EjerciciosPage() {
   const [isExerciseActive, setIsExerciseActive] = useState(false);
   const [timer, setTimer] = useState(0);
   const [isBreathing, setIsBreathing] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [breathingPhase, setBreathingPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
 
   useEffect(() => {
     loadData();
@@ -32,10 +37,22 @@ export default function EjerciciosPage() {
     if (isExerciseActive && timer > 0) {
       interval = setInterval(() => {
         setTimer(prev => prev - 1);
+        
+        // Breathing phase logic
+        const secondsInCycle = (selectedEjercicio?.duracionMinima * 60 - timer) % 12; // 12-second breathing cycle
+        if (secondsInCycle < 4) {
+          setBreathingPhase('inhale');
+          playAudio('INHALA');
+        } else if (secondsInCycle < 8) {
+          setBreathingPhase('hold');
+        } else {
+          setBreathingPhase('exhale');
+          playAudio('EXHALA');
+        }
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isExerciseActive, timer]);
+  }, [isExerciseActive, timer, selectedEjercicio]);
 
   const loadData = async () => {
     try {
@@ -64,6 +81,23 @@ export default function EjerciciosPage() {
     setTimer(duracion * 60); // Convert to seconds
     setIsExerciseActive(true);
     setIsBreathing(true);
+    setBreathingPhase('inhale');
+  };
+
+  const playAudio = (type: 'INHALA' | 'EXHALA' | 'MANTEN') => {
+    if (isMuted) return;
+    
+    try {
+      const audio = new Audio(`/audio/${type}.m4a`);
+      audio.volume = 0.5;
+      audio.play().catch(err => console.log('Audio play failed:', err));
+    } catch (error) {
+      console.log('Audio error:', error);
+    }
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
   };
 
   const completeExercise = async () => {
@@ -85,6 +119,7 @@ export default function EjerciciosPage() {
 
       setIsExerciseActive(false);
       setIsBreathing(false);
+      setBreathingPhase('inhale');
       setSelectedEjercicio(null);
       loadData();
     } catch (error) {
@@ -121,9 +156,11 @@ export default function EjerciciosPage() {
 
         {/* Breathing Animation */}
         <div className="flex justify-center">
-          <div className={`relative w-64 h-64 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center ${
-            isBreathing ? 'animate-breathe' : ''
-          }`}>
+          <div className={`relative w-64 h-64 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center transition-all duration-300 ${
+            breathingPhase === 'inhale' ? 'scale-125' : 
+            breathingPhase === 'hold' ? 'scale-110' : 
+            'scale-100'
+          } ${isBreathing ? 'animate-breathe' : ''}`}>
             <div className="text-white text-center">
               <p className="text-4xl font-bold">{formatTime(timer)}</p>
               <p className="text-sm opacity-80">minutos restantes</p>
@@ -133,12 +170,27 @@ export default function EjerciciosPage() {
 
         {/* Breathing Instructions */}
         <div className="text-center">
-          <p className="text-lg font-medium text-primary">
-            {isBreathing ? 'Inhala...' : 'Exhala...'}
+          <p className="text-2xl font-bold text-primary mb-2">
+            {breathingPhase === 'inhale' ? '🌬️ INHALA' : 
+             breathingPhase === 'hold' ? '⏸️ MANTÉN' : 
+             '💨 EXHALA'}
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Sigue el ritmo del círculo
+            {breathingPhase === 'inhale' ? 'Respira profundamente por 4 segundos' :
+             breathingPhase === 'hold' ? 'Mantén la respiración por 4 segundos' :
+             'Exhala lentamente por 4 segundos'}
           </p>
+        </div>
+
+        {/* Audio Controls */}
+        <div className="flex justify-center">
+          <button
+            onClick={toggleMute}
+            className="flex items-center space-x-2 px-4 py-2 bg-secondary rounded-lg hover:bg-accent transition-colors"
+          >
+            {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+            <span>{isMuted ? 'Activar Sonido' : 'Silenciar'}</span>
+          </button>
         </div>
 
         {/* Controls */}

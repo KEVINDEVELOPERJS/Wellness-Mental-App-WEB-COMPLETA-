@@ -8,6 +8,7 @@ import {
   MessageSquare, 
   Heart, 
   Users, 
+  Video,
   Gamepad2, 
   User, 
   Bell,
@@ -26,7 +27,8 @@ const navigation = [
   { name: 'Evaluación', href: '/evaluacion', icon: Brain },
   { name: 'Chat IA', href: '/chat-ia', icon: MessageSquare },
   { name: 'Ejercicios', href: '/ejercicios', icon: Heart },
-  { name: 'Comunidad', href: '/comunidad', icon: Users },
+  { name: 'Videos', href: '/videos', icon: Video },
+  { name: 'Comunidad y Foros', href: '/comunidad', icon: Users },
   { name: 'Juegos', href: '/juegos', icon: Gamepad2 },
   { name: 'Perfil', href: '/perfil', icon: User },
 ];

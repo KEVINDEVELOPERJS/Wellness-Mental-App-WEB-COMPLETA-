@@ -9,6 +9,7 @@ import ResultadoEvaluacionPage from './pages/ResultadoEvaluacionPage';
 import ChatIAPage from './pages/ChatIAPage';
 import EjerciciosPage from './pages/EjerciciosPage';
 import ComunidadPage from './pages/ComunidadPage';
+import VideosPage from './pages/VideosPage';
 import JuegosPage from './pages/JuegosPage';
 import PerfilPage from './pages/PerfilPage';
 import NotificacionesPage from './pages/NotificacionesPage';
@@ -128,6 +129,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ComunidadPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/videos"
+          element={
+            <ProtectedRoute>
+              <VideosPage />
             </ProtectedRoute>
           }
         />
