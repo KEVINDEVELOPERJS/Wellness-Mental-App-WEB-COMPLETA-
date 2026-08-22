@@ -11,7 +11,8 @@ import {
   Shield,
   Activity,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Bell
 } from 'lucide-react';
 
 interface AlertaRiesgo {
@@ -47,6 +48,23 @@ export default function DashboardPsicologoPage() {
   const [alertas, setAlertas] = useState<AlertaRiesgo[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAlarm, setShowAlarm] = useState(false);
+
+  useEffect(() => {
+    loadDashboardData();
+    
+    // Check for high-risk alerts and show alarm
+    const checkHighRiskAlerts = setInterval(() => {
+      const highRiskPending = alertas.filter(a => a.nivelRiesgo === 'ALTO' && a.estado === 'PENDIENTE');
+      if (highRiskPending.length > 0) {
+        setShowAlarm(true);
+      } else {
+        setShowAlarm(false);
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(checkHighRiskAlerts);
+  }, [alertas]);
 
   useEffect(() => {
     loadDashboardData();
@@ -111,6 +129,27 @@ export default function DashboardPsicologoPage() {
 
   return (
     <div className="space-y-6">
+      {/* High Risk Alarm */}
+      {showAlarm && (
+        <div className="bg-red-600 text-white rounded-xl p-4 border-4 border-red-800 animate-pulse shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Bell className="h-8 w-8 animate-ring" />
+              <div>
+                <h3 className="text-xl font-bold">⚠️ ALERTA DE ALTO RIESGO ACTIVA</h3>
+                <p className="text-red-100">Hay {alertas.filter(a => a.nivelRiesgo === 'ALTO' && a.estado === 'PENDIENTE').length} alerta(s) de alto riesgo pendiente(s) que requieren atención inmediata</p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/alertas-psicologo')}
+              className="bg-white text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-50 transition-colors"
+            >
+              Revisar Alertas
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Welcome Header */}
       <div className="gradient-wellness rounded-2xl p-6 text-white">
         <h1 className="text-3xl font-bold mb-2">

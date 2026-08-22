@@ -70,10 +70,12 @@ export class ChatIAController {
           session.id,
           userId,
           contenido.substring(0, 50),
-          nivelRiesgoFinal
+          nivelRiesgoFinal === 'ALTO' ? 'ALTO' : 'MODERADO'
         );
 
         if (alerta) {
+          // Socket notification is now handled in the repository
+          // but we keep this for backward compatibility
           SocketService.sendToPsychologists('nueva_alerta', alerta);
         }
       }
