@@ -1,0 +1,16 @@
+# Ignore backend for frontend deployment
+backend/
+docs/
+node_modules/
+dist/
+public/
+src/
+shared/
+*.md
+docker-compose.yml
+render.yaml
+.gitignore
+tsconfig.json
+postcss.config.js
+tailwind.config.js
+vite.config.ts
