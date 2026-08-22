@@ -85,7 +85,6 @@ export default function RegistroPage() {
     }
 
     // Validaciones para estudiantes
-      // Validaciones para estudiantes
     if (formData.rol === 'ESTUDIANTE') {
       const edad = parseInt(formData.edad);
       if (edad < 13 || edad > 18) {
@@ -105,7 +104,6 @@ export default function RegistroPage() {
         });
         return;
       }
-    }
     }
 
     setIsLoading(true);
