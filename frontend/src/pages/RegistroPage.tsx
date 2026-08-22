@@ -343,11 +343,6 @@ export default function RegistroPage() {
               </div>
             )}
 
-            {/* Consentimiento solo para estudiantes menores de 16 */}
-            {formData.rol === 'ESTUDIANTE' && parseInt(formData.edad) < 16 && (
-
-
-
             <div>
               <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-2">
                 Teléfono (opcional)
@@ -379,7 +374,6 @@ export default function RegistroPage() {
                   </span>
                 </label>
               </div>
-            )}
             )}
 
             <button
