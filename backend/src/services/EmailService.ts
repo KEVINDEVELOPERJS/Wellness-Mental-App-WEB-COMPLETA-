@@ -63,13 +63,6 @@ export class EmailService {
     console.log('   SENDGRID_API_KEY:', sendGridApiKey ? '✅ Set' : '❌ Missing');
     console.log('   EMAIL_FROM:', emailFrom || '❌ Missing (required for SendGrid)');
 
-    // Temporarily disable SendGrid until properly configured
-    console.warn('⚠️ SendGrid temporarily disabled due to 403 errors');
-    console.warn('⚠️ System will use SMTP fallback instead');
-    this.sendGridConfigured = false;
-    this.useSendGrid = false;
-    return;
-
     if (!sendGridApiKey) {
       console.warn('⚠️ SendGrid not configured: Missing API key');
       this.sendGridConfigured = false;
@@ -114,7 +107,7 @@ export class EmailService {
       try {
         const msg = {
           to: email,
-          from: process.env.EMAIL_FROM || 'noreply@wellness.com',
+          from: process.env.EMAIL_FROM || 'noreply@example.com',
           subject: 'Verifica tu correo - Wellness Mental',
           html: `
             <h2>Bienvenido a Wellness Mental</h2>
@@ -124,9 +117,11 @@ export class EmailService {
           `,
         };
         await sgMail.send(msg);
+        console.log('✅ Verification email sent successfully via SendGrid to:', email);
         return;
       } catch (error) {
-        console.error('SendGrid verification email failed, falling back to SMTP:', error);
+        console.error('❌ SendGrid verification email failed for:', email, 'Error:', error);
+        console.log('🔄 Falling back to SMTP...');
       }
     }
     
@@ -137,7 +132,7 @@ export class EmailService {
 
     try {
       const mailOptions = {
-        from: process.env.EMAIL_FROM || 'noreply@wellness.com',
+        from: process.env.EMAIL_FROM || 'noreply@example.com',
         to: email,
         subject: 'Verifica tu correo - Wellness Mental',
         html: `
@@ -149,8 +144,9 @@ export class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
+      console.log('✅ Verification email sent successfully to:', email);
     } catch (error) {
-      console.error('Failed to send verification email:', error);
+      console.error('❌ Failed to send verification email to:', email, 'Error:', error);
       // Don't throw error to prevent blocking user registration
     }
   }
@@ -164,7 +160,7 @@ export class EmailService {
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
         const msg = {
           to: email,
-          from: process.env.EMAIL_FROM || 'noreply@wellness.com',
+          from: process.env.EMAIL_FROM || 'noreply@example.com',
           subject: 'Restablecer contraseña - Wellness Mental',
           html: `
             <h2>Restablecer tu contraseña</h2>
@@ -175,9 +171,11 @@ export class EmailService {
           `,
         };
         await sgMail.send(msg);
+        console.log('✅ Password reset email sent successfully via SendGrid to:', email);
         return;
       } catch (error) {
-        console.error('SendGrid password reset email failed, falling back to SMTP:', error);
+        console.error('❌ SendGrid password reset email failed for:', email, 'Error:', error);
+        console.log('🔄 Falling back to SMTP...');
       }
     }
     
@@ -190,7 +188,7 @@ export class EmailService {
       const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
       
       const mailOptions = {
-        from: process.env.EMAIL_FROM || 'noreply@wellness.com',
+        from: process.env.EMAIL_FROM || 'noreply@example.com',
         to: email,
         subject: 'Restablecer contraseña - Wellness Mental',
         html: `
@@ -203,8 +201,9 @@ export class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
+      console.log('✅ Password reset email sent successfully to:', email);
     } catch (error) {
-      console.error('Failed to send password reset email:', error);
+      console.error('❌ Failed to send password reset email to:', email, 'Error:', error);
       // Don't throw error to prevent blocking password reset flow
     }
   }
@@ -240,7 +239,7 @@ export class EmailService {
 
     try {
       const mailOptions = {
-        from: process.env.EMAIL_FROM || 'noreply@wellness.com',
+        from: process.env.EMAIL_FROM || 'noreply@example.com',
         to: toEmail,
         subject: `ALERTA: ${alertData.riskLevel} - ${alertData.studentName}`,
         html: `
@@ -265,7 +264,11 @@ export class EmailService {
       // Retry with different configuration if timeout
       if (error instanceof Error && error.message.includes('timeout')) {
         console.log('🔄 Retrying with different SMTP configuration...');
-        await this.retryWithDifferentConfig(toEmail, alertData);
+        try {
+          await this.retryWithDifferentConfig(toEmail, alertData);
+        } catch (retryError) {
+          console.error('❌ Retry attempt failed:', retryError);
+        }
       }
       
       // Don't throw error to prevent blocking alert system
@@ -281,7 +284,7 @@ export class EmailService {
   }): Promise<void> {
     const msg = {
       to: toEmail,
-      from: process.env.EMAIL_FROM || 'noreply@wellness.com',
+      from: process.env.EMAIL_FROM || 'noreply@example.com',
       subject: `ALERTA: ${alertData.riskLevel} - ${alertData.studentName}`,
       html: `
         <h2 style="color: red;">⚠️ Alerta de Riesgo Detectada</h2>
@@ -298,6 +301,7 @@ export class EmailService {
 
     try {
       await sgMail.send(msg);
+      console.log('✅ Email sent successfully via SendGrid to:', toEmail);
     } catch (error: any) {
       console.error('❌ SendGrid API Error Details:', {
         message: error.message,
@@ -338,7 +342,7 @@ export class EmailService {
       });
 
       const mailOptions = {
-        from: process.env.EMAIL_FROM || 'noreply@wellness.com',
+        from: process.env.EMAIL_FROM || 'noreply@example.com',
         to: toEmail,
         subject: `ALERTA: ${alertData.riskLevel} - ${alertData.studentName}`,
         html: `
@@ -358,7 +362,7 @@ export class EmailService {
       await alternativeTransporter.sendMail(mailOptions);
       console.log('✅ Retry successful to:', toEmail);
     } catch (retryError) {
-      console.error('❌ Retry also failed for:', toEmail, retryError);
+      console.error('❌ Retry also failed for:', toEmail, 'Error:', retryError);
     }
   }
 
@@ -370,7 +374,7 @@ export class EmailService {
       try {
         const msg = {
           to: toEmail,
-          from: process.env.EMAIL_FROM || 'noreply@wellness.com',
+          from: process.env.EMAIL_FROM || 'noreply@example.com',
           subject: `Informe disponible - ${studentName}`,
           html: `
             <h2>Informe de Bienestar Mental Disponible</h2>
@@ -382,9 +386,11 @@ export class EmailService {
           `,
         };
         await sgMail.send(msg);
+        console.log('✅ Report email sent successfully via SendGrid to:', toEmail);
         return;
       } catch (error) {
-        console.error('SendGrid report email failed, falling back to SMTP:', error);
+        console.error('❌ SendGrid report email failed for:', toEmail, 'Error:', error);
+        console.log('🔄 Falling back to SMTP...');
       }
     }
     
@@ -395,7 +401,7 @@ export class EmailService {
 
     try {
       const mailOptions = {
-        from: process.env.EMAIL_FROM || 'noreply@wellness.com',
+        from: process.env.EMAIL_FROM || 'noreply@example.com',
         to: toEmail,
         subject: `Informe disponible - ${studentName}`,
         html: `
@@ -409,8 +415,9 @@ export class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
+      console.log('✅ Report email sent successfully to:', toEmail);
     } catch (error) {
-      console.error('Failed to send report email:', error);
+      console.error('❌ Failed to send report email to:', toEmail, 'Error:', error);
       // Don't throw error to prevent blocking report generation
     }
   }
