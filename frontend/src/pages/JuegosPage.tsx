@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { gamificacionService } from '../services/gamificacionService';
 import { useUIStore } from '../store/uiStore';
 import { Logro, UsuarioLogro } from '../types/logro';
+import CalmaMatchGame from '../components/CalmaMatchGame';
 import { 
   Gamepad2, 
   Trophy, 
@@ -12,7 +13,8 @@ import {
   Target,
   Palette,
   Music,
-  Sprout
+  Sprout,
+  Candy
 } from 'lucide-react';
 
 export default function JuegosPage() {
@@ -22,6 +24,29 @@ export default function JuegosPage() {
   const [nivel, setNivel] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
+
+  const handleGameComplete = (gameScore: number, gameCombo: number) => {
+    // Update gamification stats
+    const pointsEarned = Math.floor(gameScore / 10);
+    gamificacionService.addPuntos(pointsEarned).then(() => {
+      addToast({
+        type: 'success',
+        title: '¡Juego Completado!',
+        message: `Has ganado ${pointsEarned} puntos`,
+      });
+      setSelectedGame(null);
+      loadData(); // Reload to show updated stats
+    });
+  };
+
+  if (selectedGame === 'calma-match') {
+    return (
+      <CalmaMatchGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={handleGameComplete}
+      />
+    );
+  }
 
   useEffect(() => {
     loadData();
@@ -50,6 +75,14 @@ export default function JuegosPage() {
   };
 
   const games = [
+    {
+      id: 'calma-match',
+      name: 'Calma Match',
+      description: 'Combina gemas emocionales',
+      icon: Candy,
+      color: 'bg-rose-500',
+      unlocked: true,
+    },
     {
       id: 'puzzle',
       name: 'Puzzle Zen',
