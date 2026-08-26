@@ -27,11 +27,16 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   const [isMounted, setIsMounted] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isEndingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     setIsMounted(true);
     initializeGrid();
     return () => {
+      mountedRef.current = false;
+      setIsMounted(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
@@ -50,12 +55,19 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   };
 
   const startGame = () => {
+    if (!mountedRef.current) return;
+    
     setGameStarted(true);
     setTimeLeft(DURATION);
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
+    isEndingRef.current = false;
     initializeGrid();
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
 
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
@@ -69,10 +81,17 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   };
 
   const endGame = () => {
+    if (isEndingRef.current || !mountedRef.current) return;
+    
+    isEndingRef.current = true;
+    
     if (timerRef.current) {
       clearInterval(timerRef.current);
+      timerRef.current = null;
     }
+    
     setGameComplete(true);
+    
     // Only call onGameComplete if it's a valid function
     if (typeof onGameComplete === 'function') {
       try {
@@ -84,7 +103,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   };
 
   const handleCellClick = (row: number, col: number) => {
-    if (!gameStarted || isProcessing || gameComplete) return;
+    if (!gameStarted || isProcessing || gameComplete || !mountedRef.current) return;
 
     if (!selectedCell) {
       setSelectedCell({ row, col });
@@ -102,11 +121,13 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   };
 
   const swapCells = async (row1: number, col1: number, row2: number, col2: number) => {
+    if (!mountedRef.current || isProcessing || gameComplete) return;
+    
     setIsProcessing(true);
     setSelectedCell(null);
 
-    // Swap
-    const newGrid = [...grid];
+    // Deep copy the grid
+    const newGrid = grid.map(row => [...row]);
     const temp = newGrid[row1][col1];
     newGrid[row1][col1] = newGrid[row2][col2];
     newGrid[row2][col2] = temp;
@@ -120,7 +141,9 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     } else {
       // Swap back if no match
       setTimeout(() => {
-        const revertGrid = [...newGrid];
+        if (!mountedRef.current) return;
+        
+        const revertGrid = newGrid.map(row => [...row]);
         const temp = revertGrid[row1][col1];
         revertGrid[row1][col1] = revertGrid[row2][col2];
         revertGrid[row2][col2] = temp;
@@ -161,6 +184,8 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   };
 
   const processMatches = async (currentGrid: number[][], matches: {row: number, col: number}[]) => {
+    if (!mountedRef.current) return;
+
     // Remove duplicates
     const uniqueMatches = Array.from(new Set(matches.map(m => `${m.row},${m.col}`)))
       .map(str => {
@@ -171,6 +196,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     // Calculate score
     const points = uniqueMatches.length * 10 * (combo + 1);
     setScore(prev => prev + points);
+    
     setCombo(prev => {
       const newCombo = prev + 1;
       setMaxCombo(current => Math.max(current, newCombo));
@@ -178,7 +204,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     });
 
     // Remove matched cells
-    const newGrid = [...currentGrid];
+    const newGrid = currentGrid.map(row => [...row]);
     uniqueMatches.forEach(({row, col}) => {
       newGrid[row][col] = -1; // Mark as empty
     });
@@ -186,6 +212,8 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
 
     // Wait for animation
     await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (!mountedRef.current) return;
 
     // Drop cells
     dropCells(newGrid);
@@ -196,6 +224,9 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
 
     // Check for new matches
     await new Promise(resolve => setTimeout(resolve, 300));
+    
+    if (!mountedRef.current) return;
+    
     const newMatches = findMatches(newGrid);
     
     if (newMatches.length > 0) {
@@ -276,6 +307,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
               <button
                 onClick={() => {
                   setGameComplete(false);
+                  isEndingRef.current = false;
                   startGame();
                 }}
                 className="flex-1 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
@@ -369,6 +401,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
               setScore(0);
               setCombo(0);
               setMaxCombo(0);
+              isEndingRef.current = false;
               initializeGrid();
             }}
             className="px-8 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center gap-2"
