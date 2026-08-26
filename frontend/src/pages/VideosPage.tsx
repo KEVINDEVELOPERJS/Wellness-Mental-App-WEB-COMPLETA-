@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { videos, categorias, forumPosts, Video, ForumPost } from '../data/videos';
 import { useUIStore } from '../store/uiStore';
@@ -26,6 +26,11 @@ export default function VideosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showForum, setShowForum] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const filteredVideos = videos.filter(video => {
     const matchesCategory = selectedCategory === 'Todas' || video.categoria === selectedCategory;
@@ -40,7 +45,7 @@ export default function VideosPage() {
   };
 
   const handleShare = (video: Video) => {
-    if (navigator.share) {
+    if (typeof window !== 'undefined' && navigator.share) {
       navigator.share({
         title: video.titulo,
         text: video.descripcion,
@@ -101,6 +106,10 @@ export default function VideosPage() {
       post.likes += 1;
     }
   };
+
+  if (!isMounted) {
+    return <div className="flex items-center justify-center h-full">Cargando...</div>;
+  }
 
   if (selectedVideo && !showForum) {
     return (

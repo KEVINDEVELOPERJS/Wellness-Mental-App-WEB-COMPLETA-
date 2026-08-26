@@ -99,7 +99,7 @@ export default function JuegosPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     try {
@@ -238,7 +238,7 @@ export default function JuegosPage() {
             </div>
           ) : (
             logros.map((usuarioLogro) => (
-              <AchievementCard key={usuarioLogro.id} logro={usuarioLogro.logro} />
+              <AchievementCard key={usuarioLogro.id} logro={usuarioLogro.logro || usuarioLogro} />
             ))
           )}
         </div>
