@@ -55,7 +55,7 @@ export default function JuegosPage() {
         onBack={() => setSelectedGame(null)}
         title="Puzzle Zen"
         description="Este juego estará disponible próximamente. Ordena piezas relajantes para mejorar tu concentración."
-        icon={Target}
+        iconName="target"
         color="bg-purple-500"
       />
     );
@@ -67,7 +67,7 @@ export default function JuegosPage() {
         onBack={() => setSelectedGame(null)}
         title="Arte Emocional"
         description="Este juego estará disponible próximamente. Dibuja con colores para expresar tus emociones."
-        icon={Palette}
+        iconName="palette"
         color="bg-pink-500"
       />
     );
@@ -79,7 +79,7 @@ export default function JuegosPage() {
         onBack={() => setSelectedGame(null)}
         title="Ritmo Calma"
         description="Este juego estará disponible próximamente. Juego de timing para relajarte con la música."
-        icon={Music}
+        iconName="music"
         color="bg-blue-500"
       />
     );
@@ -91,7 +91,7 @@ export default function JuegosPage() {
         onBack={() => setSelectedGame(null)}
         title="Jardín Mental"
         description="Este juego estará disponible próximamente. Cultiva tu bienestar en un jardín virtual."
-        icon={Sprout}
+        iconName="sprout"
         color="bg-green-500"
       />
     );
@@ -309,7 +309,16 @@ function AchievementCard({ logro, locked }: any) {
   );
 }
 
-function PlaceholderGame({ onBack, title, description, icon: Icon, color }: any) {
+function PlaceholderGame({ onBack, title, description, iconName, color }: any) {
+  const iconMap: any = {
+    target: Target,
+    palette: Palette,
+    music: Music,
+    sprout: Sprout,
+  };
+  
+  const Icon = iconMap[iconName] || Gamepad2;
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
