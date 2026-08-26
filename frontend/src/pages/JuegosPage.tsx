@@ -27,6 +27,28 @@ export default function JuegosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
 
+  const loadData = async () => {
+    try {
+      const [userLogros, allLogrosData, nivelData] = await Promise.all([
+        gamificacionService.getUserLogros(),
+        gamificacionService.getLogros(),
+        gamificacionService.getNivel(),
+      ]);
+      
+      setLogros(userLogros);
+      setAllLogros(allLogrosData);
+      setNivel(nivelData);
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudieron cargar los datos de gamificación',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -52,6 +74,49 @@ export default function JuegosPage() {
       setSelectedGame(null);
     });
   };
+
+  const games = useMemo(() => [
+    {
+      id: 'calma-match',
+      name: 'Calma Match',
+      description: 'Combina gemas emocionales',
+      icon: Candy,
+      color: 'bg-rose-500',
+      unlocked: true,
+    },
+    {
+      id: 'puzzle',
+      name: 'Puzzle Zen',
+      description: 'Ordena piezas relajantes',
+      icon: Target,
+      color: 'bg-purple-500',
+      unlocked: true,
+    },
+    {
+      id: 'arte',
+      name: 'Arte Emocional',
+      description: 'Dibuja con colores',
+      icon: Palette,
+      color: 'bg-pink-500',
+      unlocked: true,
+    },
+    {
+      id: 'ritmo',
+      name: 'Ritmo Calma',
+      description: 'Juego de timing',
+      icon: Music,
+      color: 'bg-blue-500',
+      unlocked: true,
+    },
+    {
+      id: 'jardin',
+      name: 'Jardín Mental',
+      description: 'Cultiva tu bienestar',
+      icon: Sprout,
+      color: 'bg-green-500',
+      unlocked: nivel?.puntosActuales >= 100,
+    },
+  ], [nivel?.puntosActuales]);
 
   if (selectedGame === 'calma-match') {
     return (
@@ -109,71 +174,6 @@ export default function JuegosPage() {
       />
     );
   }
-
-  const loadData = async () => {
-    try {
-      const [userLogros, allLogrosData, nivelData] = await Promise.all([
-        gamificacionService.getUserLogros(),
-        gamificacionService.getLogros(),
-        gamificacionService.getNivel(),
-      ]);
-      
-      setLogros(userLogros);
-      setAllLogros(allLogrosData);
-      setNivel(nivelData);
-    } catch (error) {
-      addToast({
-        type: 'error',
-        title: 'Error',
-        message: 'No se pudieron cargar los datos de gamificación',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const games = useMemo(() => [
-    {
-      id: 'calma-match',
-      name: 'Calma Match',
-      description: 'Combina gemas emocionales',
-      icon: Candy,
-      color: 'bg-rose-500',
-      unlocked: true,
-    },
-    {
-      id: 'puzzle',
-      name: 'Puzzle Zen',
-      description: 'Ordena piezas relajantes',
-      icon: Target,
-      color: 'bg-purple-500',
-      unlocked: true,
-    },
-    {
-      id: 'arte',
-      name: 'Arte Emocional',
-      description: 'Dibuja con colores',
-      icon: Palette,
-      color: 'bg-pink-500',
-      unlocked: true,
-    },
-    {
-      id: 'ritmo',
-      name: 'Ritmo Calma',
-      description: 'Juego de timing',
-      icon: Music,
-      color: 'bg-blue-500',
-      unlocked: true,
-    },
-    {
-      id: 'jardin',
-      name: 'Jardín Mental',
-      description: 'Cultiva tu bienestar',
-      icon: Sprout,
-      color: 'bg-green-500',
-      unlocked: nivel?.puntosActuales >= 100,
-    },
-  ], [nivel?.puntosActuales]);
 
   if (isLoading) {
     return (

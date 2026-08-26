@@ -11,5 +11,5 @@
       "NODE_OPTIONS": "--max-old-space-size=4096"
     }
   },
-  "version": "blank-page-fix-remove-emergency-script-2026-08-26"
+  "version": "hooks-order-fix-react-error-300-2026-08-26"
 }
