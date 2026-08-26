@@ -95,4 +95,57 @@ export class GamificacionController {
       throw error;
     }
   }
+
+  static async getEstado(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.userId;
+      
+      // Return mock gamification state for now
+      res.json({
+        rachaActividad: 0,
+        minutosRestantesHoy: 30,
+        posicionRanking: 0,
+        misionesCompletadasHoy: 0,
+        misionesTotalesHoy: 3
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getMisionesDiarias(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.userId;
+      
+      // Return empty array for now - missions feature to be implemented
+      res.json([]);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getRankingCalmaMatch(req: Request, res: Response) {
+    try {
+      // Return empty array for now - ranking feature to be implemented
+      res.json([]);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async registrarSesionJuego(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.userId;
+      const { tipoJuego, puntos, combo, duracion } = req.body;
+      
+      // For now, return mock response
+      res.json({
+        puntosGanados: Math.floor(puntos / 10),
+        nivelSubido: false,
+        logrosDesbloqueados: []
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 }

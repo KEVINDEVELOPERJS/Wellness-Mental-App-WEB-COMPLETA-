@@ -187,7 +187,7 @@ export default function VideosPage() {
         <div>
           <h2 className="text-xl font-semibold mb-4">Videos Relacionados</h2>
           <div className="grid md:grid-cols-3 gap-4">
-            {videos
+            {Array.isArray(videos) && videos
               .filter(v => v.id !== selectedVideo.id && v.categoria === selectedVideo.categoria)
               .slice(0, 3)
               .map(video => (

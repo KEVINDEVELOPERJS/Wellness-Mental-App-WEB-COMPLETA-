@@ -4,7 +4,7 @@ import { animations, getComboAnimation, getComboColor } from '../utils/animation
 
 interface CalmaMatchGameProps {
   onBack: () => void;
-  onGameComplete: (score: number, combo: number) => void;
+  onGameComplete: (score: number, combo: number, gameType?: string) => void;
 }
 
 export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGameProps) {
@@ -111,7 +111,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     // Only call onGameComplete if it's a valid function
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, maxCombo);
+        onGameComplete(score, maxCombo, 'calma-match');
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }

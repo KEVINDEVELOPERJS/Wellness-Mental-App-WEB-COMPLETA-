@@ -116,8 +116,8 @@ export default function DashboardPsicologoPage() {
     }
   };
 
-  const recentAlertas = alertas.slice(0, 5);
-  const highRiskAlertas = alertas.filter(a => a.nivelRiesgo === 'ALTO' && a.estado === 'PENDIENTE').slice(0, 3);
+  const recentAlertas = Array.isArray(alertas) ? alertas.slice(0, 5) : [];
+  const highRiskAlertas = Array.isArray(alertas) ? alertas.filter(a => a.nivelRiesgo === 'ALTO' && a.estado === 'PENDIENTE').slice(0, 3) : [];
 
   if (isLoading) {
     return (
@@ -265,7 +265,7 @@ export default function DashboardPsicologoPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {alertas
+              {Array.isArray(alertas) && alertas
                 .filter(a => a.nivelRiesgo !== 'ALTO')
                 .slice(0, 5)
                 .map((alerta) => (

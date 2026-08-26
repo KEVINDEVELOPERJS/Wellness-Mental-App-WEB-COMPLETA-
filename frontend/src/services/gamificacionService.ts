@@ -43,27 +43,57 @@ export const gamificacionService = {
   },
 
   async getMisionesDiarias(): Promise<any> {
-    const response = await apiClient.get('/gamificacion/misiones-diarias');
-    return response.data;
+    try {
+      const response = await apiClient.get('/gamificacion/misiones-diarias');
+      return response.data;
+    } catch (error) {
+      console.log('Misiones diarias endpoint not available, returning empty array');
+      return [];
+    }
   },
 
   async getRankingCalmaMatch(): Promise<any> {
-    const response = await apiClient.get('/gamificacion/ranking/calma-match');
-    return response.data;
+    try {
+      const response = await apiClient.get('/gamificacion/ranking/calma-match');
+      return response.data;
+    } catch (error) {
+      console.log('Ranking Calma Match endpoint not available, returning empty array');
+      return [];
+    }
   },
 
   async getEstadoGamificacion(): Promise<any> {
-    const response = await apiClient.get('/gamificacion/estado');
-    return response.data;
+    try {
+      const response = await apiClient.get('/gamificacion/estado');
+      return response.data;
+    } catch (error) {
+      console.log('Estado gamificacion endpoint not available, returning default state');
+      return {
+        rachaActividad: 0,
+        minutosRestantesHoy: 30,
+        posicionRanking: 0,
+        misionesCompletadasHoy: 0,
+        misionesTotalesHoy: 3
+      };
+    }
   },
 
   async registrarSesionJuego(tipoJuego: string, puntos: number, combo: number, duracion: number): Promise<any> {
-    const response = await apiClient.post('/gamificacion/sesion-juego', { 
-      tipoJuego, 
-      puntos, 
-      combo, 
-      duracion 
-    });
-    return response.data;
+    try {
+      const response = await apiClient.post('/gamificacion/sesion-juego', { 
+        tipoJuego, 
+        puntos, 
+        combo, 
+        duracion 
+      });
+      return response.data;
+    } catch (error) {
+      console.log('Sesion juego endpoint not available, returning mock response');
+      return {
+        puntosGanados: Math.floor(puntos / 10),
+        nivelSubido: false,
+        logrosDesbloqueados: []
+      };
+    }
   },
 };

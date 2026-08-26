@@ -15,4 +15,10 @@ router.post('/verificar-logros', authenticate, GamificacionController.verificarL
 router.get('/estadisticas', authenticate, GamificacionController.getEstadisticas);
 router.get('/leaderboard', authenticate, GamificacionController.getLeaderboard);
 
+// Additional game endpoints
+router.get('/estado', authenticate, GamificacionController.getEstado);
+router.get('/misiones-diarias', authenticate, GamificacionController.getMisionesDiarias);
+router.get('/ranking/calma-match', authenticate, GamificacionController.getRankingCalmaMatch);
+router.post('/sesion-juego', authenticate, GamificacionController.registrarSesionJuego);
+
 export default router;
