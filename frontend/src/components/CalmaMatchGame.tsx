@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Trophy, Flame, Clock } from 'lucide-react';
+import { animations, getComboAnimation, getComboColor } from '../utils/animations';
 
 interface CalmaMatchGameProps {
   onBack: () => void;
@@ -63,6 +64,14 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
+    
+    // Reset combo color
+    setTimeout(() => {
+      const comboElement = document.getElementById('combo-display');
+      if (comboElement) {
+        comboElement.style.color = '#f97316'; // orange-500
+      }
+    }, 100);
     
     // Reinitialize grid
     const newGrid: number[][] = [];
@@ -207,6 +216,15 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     setCombo(prev => {
       const newCombo = prev + 1;
       setMaxCombo(current => Math.max(current, newCombo));
+      
+      // Apply combo animation
+      const comboElement = document.getElementById('combo-display');
+      if (comboElement) {
+        const animationType = getComboAnimation(newCombo);
+        animations[animationType](comboElement);
+        comboElement.style.color = getComboColor(newCombo);
+      }
+      
       return newCombo;
     });
 
@@ -241,6 +259,12 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     } else {
       setCombo(0);
       setIsProcessing(false);
+      
+      // Reset combo color
+      const comboElement = document.getElementById('combo-display');
+      if (comboElement) {
+        comboElement.style.color = '#f97316'; // orange-500
+      }
     }
   };
 
@@ -341,7 +365,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
           </div>
           <div className="flex items-center gap-1 text-orange-600">
             <Flame className="h-5 w-5" />
-            <span className="font-bold">{combo}</span>
+            <span id="combo-display" className="font-bold">{combo}</span>
           </div>
           <div className="flex items-center gap-1 text-blue-600">
             <Clock className="h-5 w-5" />
@@ -403,6 +427,12 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
               setScore(0);
               setCombo(0);
               setMaxCombo(0);
+              
+              // Reset combo color
+              const comboElement = document.getElementById('combo-display');
+              if (comboElement) {
+                comboElement.style.color = '#f97316'; // orange-500
+              }
               
               // Reinitialize grid
               const newGrid: number[][] = [];

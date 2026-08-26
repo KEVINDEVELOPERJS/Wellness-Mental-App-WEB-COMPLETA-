@@ -36,4 +36,34 @@ export const gamificacionService = {
     const response = await apiClient.get('/gamificacion/leaderboard');
     return response.data;
   },
+
+  async addPuntos(puntos: number): Promise<any> {
+    const response = await apiClient.post('/gamificacion/puntos', { tipoActividad: 'JUEGO_CALMA_MATCH', cantidad: puntos });
+    return response.data;
+  },
+
+  async getMisionesDiarias(): Promise<any> {
+    const response = await apiClient.get('/gamificacion/misiones-diarias');
+    return response.data;
+  },
+
+  async getRankingCalmaMatch(): Promise<any> {
+    const response = await apiClient.get('/gamificacion/ranking/calma-match');
+    return response.data;
+  },
+
+  async getEstadoGamificacion(): Promise<any> {
+    const response = await apiClient.get('/gamificacion/estado');
+    return response.data;
+  },
+
+  async registrarSesionJuego(tipoJuego: string, puntos: number, combo: number, duracion: number): Promise<any> {
+    const response = await apiClient.post('/gamificacion/sesion-juego', { 
+      tipoJuego, 
+      puntos, 
+      combo, 
+      duracion 
+    });
+    return response.data;
+  },
 };

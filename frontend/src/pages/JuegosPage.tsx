@@ -4,6 +4,11 @@ import { gamificacionService } from '../services/gamificacionService';
 import { useUIStore } from '../store/uiStore';
 import { Logro, UsuarioLogro } from '../types/logro';
 import CalmaMatchGame from '../components/CalmaMatchGame';
+import RitmoCalmaGame from '../components/RitmoCalmaGame';
+import JardinMentalGame from '../components/JardinMentalGame';
+import PuzzleZenGame from '../components/PuzzleZenGame';
+import ArteEmocionalGame from '../components/ArteEmocionalGame';
+import { animations } from '../utils/animations';
 import { 
   Gamepad2, 
   Trophy, 
@@ -16,7 +21,12 @@ import {
   Music,
   Sprout,
   Candy,
-  ArrowLeft
+  ArrowLeft,
+  Flame,
+  Clock,
+  Award,
+  TrendingUp,
+  CheckCircle
 } from 'lucide-react';
 
 export default function JuegosPage() {
@@ -26,18 +36,27 @@ export default function JuegosPage() {
   const [nivel, setNivel] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
+  const [misiones, setMisiones] = useState<any[]>([]);
+  const [ranking, setRanking] = useState<any[]>([]);
+  const [estadoGamificacion, setEstadoGamificacion] = useState<any>(null);
 
   const loadData = async () => {
     try {
-      const [userLogros, allLogrosData, nivelData] = await Promise.all([
+      const [userLogros, allLogrosData, nivelData, misionesData, rankingData, estadoData] = await Promise.all([
         gamificacionService.getUserLogros(),
         gamificacionService.getLogros(),
         gamificacionService.getNivel(),
+        gamificacionService.getMisionesDiarias().catch(() => []),
+        gamificacionService.getLeaderboard().catch(() => []),
+        gamificacionService.getEstadoGamificacion().catch(() => null),
       ]);
       
       setLogros(userLogros);
       setAllLogros(allLogrosData);
       setNivel(nivelData);
+      setMisiones(misionesData);
+      setRanking(rankingData);
+      setEstadoGamificacion(estadoData);
     } catch (error) {
       addToast({
         type: 'error',
@@ -53,7 +72,7 @@ export default function JuegosPage() {
     loadData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleGameComplete = (gameScore: number, gameCombo: number) => {
+  const handleGameComplete = (gameScore: number, gameCombo: number, gameType?: string) => {
     // Update gamification stats
     const pointsEarned = Math.floor(gameScore / 10);
     gamificacionService.addPuntos(pointsEarned).then(() => {
@@ -127,50 +146,38 @@ export default function JuegosPage() {
     );
   }
 
-  if (selectedGame === 'puzzle') {
-    return (
-      <PlaceholderGame
-        onBack={() => setSelectedGame(null)}
-        title="Puzzle Zen"
-        description="Este juego estará disponible próximamente. Ordena piezas relajantes para mejorar tu concentración."
-        iconName="target"
-        color="bg-purple-500"
-      />
-    );
-  }
-
-  if (selectedGame === 'arte') {
-    return (
-      <PlaceholderGame
-        onBack={() => setSelectedGame(null)}
-        title="Arte Emocional"
-        description="Este juego estará disponible próximamente. Dibuja con colores para expresar tus emociones."
-        iconName="palette"
-        color="bg-pink-500"
-      />
-    );
-  }
-
   if (selectedGame === 'ritmo') {
     return (
-      <PlaceholderGame
+      <RitmoCalmaGame
         onBack={() => setSelectedGame(null)}
-        title="Ritmo Calma"
-        description="Este juego estará disponible próximamente. Juego de timing para relajarte con la música."
-        iconName="music"
-        color="bg-blue-500"
+        onGameComplete={handleGameComplete}
       />
     );
   }
 
   if (selectedGame === 'jardin') {
     return (
-      <PlaceholderGame
+      <JardinMentalGame
         onBack={() => setSelectedGame(null)}
-        title="Jardín Mental"
-        description="Este juego estará disponible próximamente. Cultiva tu bienestar en un jardín virtual."
-        iconName="sprout"
-        color="bg-green-500"
+        onGameComplete={handleGameComplete}
+      />
+    );
+  }
+
+  if (selectedGame === 'puzzle') {
+    return (
+      <PuzzleZenGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={handleGameComplete}
+      />
+    );
+  }
+
+  if (selectedGame === 'arte') {
+    return (
+      <ArteEmocionalGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={handleGameComplete}
       />
     );
   }
@@ -220,6 +227,88 @@ export default function JuegosPage() {
         </div>
       </div>
 
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card rounded-xl p-4 border">
+          <div className="flex items-center gap-2 mb-2">
+            <Flame className="h-5 w-5 text-orange-500" />
+            <span className="text-sm text-muted-foreground">Racha</span>
+          </div>
+          <p className="text-2xl font-bold">{estadoGamificacion?.rachaActividad || 0}</p>
+        </div>
+        <div className="bg-card rounded-xl p-4 border">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="h-5 w-5 text-blue-500" />
+            <span className="text-sm text-muted-foreground">Tiempo Hoy</span>
+          </div>
+          <p className="text-2xl font-bold">{estadoGamificacion?.minutosRestantesHoy || 0} min</p>
+        </div>
+        <div className="bg-card rounded-xl p-4 border">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="h-5 w-5 text-green-500" />
+            <span className="text-sm text-muted-foreground">Ranking</span>
+          </div>
+          <p className="text-2xl font-bold">#{estadoGamificacion?.posicionRanking || 0}</p>
+        </div>
+        <div className="bg-card rounded-xl p-4 border">
+          <div className="flex items-center gap-2 mb-2">
+            <Award className="h-5 w-5 text-purple-500" />
+            <span className="text-sm text-muted-foreground">Misiones</span>
+          </div>
+          <p className="text-2xl font-bold">{estadoGamificacion?.misionesCompletadasHoy || 0}/{estadoGamificacion?.misionesTotalesHoy || 3}</p>
+        </div>
+      </div>
+
+      {/* Daily Missions */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Misiones Diarias</h2>
+        <div className="space-y-3">
+          {misiones.length === 0 ? (
+            <div className="text-center py-8 bg-card rounded-xl border">
+              <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">
+                No hay misiones disponibles por ahora
+              </p>
+            </div>
+          ) : (
+            misiones.map((mision) => (
+              <div
+                key={mision.id}
+                className={`bg-card rounded-xl p-4 border ${
+                  mision.completada ? 'opacity-60' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${
+                      mision.completada ? 'bg-green-100' : 'bg-blue-100'
+                    }`}>
+                      {mision.completada ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <Star className="h-5 w-5 text-blue-600" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{mision.titulo}</h4>
+                      <p className="text-sm text-muted-foreground">{mision.descripcion}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-primary">+{mision.puntos} pts</p>
+                    {mision.progreso !== undefined && (
+                      <p className="text-xs text-muted-foreground">
+                        {mision.progreso}/{mision.objetivo}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       {/* Games Grid */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Mini Juegos</h2>
@@ -231,6 +320,52 @@ export default function JuegosPage() {
               onSelect={setSelectedGame}
             />
           ))}
+        </div>
+      </div>
+
+      {/* Ranking */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Ranking Global</h2>
+        <div className="bg-card rounded-xl border overflow-hidden">
+          {ranking.length === 0 ? (
+            <div className="text-center py-8">
+              <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">
+                Ranking no disponible
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {ranking.slice(0, 5).map((user, index) => (
+                <div
+                  key={user.id}
+                  className={`flex items-center justify-between p-4 ${
+                    index === 0 ? 'bg-yellow-50' : index === 1 ? 'bg-gray-50' : index === 2 ? 'bg-orange-50' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      index === 0 ? 'bg-yellow-500 text-white' : 
+                      index === 1 ? 'bg-gray-400 text-white' : 
+                      index === 2 ? 'bg-orange-400 text-white' : 
+                      'bg-gray-200 text-gray-600'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{user.nombre}</h4>
+                      <p className="text-sm text-muted-foreground">{user.puntos} puntos</p>
+                    </div>
+                  </div>
+                  {user.esUsuario && (
+                    <span className="text-xs bg-primary text-white px-2 py-1 rounded-full">
+                      Tú
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -276,7 +411,7 @@ const GameCard = React.memo(function GameCard({ game, onSelect }: any) {
   };
 
   return (
-    <div className="bg-card rounded-xl p-6 border hover:shadow-lg transition-all">
+    <div className="bg-card rounded-xl p-6 border hover:shadow-lg transition-all cursor-pointer">
       <div className="flex items-start justify-between mb-4">
         <div className={`${game.color} rounded-full p-3`}>
           <game.icon className="h-6 w-6 text-white" />
@@ -292,7 +427,10 @@ const GameCard = React.memo(function GameCard({ game, onSelect }: any) {
       <p className="text-sm text-muted-foreground mb-4">{game.description}</p>
       
       <button
-        onClick={handleClick}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleClick();
+        }}
         disabled={!game.unlocked}
         className="w-full py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
       >
@@ -320,47 +458,6 @@ function AchievementCard({ logro, locked }: any) {
           <span>Bloqueado</span>
         </div>
       )}
-    </div>
-  );
-}
-
-function PlaceholderGame({ onBack, title, description, iconName, color }: any) {
-  const iconMap: any = {
-    target: Target,
-    palette: Palette,
-    music: Music,
-    sprout: Sprout,
-  };
-  
-  const Icon = iconMap[iconName] || Gamepad2;
-
-  return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span>Volver</span>
-        </button>
-        <h1 className="text-2xl font-bold">{title}</h1>
-        <div className="w-20"></div>
-      </div>
-
-      <div className="flex flex-col items-center justify-center py-16">
-        <div className={`${color} rounded-full p-8 mb-6`}>
-          <Icon className="h-16 w-16 text-white" />
-        </div>
-        <h2 className="text-3xl font-bold mb-4">Próximamente</h2>
-        <p className="text-gray-600 text-center max-w-md mb-8">{description}</p>
-        <button
-          onClick={onBack}
-          className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
-        >
-          Volver a Juegos
-        </button>
-      </div>
     </div>
   );
 }

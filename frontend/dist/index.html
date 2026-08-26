@@ -9,28 +9,12 @@
     <meta name="description" content="App de bienestar mental para estudiantes adolescentes" />
     <title>Wellness Mental - Bienestar Estudiantil</title>
     <meta name="theme-color" content="#4CAF50" />
-    <script type="module" crossorigin src="/assets/index-L5bB6v_q.js"></script>
+    <script type="module" crossorigin src="/assets/index-Dm8ZKLYr.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-BjU5LUAW.js">
     <link rel="modulepreload" crossorigin href="/assets/ui-CipO2WS8.js">
     <link rel="stylesheet" crossorigin href="/assets/index-DP_YufpX.css">
   </head>
   <body>
     <div id="root"></div>
-  <script>
-    // Emergency cache clear script - will only run once
-    if (!sessionStorage.getItem('cacheCleared')) {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
-            registration.unregister();
-            console.log('Emergency: Service worker unregistered');
-          }
-          sessionStorage.setItem('cacheCleared', 'true');
-          console.log('Emergency: Cache cleared, reloading...');
-          setTimeout(() => window.location.reload(true), 500);
-        });
-      }
-    }
-  </script>
   </body>
 </html>
