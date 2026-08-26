@@ -111,36 +111,38 @@ export default function ComunidadPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Comunidad y Foros</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Comunidad y Foros</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Comparte experiencias y participa en foros de discusión
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
           <button
             onClick={() => navigate('/videos')}
-            className="flex items-center space-x-2 px-4 py-2 bg-secondary rounded-lg hover:bg-accent transition-colors"
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-secondary rounded-lg hover:bg-accent transition-colors"
           >
             <Video className="h-4 w-4" />
-            <span>Ver Videos</span>
+            <span className="hidden sm:inline">Ver Videos</span>
+            <span className="sm:hidden">Videos</span>
           </button>
           <button
             onClick={() => setShowNewPost(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-4 w-4" />
-            <span>Nuevo Post</span>
+            <span className="hidden sm:inline">Nuevo Post</span>
+            <span className="sm:hidden">Nuevo</span>
           </button>
         </div>
       </div>
 
       {/* Category Filter */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+      <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-hide">
         <button
           onClick={() => setSelectedCategoria('')}
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+          className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm whitespace-nowrap transition-colors ${
             selectedCategoria === '' 
               ? 'bg-primary text-white' 
               : 'bg-secondary hover:bg-accent'
@@ -152,7 +154,7 @@ export default function ComunidadPage() {
           <button
             key={categoria}
             onClick={() => setSelectedCategoria(categoria)}
-            className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+            className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm whitespace-nowrap transition-colors ${
               selectedCategoria === categoria 
                 ? 'bg-primary text-white' 
                 : 'bg-secondary hover:bg-accent'
@@ -165,7 +167,7 @@ export default function ComunidadPage() {
 
       {/* New Post Form */}
       {showNewPost && (
-        <div className="bg-card rounded-xl p-6 border">
+        <div className="bg-card rounded-xl p-4 md:p-6 border">
           <h3 className="text-lg font-semibold mb-4">Crear Nuevo Post</h3>
           <form onSubmit={handleSubmitPost} className="space-y-4">
             <div>
@@ -175,7 +177,7 @@ export default function ComunidadPage() {
                 value={newPost.titulo}
                 onChange={(e) => setNewPost({ ...newPost, titulo: e.target.value })}
                 maxLength={200}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 py-2 md:px-4 md:py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm md:text-base"
                 placeholder="Título de tu post..."
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -188,7 +190,7 @@ export default function ComunidadPage() {
               <select
                 value={newPost.categoria}
                 onChange={(e) => setNewPost({ ...newPost, categoria: e.target.value })}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 py-2 md:px-4 md:py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm md:text-base"
               >
                 <option value="">Seleccionar categoría</option>
                 {categorias.map((cat) => (
@@ -204,7 +206,7 @@ export default function ComunidadPage() {
                 onChange={(e) => setNewPost({ ...newPost, contenido: e.target.value })}
                 maxLength={2000}
                 rows={4}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                className="w-full px-3 py-2 md:px-4 md:py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm md:text-base"
                 placeholder="Comparte tu experiencia..."
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -212,7 +214,7 @@ export default function ComunidadPage() {
               </p>
             </div>
 
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
               <button
                 type="submit"
                 className="flex-1 bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors"
@@ -254,40 +256,40 @@ function PostCard({ post, onLike }: any) {
   const timeAgo = getTimeAgo(new Date(post.fecha));
 
   return (
-    <div className="bg-card rounded-xl p-6 border hover:shadow-lg transition-all">
+    <div className="bg-card rounded-xl p-4 md:p-6 border hover:shadow-lg transition-all">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
+          <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm md:text-base">
             {post.usuario?.nombre?.charAt(0) || 'U'}
           </div>
           <div>
-            <p className="font-medium">{post.usuario?.nombre || 'Anónimo'}</p>
+            <p className="font-medium text-sm md:text-base">{post.usuario?.nombre || 'Anónimo'}</p>
             <p className="text-xs text-muted-foreground">{timeAgo}</p>
           </div>
         </div>
-        <span className="text-xs bg-secondary px-2 py-1 rounded-full">
+        <span className="text-xs bg-secondary px-2 py-1 rounded-full whitespace-nowrap">
           {post.categoria}
         </span>
       </div>
 
-      <h3 className="text-lg font-semibold mb-2">{post.titulo}</h3>
-      <p className="text-muted-foreground mb-4">{post.contenido}</p>
+      <h3 className="text-base md:text-lg font-semibold mb-2">{post.titulo}</h3>
+      <p className="text-sm md:text-base text-muted-foreground mb-4 line-clamp-3 md:line-clamp-none">{post.contenido}</p>
 
       <div className="flex items-center justify-between pt-4 border-t">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3 md:space-x-4">
           <button
             onClick={() => onLike(post.id)}
-            className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors"
+            className="flex items-center space-x-1 md:space-x-2 text-muted-foreground hover:text-primary transition-colors"
           >
             <Heart className="h-4 w-4" />
-            <span>{post.likes}</span>
+            <span className="text-xs md:text-sm">{post.likes}</span>
           </button>
-          <button className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors">
+          <button className="flex items-center space-x-1 md:space-x-2 text-muted-foreground hover:text-primary transition-colors">
             <MessageSquare className="h-4 w-4" />
-            <span>{post.comentarios?.length || 0}</span>
+            <span className="text-xs md:text-sm">{post.comentarios?.length || 0}</span>
           </button>
         </div>
-        <button className="text-sm text-muted-foreground hover:text-primary transition-colors">
+        <button className="text-xs md:text-sm text-muted-foreground hover:text-primary transition-colors">
           Ver comentarios
         </button>
       </div>

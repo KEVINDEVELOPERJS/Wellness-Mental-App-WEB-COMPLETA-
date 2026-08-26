@@ -250,3 +250,30 @@ export const getComboWord = (combo: number): string => {
   if (combo >= 2) return '¡GENIAL!';
   return '¡BUEN!';
 };
+
+// Helper to get motivational phrase based on score
+export const getMotivationalPhrase = (score: number): string => {
+  const phrases = [
+    { threshold: 0, text: '¡Comienza tu viaje de calma!' },
+    { threshold: 100, text: '¡Excelente inicio! Sigue así.' },
+    { threshold: 250, text: '¡Tu mente se está relajando!' },
+    { threshold: 500, text: '¡Eres un maestro de la calma!' },
+    { threshold: 750, text: '¡Cada combo te acerca a la paz!' },
+    { threshold: 1000, text: '¡Tu bienestar mental crece!' },
+    { threshold: 1500, text: '¡Eres increíble buscando combos!' },
+    { threshold: 2000, text: '¡La paz interior es tu aliado!' },
+    { threshold: 3000, text: '¡Maestro del equilibrio mental!' },
+    { threshold: 5000, text: '¡Tu claridad mental es excepcional!' },
+    { threshold: 7500, text: '¡Eres un líder en bienestar!' },
+    { threshold: 10000, text: '¡Leyenda de la calma mental!' }
+  ];
+
+  // Find the highest threshold that the score has reached
+  let currentPhrase = phrases[0].text;
+  for (const phrase of phrases) {
+    if (score >= phrase.threshold) {
+      currentPhrase = phrase.text;
+    }
+  }
+  return currentPhrase;
+};

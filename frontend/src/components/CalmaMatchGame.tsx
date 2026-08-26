@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Trophy, Flame, Clock } from 'lucide-react';
-import { animations, getComboAnimation, getComboColor, getComboWord } from '../utils/animations';
+import { animations, getComboAnimation, getComboColor, getComboWord, getMotivationalPhrase } from '../utils/animations';
 
 interface CalmaMatchGameProps {
   onBack: () => void;
@@ -25,6 +25,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   const [gameStarted, setGameStarted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
+  const [motivationalPhrase, setMotivationalPhrase] = useState('¡Comienza tu viaje de calma!');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
@@ -64,6 +65,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
+    setMotivationalPhrase('¡Comienza tu viaje de calma!');
     
     // Reset combo color
     setTimeout(() => {
@@ -211,7 +213,12 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
 
     // Calculate score
     const points = uniqueMatches.length * 10 * (combo + 1);
-    setScore(prev => prev + points);
+    setScore(prev => {
+      const newScore = prev + points;
+      // Update motivational phrase based on new score
+      setMotivationalPhrase(getMotivationalPhrase(newScore));
+      return newScore;
+    });
     
     const newCombo = combo + 1;
     setCombo(newCombo);
@@ -447,6 +454,9 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
 
       <div className="mb-6 text-center">
         <div className="text-gray-600">Intercambia gemas adyacentes para crear grupos de 3 o más. ¡Relájate y diviértete!</div>
+        <div className="mt-2 text-sm md:text-base font-semibold text-purple-600 animate-pulse">
+          {motivationalPhrase}
+        </div>
       </div>
 
       <div className="flex justify-center mb-6">
@@ -499,6 +509,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
               setScore(0);
               setCombo(0);
               setMaxCombo(0);
+              setMotivationalPhrase('¡Comienza tu viaje de calma!');
               
               // Reset combo color
               const comboElement = document.getElementById('combo-display');
