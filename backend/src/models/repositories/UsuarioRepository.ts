@@ -1,13 +1,12 @@
 import prisma from '../../config/database';
 import { Usuario, UsuarioDTO } from '../entities/Usuario';
 import { HashService } from '../../services/HashService';
-import { EncryptionService } from '../../services/EncryptionService';
 
 export class UsuarioRepository {
   static async create(usuarioDTO: UsuarioDTO): Promise<Usuario> {
     const passwordHash = await HashService.hashPassword(usuarioDTO.password);
     
-    return prisma.usuario.create({
+    const user = await prisma.usuario.create({
       data: {
         nombre: usuarioDTO.nombre,
         email: usuarioDTO.email,
@@ -20,18 +19,42 @@ export class UsuarioRepository {
         consentimientoPadres: usuarioDTO.rol === 'ESTUDIANTE' && usuarioDTO.edad < 16,
       },
     });
+    
+    return {
+      ...user,
+      passwordHash: user.passwordHash,
+      codigoInvitacionPadre: user.codigoInvitacionPadre || undefined,
+      avatar: user.avatar || undefined,
+      telefono: user.telefono || undefined,
+    } as Usuario;
   }
 
   static async findById(id: number): Promise<Usuario | null> {
-    return prisma.usuario.findUnique({
+    const user = await prisma.usuario.findUnique({
       where: { id },
     });
+    if (!user) return null;
+    return {
+      ...user,
+      passwordHash: user.passwordHash,
+      codigoInvitacionPadre: user.codigoInvitacionPadre || undefined,
+      avatar: user.avatar || undefined,
+      telefono: user.telefono || undefined,
+    } as Usuario;
   }
 
   static async findByEmail(email: string): Promise<Usuario | null> {
-    return prisma.usuario.findUnique({
+    const user = await prisma.usuario.findUnique({
       where: { email },
     });
+    if (!user) return null;
+    return {
+      ...user,
+      passwordHash: user.passwordHash,
+      codigoInvitacionPadre: user.codigoInvitacionPadre || undefined,
+      avatar: user.avatar || undefined,
+      telefono: user.telefono || undefined,
+    } as Usuario;
   }
 
   static async validateEmailUnique(email: string): Promise<boolean> {
@@ -55,10 +78,18 @@ export class UsuarioRepository {
   }
 
   static async updateProfile(id: number, data: Partial<Usuario>): Promise<Usuario> {
-    return prisma.usuario.update({
+    const user = await prisma.usuario.update({
       where: { id },
       data,
     });
+    
+    return {
+      ...user,
+      passwordHash: user.passwordHash,
+      codigoInvitacionPadre: user.codigoInvitacionPadre || undefined,
+      avatar: user.avatar || undefined,
+      telefono: user.telefono || undefined,
+    } as Usuario;
   }
 
   static async generateInvitationCode(id: number): Promise<string> {

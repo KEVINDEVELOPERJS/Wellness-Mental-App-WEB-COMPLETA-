@@ -26,7 +26,7 @@ const loginSchema = z.object({
 export class AuthController {
   static async registrar(req: Request, res: Response) {
     try {
-      const data = registroSchema.parse(req.body);
+      const data = registroSchema.parse(req.body) as any;
 
       // Validate email uniqueness
       const emailUnico = await UsuarioRepository.validateEmailUnique(data.email);
@@ -48,7 +48,7 @@ export class AuthController {
       }
 
       // Create user
-      const usuario = await UsuarioRepository.create(data);
+      const usuario = await UsuarioRepository.create(data as any);
 
       // Generate tokens
       const tokenPayload = JwtService.generateTokenPayload(usuario);
@@ -60,10 +60,10 @@ export class AuthController {
         data: {
           usuarioId: usuario.id,
           token: refreshToken,
-          ip: req.ip,
+          ip: req.ip || 'unknown',
           userAgent: req.get('user-agent') || 'unknown',
         },
-      });
+      } as any);
 
       // Send verification email if under 16 (for students only)
       if (data.rol === 'ESTUDIANTE' && data.edad < 16) {
@@ -117,10 +117,10 @@ export class AuthController {
         data: {
           usuarioId: usuario.id,
           token: refreshToken,
-          ip: req.ip,
+          ip: req.ip || 'unknown',
           userAgent: req.get('user-agent') || 'unknown',
         },
-      });
+      } as any);
 
       res.json({
         usuario: {
@@ -159,8 +159,15 @@ export class AuthController {
         throw new AppError(401, 'Invalid refresh token');
       }
 
-      // Generate new access token
-      const newAccessToken = JwtService.generateAccessToken(payload);
+      // Fetch user to get fresh data
+      const usuario = await UsuarioRepository.findById(payload.userId);
+      if (!usuario) {
+        throw new AppError(404, 'User not found');
+      }
+
+      // Generate new access token with fresh payload (without exp property)
+      const freshTokenPayload = JwtService.generateTokenPayload(usuario);
+      const newAccessToken = JwtService.generateAccessToken(freshTokenPayload);
 
       res.json({ accessToken: newAccessToken });
     } catch (error) {

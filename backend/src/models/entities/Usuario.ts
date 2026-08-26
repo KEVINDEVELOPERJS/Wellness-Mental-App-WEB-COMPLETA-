@@ -4,6 +4,7 @@ export interface Usuario {
   id: number;
   nombre: string;
   email: string;
+  passwordHash: string;
   edad: number;
   grado: string;
   rol: Rol;

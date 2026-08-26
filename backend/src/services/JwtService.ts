@@ -16,13 +16,13 @@ export class JwtService {
   static generateAccessToken(payload: TokenPayload): string {
     return jwt.sign(payload, this.ACCESS_SECRET, {
       expiresIn: this.ACCESS_TOKEN_EXPIRES,
-    });
+    } as any);
   }
 
   static generateRefreshToken(payload: TokenPayload): string {
     return jwt.sign(payload, this.REFRESH_SECRET, {
       expiresIn: this.REFRESH_TOKEN_EXPIRES,
-    });
+    } as any);
   }
 
   static verifyAccessToken(token: string): TokenPayload {
