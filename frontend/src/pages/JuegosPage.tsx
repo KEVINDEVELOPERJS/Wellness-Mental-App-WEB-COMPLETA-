@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import React from 'react';
 import { gamificacionService } from '../services/gamificacionService';
 import { useUIStore } from '../store/uiStore';
 import { Logro, UsuarioLogro } from '../types/logro';
@@ -50,10 +51,12 @@ export default function JuegosPage() {
 
   if (selectedGame === 'calma-match') {
     return (
-      <CalmaMatchGame
-        onBack={() => setSelectedGame(null)}
-        onGameComplete={handleGameComplete}
-      />
+      <div key="calma-match">
+        <CalmaMatchGame
+          onBack={() => setSelectedGame(null)}
+          onGameComplete={handleGameComplete}
+        />
+      </div>
     );
   }
 
@@ -131,7 +134,7 @@ export default function JuegosPage() {
     }
   };
 
-  const games = [
+  const games = useMemo(() => [
     {
       id: 'calma-match',
       name: 'Calma Match',
@@ -172,7 +175,7 @@ export default function JuegosPage() {
       color: 'bg-green-500',
       unlocked: nivel?.puntosActuales >= 100,
     },
-  ];
+  ], [nivel?.puntosActuales]);
 
   if (isLoading) {
     return (
@@ -227,7 +230,7 @@ export default function JuegosPage() {
             <GameCard
               key={game.id}
               game={game}
-              onSelect={() => setSelectedGame(game.id)}
+              onSelect={setSelectedGame}
             />
           ))}
         </div>
@@ -267,7 +270,13 @@ export default function JuegosPage() {
   );
 }
 
-function GameCard({ game, onSelect }: any) {
+const GameCard = React.memo(function GameCard({ game, onSelect }: any) {
+  const handleClick = () => {
+    if (game.unlocked) {
+      onSelect(game.id);
+    }
+  };
+
   return (
     <div className="bg-card rounded-xl p-6 border hover:shadow-lg transition-all">
       <div className="flex items-start justify-between mb-4">
@@ -285,7 +294,7 @@ function GameCard({ game, onSelect }: any) {
       <p className="text-sm text-muted-foreground mb-4">{game.description}</p>
       
       <button
-        onClick={onSelect}
+        onClick={handleClick}
         disabled={!game.unlocked}
         className="w-full py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
       >
@@ -294,7 +303,7 @@ function GameCard({ game, onSelect }: any) {
       </button>
     </div>
   );
-}
+});
 
 function AchievementCard({ logro, locked }: any) {
   return (

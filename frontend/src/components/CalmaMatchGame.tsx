@@ -24,26 +24,47 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   const [gameStarted, setGameStarted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const isEndingRef = useRef(false);
-  const mountedRef = useRef(true);
+  const isMountedRef = useRef(true);
 
+  // Initialize grid on mount
   useEffect(() => {
-    mountedRef.current = true;
-    setIsMounted(true);
+    isMountedRef.current = true;
+    
+    const initializeGrid = () => {
+      const newGrid: number[][] = [];
+      for (let row = 0; row < ROWS; row++) {
+        newGrid[row] = [];
+        for (let col = 0; col < COLS; col++) {
+          newGrid[row][col] = Math.floor(Math.random() * TYPES);
+        }
+      }
+      if (isMountedRef.current) {
+        setGrid(newGrid);
+      }
+    };
+    
     initializeGrid();
+    
     return () => {
-      mountedRef.current = false;
-      setIsMounted(false);
+      isMountedRef.current = false;
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
   }, []);
 
-  const initializeGrid = () => {
+  const startGame = () => {
+    if (!isMountedRef.current) return;
+    
+    setGameStarted(true);
+    setTimeLeft(DURATION);
+    setScore(0);
+    setCombo(0);
+    setMaxCombo(0);
+    
+    // Reinitialize grid
     const newGrid: number[][] = [];
     for (let row = 0; row < ROWS; row++) {
       newGrid[row] = [];
@@ -52,18 +73,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
       }
     }
     setGrid(newGrid);
-  };
-
-  const startGame = () => {
-    if (!mountedRef.current) return;
-    
-    setGameStarted(true);
-    setTimeLeft(DURATION);
-    setScore(0);
-    setCombo(0);
-    setMaxCombo(0);
-    isEndingRef.current = false;
-    initializeGrid();
 
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -81,9 +90,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   };
 
   const endGame = () => {
-    if (isEndingRef.current || !mountedRef.current) return;
-    
-    isEndingRef.current = true;
+    if (!isMountedRef.current) return;
     
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -103,7 +110,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   };
 
   const handleCellClick = (row: number, col: number) => {
-    if (!gameStarted || isProcessing || gameComplete || !mountedRef.current) return;
+    if (!gameStarted || isProcessing || gameComplete || !isMountedRef.current) return;
 
     if (!selectedCell) {
       setSelectedCell({ row, col });
@@ -121,7 +128,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   };
 
   const swapCells = async (row1: number, col1: number, row2: number, col2: number) => {
-    if (!mountedRef.current || isProcessing || gameComplete) return;
+    if (!isMountedRef.current || isProcessing || gameComplete) return;
     
     setIsProcessing(true);
     setSelectedCell(null);
@@ -141,7 +148,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     } else {
       // Swap back if no match
       setTimeout(() => {
-        if (!mountedRef.current) return;
+        if (!isMountedRef.current) return;
         
         const revertGrid = newGrid.map(row => [...row]);
         const temp = revertGrid[row1][col1];
@@ -184,7 +191,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   };
 
   const processMatches = async (currentGrid: number[][], matches: {row: number, col: number}[]) => {
-    if (!mountedRef.current) return;
+    if (!isMountedRef.current) return;
 
     // Remove duplicates
     const uniqueMatches = Array.from(new Set(matches.map(m => `${m.row},${m.col}`)))
@@ -213,7 +220,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     // Wait for animation
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    if (!mountedRef.current) return;
+    if (!isMountedRef.current) return;
 
     // Drop cells
     dropCells(newGrid);
@@ -225,7 +232,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     // Check for new matches
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    if (!mountedRef.current) return;
+    if (!isMountedRef.current) return;
     
     const newMatches = findMatches(newGrid);
     
@@ -268,10 +275,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (!isMounted) {
-    return <div className="flex items-center justify-center h-full">Cargando juego...</div>;
-  }
-
   if (gameComplete) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -307,7 +310,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
               <button
                 onClick={() => {
                   setGameComplete(false);
-                  isEndingRef.current = false;
                   startGame();
                 }}
                 className="flex-1 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
@@ -401,8 +403,16 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
               setScore(0);
               setCombo(0);
               setMaxCombo(0);
-              isEndingRef.current = false;
-              initializeGrid();
+              
+              // Reinitialize grid
+              const newGrid: number[][] = [];
+              for (let row = 0; row < ROWS; row++) {
+                newGrid[row] = [];
+                for (let col = 0; col < COLS; col++) {
+                  newGrid[row][col] = Math.floor(Math.random() * TYPES);
+                }
+              }
+              setGrid(newGrid);
             }}
             className="px-8 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center gap-2"
           >
