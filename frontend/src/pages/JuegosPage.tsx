@@ -14,7 +14,8 @@ import {
   Palette,
   Music,
   Sprout,
-  Candy
+  Candy,
+  ArrowLeft
 } from 'lucide-react';
 
 export default function JuegosPage() {
@@ -44,6 +45,54 @@ export default function JuegosPage() {
       <CalmaMatchGame
         onBack={() => setSelectedGame(null)}
         onGameComplete={handleGameComplete}
+      />
+    );
+  }
+
+  if (selectedGame === 'puzzle') {
+    return (
+      <PlaceholderGame
+        onBack={() => setSelectedGame(null)}
+        title="Puzzle Zen"
+        description="Este juego estará disponible próximamente. Ordena piezas relajantes para mejorar tu concentración."
+        icon={Target}
+        color="bg-purple-500"
+      />
+    );
+  }
+
+  if (selectedGame === 'arte') {
+    return (
+      <PlaceholderGame
+        onBack={() => setSelectedGame(null)}
+        title="Arte Emocional"
+        description="Este juego estará disponible próximamente. Dibuja con colores para expresar tus emociones."
+        icon={Palette}
+        color="bg-pink-500"
+      />
+    );
+  }
+
+  if (selectedGame === 'ritmo') {
+    return (
+      <PlaceholderGame
+        onBack={() => setSelectedGame(null)}
+        title="Ritmo Calma"
+        description="Este juego estará disponible próximamente. Juego de timing para relajarte con la música."
+        icon={Music}
+        color="bg-blue-500"
+      />
+    );
+  }
+
+  if (selectedGame === 'jardin') {
+    return (
+      <PlaceholderGame
+        onBack={() => setSelectedGame(null)}
+        title="Jardín Mental"
+        description="Este juego estará disponible próximamente. Cultiva tu bienestar en un jardín virtual."
+        icon={Sprout}
+        color="bg-green-500"
       />
     );
   }
@@ -256,6 +305,38 @@ function AchievementCard({ logro, locked }: any) {
           <span>Bloqueado</span>
         </div>
       )}
+    </div>
+  );
+}
+
+function PlaceholderGame({ onBack, title, description, icon: Icon, color }: any) {
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span>Volver</span>
+        </button>
+        <h1 className="text-2xl font-bold">{title}</h1>
+        <div className="w-20"></div>
+      </div>
+
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className={`${color} rounded-full p-8 mb-6`}>
+          <Icon className="h-16 w-16 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold mb-4">Próximamente</h2>
+        <p className="text-gray-600 text-center max-w-md mb-8">{description}</p>
+        <button
+          onClick={onBack}
+          className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+        >
+          Volver a Juegos
+        </button>
+      </div>
     </div>
   );
 }

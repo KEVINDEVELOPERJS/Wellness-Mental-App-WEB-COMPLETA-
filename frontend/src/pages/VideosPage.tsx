@@ -186,6 +186,7 @@ export default function VideosPage() {
                   key={video.id}
                   video={video}
                   onClick={() => handleVideoClick(video)}
+                  onOpenForum={handleOpenForum}
                 />
               ))}
           </div>
@@ -342,6 +343,7 @@ export default function VideosPage() {
             key={video.id}
             video={video}
             onClick={() => handleVideoClick(video)}
+            onOpenForum={handleOpenForum}
           />
         ))}
       </div>
@@ -355,7 +357,7 @@ export default function VideosPage() {
   );
 }
 
-function VideoCard({ video, onClick }: { video: Video; onClick: () => void }) {
+function VideoCard({ video, onClick, onOpenForum }: { video: Video; onClick: () => void; onOpenForum: (video: Video) => void }) {
   return (
     <div 
       className="bg-card rounded-xl overflow-hidden border hover:shadow-lg transition-all cursor-pointer group"
@@ -384,7 +386,7 @@ function VideoCard({ video, onClick }: { video: Video; onClick: () => void }) {
             <Eye className="h-3 w-3" />
             <span>{video.vistas}</span>
           </div>
-          <div className="flex items-center space-x-1 cursor-pointer hover:text-primary" onClick={(e) => { e.stopPropagation(); handleOpenForum(video); }}>
+          <div className="flex items-center space-x-1 cursor-pointer hover:text-primary" onClick={(e) => { e.stopPropagation(); onOpenForum(video); }}>
             <MessageCircle className="h-3 w-3" />
             <span>{video.comentariosCount} comentarios</span>
           </div>
