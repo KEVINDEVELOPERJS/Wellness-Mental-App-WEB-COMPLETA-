@@ -24,10 +24,12 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   const [gameStarted, setGameStarted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    setIsMounted(true);
     initializeGrid();
     return () => {
       if (timerRef.current) {
@@ -71,7 +73,14 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
       clearInterval(timerRef.current);
     }
     setGameComplete(true);
-    onGameComplete(score, maxCombo);
+    // Only call onGameComplete if it's a valid function
+    if (typeof onGameComplete === 'function') {
+      try {
+        onGameComplete(score, maxCombo);
+      } catch (error) {
+        console.error('Error in onGameComplete:', error);
+      }
+    }
   };
 
   const handleCellClick = (row: number, col: number) => {
@@ -227,6 +236,10 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  if (!isMounted) {
+    return <div className="flex items-center justify-center h-full">Cargando juego...</div>;
+  }
 
   if (gameComplete) {
     return (

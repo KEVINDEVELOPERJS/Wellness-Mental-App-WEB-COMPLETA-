@@ -37,6 +37,14 @@ export default function JuegosPage() {
       });
       setSelectedGame(null);
       loadData(); // Reload to show updated stats
+    }).catch((error) => {
+      console.error('Error updating gamification:', error);
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudo actualizar los puntos',
+      });
+      setSelectedGame(null);
     });
   };
 
