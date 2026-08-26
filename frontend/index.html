@@ -13,21 +13,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-  <script>
-    // Emergency cache clear script - will only run once
-    if (!sessionStorage.getItem('cacheCleared')) {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
-            registration.unregister();
-            console.log('Emergency: Service worker unregistered');
-          }
-          sessionStorage.setItem('cacheCleared', 'true');
-          console.log('Emergency: Cache cleared, reloading...');
-          setTimeout(() => window.location.reload(true), 500);
-        });
-      }
-    }
-  </script>
   </body>
 </html>
