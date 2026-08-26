@@ -27,6 +27,10 @@ export default function JuegosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
 
+  useEffect(() => {
+    loadData();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleGameComplete = (gameScore: number, gameCombo: number) => {
     // Update gamification stats
     const pointsEarned = Math.floor(gameScore / 10);
@@ -107,10 +111,6 @@ export default function JuegosPage() {
       />
     );
   }
-
-  useEffect(() => {
-    loadData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     try {

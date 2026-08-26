@@ -10,5 +10,6 @@
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096"
     }
-  }
+  },
+  "version": "react-error-300-fix-2026-08-26"
 }
