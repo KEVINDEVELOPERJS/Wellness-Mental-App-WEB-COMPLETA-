@@ -251,27 +251,30 @@ export const getComboWord = (combo: number): string => {
   return '¡BUEN!';
 };
 
-// Helper to get motivational phrase based on score
-export const getMotivationalPhrase = (score: number): string => {
+// Helper to get motivational phrase based on combo count
+export const getMotivationalPhrase = (combo: number): string => {
   const phrases = [
-    { threshold: 0, text: '¡Comienza tu viaje de calma!' },
-    { threshold: 100, text: '¡Excelente inicio! Sigue así.' },
-    { threshold: 250, text: '¡Tu mente se está relajando!' },
-    { threshold: 500, text: '¡Eres un maestro de la calma!' },
-    { threshold: 750, text: '¡Cada combo te acerca a la paz!' },
-    { threshold: 1000, text: '¡Tu bienestar mental crece!' },
-    { threshold: 1500, text: '¡Eres increíble buscando combos!' },
-    { threshold: 2000, text: '¡La paz interior es tu aliado!' },
-    { threshold: 3000, text: '¡Maestro del equilibrio mental!' },
-    { threshold: 5000, text: '¡Tu claridad mental es excepcional!' },
-    { threshold: 7500, text: '¡Eres un líder en bienestar!' },
-    { threshold: 10000, text: '¡Leyenda de la calma mental!' }
+    { threshold: 0, text: '¡Busca combos para ganar puntos!' },
+    { threshold: 1, text: '¡Excelente inicio! Sigue así.' },
+    { threshold: 2, text: '¡Tu mente se está relajando!' },
+    { threshold: 3, text: '¡Eres un maestro de la calma!' },
+    { threshold: 4, text: '¡Cada combo te acerca a la paz!' },
+    { threshold: 5, text: '¡Tu bienestar mental crece!' },
+    { threshold: 6, text: '¡Eres increíble buscando combos!' },
+    { threshold: 7, text: '¡La paz interior es tu aliado!' },
+    { threshold: 8, text: '¡Maestro del equilibrio mental!' },
+    { threshold: 9, text: '¡Tu claridad mental es excepcional!' },
+    { threshold: 10, text: '¡Eres un líder en bienestar!' },
+    { threshold: 15, text: '¡Leyenda de la calma mental!' }
   ];
 
-  // Find the highest threshold that the score has reached
+  // When combo is 0, return the initial phrase
+  if (combo === 0) return '¡Busca combos para ganar puntos!';
+
+  // Find the highest threshold that the combo has reached
   let currentPhrase = phrases[0].text;
   for (const phrase of phrases) {
-    if (score >= phrase.threshold) {
+    if (combo >= phrase.threshold) {
       currentPhrase = phrase.text;
     }
   }

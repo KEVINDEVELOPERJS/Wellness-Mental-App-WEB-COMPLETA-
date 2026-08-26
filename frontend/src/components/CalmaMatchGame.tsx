@@ -25,7 +25,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   const [gameStarted, setGameStarted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
-  const [motivationalPhrase, setMotivationalPhrase] = useState('¡Comienza tu viaje de calma!');
+  const [motivationalPhrase, setMotivationalPhrase] = useState(getMotivationalPhrase(0));
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
@@ -65,7 +65,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
-    setMotivationalPhrase('¡Comienza tu viaje de calma!');
+    setMotivationalPhrase(getMotivationalPhrase(0));
     
     // Reset combo color
     setTimeout(() => {
@@ -213,16 +213,14 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
 
     // Calculate score
     const points = uniqueMatches.length * 10 * (combo + 1);
-    setScore(prev => {
-      const newScore = prev + points;
-      // Update motivational phrase based on new score
-      setMotivationalPhrase(getMotivationalPhrase(newScore));
-      return newScore;
-    });
+    setScore(prev => prev + points);
     
     const newCombo = combo + 1;
     setCombo(newCombo);
     setMaxCombo(current => Math.max(current, newCombo));
+    
+    // Update motivational phrase based on new combo
+    setMotivationalPhrase(getMotivationalPhrase(newCombo));
     
     // Apply combo animation to combo display
     const comboElement = document.getElementById('combo-display');
@@ -241,19 +239,18 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
       }
     });
 
-    // Show combo word popup at center of matches
+    // Show points popup at center of matches
     if (uniqueMatches.length > 0) {
       const centerMatch = uniqueMatches[Math.floor(uniqueMatches.length / 2)];
       const cellElement = document.getElementById(`cell-${centerMatch.row}-${centerMatch.col}`);
       
       if (cellElement) {
         const rect = cellElement.getBoundingClientRect();
-        const comboWord = getComboWord(newCombo);
         
-        // Create popup element
+        // Create popup element showing points gained
         const popup = document.createElement('div');
-        popup.textContent = comboWord;
-        popup.className = 'text-2xl font-bold text-white drop-shadow-lg';
+        popup.textContent = `+${points}`;
+        popup.className = 'font-bold text-white drop-shadow-lg text-center';
         popup.style.fontSize = `${Math.min(24 + newCombo * 2, 48)}px`;
         popup.style.color = getComboColor(newCombo);
         popup.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
@@ -268,36 +265,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
             document.body.removeChild(popup);
           }
         }, 800);
-
-        // Show floating points
-        const pointsPopup = document.createElement('div');
-        pointsPopup.textContent = `+${points}`;
-        pointsPopup.className = 'text-xl font-bold text-yellow-400';
-        pointsPopup.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
-        pointsPopup.style.position = 'fixed';
-        pointsPopup.style.left = `${rect.left + rect.width / 2}px`;
-        pointsPopup.style.top = `${rect.top}px`;
-        pointsPopup.style.transform = 'translateX(-50%)';
-        pointsPopup.style.zIndex = '1001';
-        pointsPopup.style.pointerEvents = 'none';
-        document.body.appendChild(pointsPopup);
-        
-        // Apply float animation
-        pointsPopup.animate([
-          { transform: 'translateX(-50%) translateY(0)', opacity: 1 },
-          { transform: 'translateX(-50%) translateY(-30px)', opacity: 0.8 },
-          { transform: 'translateX(-50%) translateY(-60px)', opacity: 0.5 },
-          { transform: 'translateX(-50%) translateY(-90px)', opacity: 0 }
-        ], {
-          duration: 1000,
-          easing: 'ease-out'
-        });
-        
-        setTimeout(() => {
-          if (document.body.contains(pointsPopup)) {
-            document.body.removeChild(pointsPopup);
-          }
-        }, 1000);
       }
     }
 
@@ -336,6 +303,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
       await processMatches(newGrid, newMatches);
     } else {
       setCombo(0);
+      setMotivationalPhrase(getMotivationalPhrase(0));
       setIsProcessing(false);
       
       // Reset combo color
@@ -509,7 +477,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
               setScore(0);
               setCombo(0);
               setMaxCombo(0);
-              setMotivationalPhrase('¡Comienza tu viaje de calma!');
+              setMotivationalPhrase(getMotivationalPhrase(0));
               
               // Reset combo color
               const comboElement = document.getElementById('combo-display');
