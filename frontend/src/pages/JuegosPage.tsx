@@ -55,12 +55,10 @@ export default function JuegosPage() {
 
   if (selectedGame === 'calma-match') {
     return (
-      <div key="calma-match">
-        <CalmaMatchGame
-          onBack={() => setSelectedGame(null)}
-          onGameComplete={handleGameComplete}
-        />
-      </div>
+      <CalmaMatchGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={handleGameComplete}
+      />
     );
   }
 

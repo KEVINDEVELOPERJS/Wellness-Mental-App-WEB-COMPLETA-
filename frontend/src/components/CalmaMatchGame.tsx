@@ -298,7 +298,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
               </div>
             </div>
 
-            <p className="text-gray-600 mb-6">¡Excelente trabajo! Has completado el juego Calma Match.</p>
+            <div className="text-gray-600 mb-6">¡Excelente trabajo! Has completado el juego Calma Match.</div>
 
             <div className="flex gap-3">
               <button
@@ -351,7 +351,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
       </div>
 
       <div className="mb-6 text-center">
-        <p className="text-gray-600">Intercambia gemas adyacentes para crear grupos de 3 o más. ¡Relájate y diviértete!</p>
+        <div className="text-gray-600">Intercambia gemas adyacentes para crear grupos de 3 o más. ¡Relájate y diviértete!</div>
       </div>
 
       <div className="flex justify-center mb-6">
