@@ -27,7 +27,7 @@ describe('authStore', () => {
       email: 'test@example.com',
       edad: 16,
       grado: '3° Secundaria',
-      rol: 'ESTUDIANTE',
+      rol: 'USUARIO',
     };
 
     act(() => {
@@ -49,7 +49,7 @@ describe('authStore', () => {
       email: 'test@example.com',
       edad: 16,
       grado: '3° Secundaria',
-      rol: 'ESTUDIANTE',
+      rol: 'USUARIO',
     };
 
     act(() => {
@@ -77,7 +77,7 @@ describe('authStore', () => {
       email: 'test@example.com',
       edad: 16,
       grado: '3° Secundaria',
-      rol: 'ESTUDIANTE',
+      rol: 'USUARIO',
     };
 
     act(() => {

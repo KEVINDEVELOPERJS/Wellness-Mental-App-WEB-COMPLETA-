@@ -4,7 +4,7 @@ import { animations } from '../utils/animations';
 
 interface ArteEmocionalGameProps {
   onBack: () => void;
-  onGameComplete: (score: number, combo?: number) => void;
+  onGameComplete: (score: number) => void;
 }
 
 interface Emocion {
@@ -155,7 +155,7 @@ export default function ArteEmocionalGame({ onBack, onGameComplete }: ArteEmocio
     
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, 0);
+        onGameComplete(score);
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }

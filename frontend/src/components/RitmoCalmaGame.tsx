@@ -4,7 +4,7 @@ import { animations, getComboAnimation, getComboColor } from '../utils/animation
 
 interface RitmoCalmaGameProps {
   onBack: () => void;
-  onGameComplete: (score: number, combo: number, gameType?: string) => void;
+  onGameComplete: (score: number, combo: number) => void;
 }
 
 export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGameProps) {
@@ -77,7 +77,7 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
     
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, maxCombo, 'ritmo');
+        onGameComplete(score, maxCombo);
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }

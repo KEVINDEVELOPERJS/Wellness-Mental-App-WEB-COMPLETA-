@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Trophy, Flame, Clock } from 'lucide-react';
-import { animations, getComboAnimation, getComboColor, getComboWord, getMotivationalPhrase } from '../utils/animations';
+import { animations, getComboAnimation, getComboColor } from '../utils/animations';
 
 interface CalmaMatchGameProps {
   onBack: () => void;
-  onGameComplete: (score: number, combo: number, gameType?: string) => void;
+  onGameComplete: (score: number, combo: number) => void;
 }
 
 export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGameProps) {
@@ -25,7 +25,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   const [gameStarted, setGameStarted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
-  const [motivationalPhrase, setMotivationalPhrase] = useState(getMotivationalPhrase(0));
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
@@ -65,7 +64,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
-    setMotivationalPhrase(getMotivationalPhrase(0));
     
     // Reset combo color
     setTimeout(() => {
@@ -113,7 +111,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     // Only call onGameComplete if it's a valid function
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, maxCombo, 'calma-match');
+        onGameComplete(score, maxCombo);
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }
@@ -215,63 +213,20 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     const points = uniqueMatches.length * 10 * (combo + 1);
     setScore(prev => prev + points);
     
-    const newCombo = combo + 1;
-    setCombo(newCombo);
-    setMaxCombo(current => Math.max(current, newCombo));
-    
-    // Update motivational phrase based on new combo
-    setMotivationalPhrase(getMotivationalPhrase(newCombo));
-    
-    // Apply combo animation to combo display
-    const comboElement = document.getElementById('combo-display');
-    if (comboElement) {
-      const animationType = getComboAnimation(newCombo);
-      animations[animationType](comboElement);
-      comboElement.style.color = getComboColor(newCombo);
-    }
-
-    // Apply destruction animations to matched cells
-    uniqueMatches.forEach(({row, col}) => {
-      const cellElement = document.getElementById(`cell-${row}-${col}`);
-      if (cellElement) {
-        // Use explosion animation for better visual effect
-        animations.explode(cellElement);
-      }
-    });
-
-    // Show points popup at center of matches
-    if (uniqueMatches.length > 0) {
-      const centerMatch = uniqueMatches[Math.floor(uniqueMatches.length / 2)];
-      const cellElement = document.getElementById(`cell-${centerMatch.row}-${centerMatch.col}`);
+    setCombo(prev => {
+      const newCombo = prev + 1;
+      setMaxCombo(current => Math.max(current, newCombo));
       
-      if (cellElement) {
-        const rect = cellElement.getBoundingClientRect();
-        
-        // Create popup element showing points gained
-        const popup = document.createElement('div');
-        popup.textContent = `+${points}`;
-        popup.className = 'font-bold text-white drop-shadow-lg text-center';
-        popup.style.fontSize = `${Math.min(24 + newCombo * 2, 48)}px`;
-        popup.style.color = getComboColor(newCombo);
-        popup.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
-        document.body.appendChild(popup);
-        
-        // Apply popup animation
-        animations.comboPopup(popup, rect.left + rect.width / 2, rect.top + rect.height / 2);
-        
-        // Remove popup after animation
-        setTimeout(() => {
-          if (document.body.contains(popup)) {
-            document.body.removeChild(popup);
-          }
-        }, 800);
+      // Apply combo animation
+      const comboElement = document.getElementById('combo-display');
+      if (comboElement) {
+        const animationType = getComboAnimation(newCombo);
+        animations[animationType](comboElement);
+        comboElement.style.color = getComboColor(newCombo);
       }
-    }
-
-    // Wait for destruction animation
-    await new Promise(resolve => setTimeout(resolve, 400));
-
-    if (!isMountedRef.current) return;
+      
+      return newCombo;
+    });
 
     // Remove matched cells
     const newGrid = currentGrid.map(row => [...row]);
@@ -280,8 +235,8 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     });
     setGrid(newGrid);
 
-    // Wait for empty state
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Wait for animation
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     if (!isMountedRef.current) return;
 
@@ -303,7 +258,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
       await processMatches(newGrid, newMatches);
     } else {
       setCombo(0);
-      setMotivationalPhrase(getMotivationalPhrase(0));
       setIsProcessing(false);
       
       // Reset combo color
@@ -422,9 +376,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
 
       <div className="mb-6 text-center">
         <div className="text-gray-600">Intercambia gemas adyacentes para crear grupos de 3 o más. ¡Relájate y diviértete!</div>
-        <div className="mt-2 text-sm md:text-base font-semibold text-purple-600 animate-pulse">
-          {motivationalPhrase}
-        </div>
       </div>
 
       <div className="flex justify-center mb-6">
@@ -439,7 +390,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
           {grid.map((row, rowIndex) =>
             row.map((cell, colIndex) => (
               <div
-                id={`cell-${rowIndex}-${colIndex}`}
                 key={`${rowIndex}-${colIndex}`}
                 onClick={() => handleCellClick(rowIndex, colIndex)}
                 className={`
@@ -477,7 +427,6 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
               setScore(0);
               setCombo(0);
               setMaxCombo(0);
-              setMotivationalPhrase(getMotivationalPhrase(0));
               
               // Reset combo color
               const comboElement = document.getElementById('combo-display');

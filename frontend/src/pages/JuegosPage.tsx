@@ -43,46 +43,25 @@ export default function JuegosPage() {
   const loadData = async () => {
     try {
       const [userLogros, allLogrosData, nivelData, misionesData, rankingData, estadoData] = await Promise.all([
-        gamificacionService.getUserLogros().catch(() => []),
-        gamificacionService.getLogros().catch(() => []),
-        gamificacionService.getNivel().catch(() => ({ nivel: 'Explorador Mental', puntosActuales: 0, puntosSiguienteNivel: 500, progreso: 0 })),
-        gamificacionService.getMisionesDiarias(),
+        gamificacionService.getUserLogros(),
+        gamificacionService.getLogros(),
+        gamificacionService.getNivel(),
+        gamificacionService.getMisionesDiarias().catch(() => []),
         gamificacionService.getLeaderboard().catch(() => []),
-        gamificacionService.getEstadoGamificacion(),
+        gamificacionService.getEstadoGamificacion().catch(() => null),
       ]);
       
-      // Ensure data is in correct format
-      setLogros(Array.isArray(userLogros) ? userLogros : []);
-      setAllLogros(Array.isArray(allLogrosData) ? allLogrosData : []);
-      setNivel(nivelData || { nivel: 'Explorador Mental', puntosActuales: 0, puntosSiguienteNivel: 500, progreso: 0 });
-      setMisiones(Array.isArray(misionesData) ? misionesData : []);
-      setRanking(Array.isArray(rankingData) ? rankingData : []);
-      setEstadoGamificacion(estadoData || {
-        rachaActividad: 0,
-        minutosRestantesHoy: 30,
-        posicionRanking: 0,
-        misionesCompletadasHoy: 0,
-        misionesTotalesHoy: 3
-      });
+      setLogros(userLogros);
+      setAllLogros(allLogrosData);
+      setNivel(nivelData);
+      setMisiones(misionesData);
+      setRanking(rankingData);
+      setEstadoGamificacion(estadoData);
     } catch (error) {
-      console.error('Error loading gamification data:', error);
       addToast({
         type: 'error',
         title: 'Error',
         message: 'No se pudieron cargar los datos de gamificación',
-      });
-      // Set default values on error
-      setLogros([]);
-      setAllLogros([]);
-      setNivel({ nivel: 'Explorador Mental', puntosActuales: 0, puntosSiguienteNivel: 500, progreso: 0 });
-      setMisiones([]);
-      setRanking([]);
-      setEstadoGamificacion({
-        rachaActividad: 0,
-        minutosRestantesHoy: 30,
-        posicionRanking: 0,
-        misionesCompletadasHoy: 0,
-        misionesTotalesHoy: 3
       });
     } finally {
       setIsLoading(false);
@@ -93,7 +72,7 @@ export default function JuegosPage() {
     loadData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleGameComplete = (gameScore: number, gameCombo?: number, gameType?: string) => {
+  const handleGameComplete = (gameScore: number, gameCombo: number, gameType?: string) => {
     // Update gamification stats
     const pointsEarned = Math.floor(gameScore / 10);
     gamificacionService.addPuntos(pointsEarned).then(() => {
@@ -106,14 +85,12 @@ export default function JuegosPage() {
       loadData(); // Reload to show updated stats
     }).catch((error) => {
       console.error('Error updating gamification:', error);
-      // Still show success and navigate back even if API fails
       addToast({
-        type: 'success',
-        title: '¡Juego Completado!',
-        message: `Has ganado ${pointsEarned} puntos`,
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudo actualizar los puntos',
       });
       setSelectedGame(null);
-      loadData(); // Try to reload anyway
     });
   };
 
@@ -156,7 +133,7 @@ export default function JuegosPage() {
       description: 'Cultiva tu bienestar',
       icon: Sprout,
       color: 'bg-green-500',
-      unlocked: (nivel?.puntosActuales || 0) >= 100,
+      unlocked: nivel?.puntosActuales >= 100,
     },
   ], [nivel?.puntosActuales]);
 
@@ -164,7 +141,7 @@ export default function JuegosPage() {
     return (
       <CalmaMatchGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score, combo) => handleGameComplete(score, combo, 'calma-match')}
+        onGameComplete={handleGameComplete}
       />
     );
   }
@@ -173,7 +150,7 @@ export default function JuegosPage() {
     return (
       <RitmoCalmaGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score, combo) => handleGameComplete(score, combo, 'ritmo')}
+        onGameComplete={handleGameComplete}
       />
     );
   }
@@ -182,7 +159,7 @@ export default function JuegosPage() {
     return (
       <JardinMentalGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score) => handleGameComplete(score, 0, 'jardin')}
+        onGameComplete={handleGameComplete}
       />
     );
   }
@@ -191,7 +168,7 @@ export default function JuegosPage() {
     return (
       <PuzzleZenGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score, level) => handleGameComplete(score, 0, 'puzzle')}
+        onGameComplete={handleGameComplete}
       />
     );
   }
@@ -200,7 +177,7 @@ export default function JuegosPage() {
     return (
       <ArteEmocionalGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score) => handleGameComplete(score, 0, 'arte')}
+        onGameComplete={handleGameComplete}
       />
     );
   }
@@ -286,7 +263,7 @@ export default function JuegosPage() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Misiones Diarias</h2>
         <div className="space-y-3">
-          {!Array.isArray(misiones) || misiones.length === 0 ? (
+          {misiones.length === 0 ? (
             <div className="text-center py-8 bg-card rounded-xl border">
               <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
               <p className="text-muted-foreground">
@@ -294,9 +271,9 @@ export default function JuegosPage() {
               </p>
             </div>
           ) : (
-            misiones.map((mision, index) => (
+            misiones.map((mision) => (
               <div
-                key={mision.id || index}
+                key={mision.id}
                 className={`bg-card rounded-xl p-4 border ${
                   mision.completada ? 'opacity-60' : ''
                 }`}
@@ -313,15 +290,15 @@ export default function JuegosPage() {
                       )}
                     </div>
                     <div>
-                      <h4 className="font-semibold">{mision.titulo || 'Misión'}</h4>
-                      <p className="text-sm text-muted-foreground">{mision.descripcion || 'Completa esta misión'}</p>
+                      <h4 className="font-semibold">{mision.titulo}</h4>
+                      <p className="text-sm text-muted-foreground">{mision.descripcion}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-primary">+{mision.puntos || 0} pts</p>
+                    <p className="font-bold text-primary">+{mision.puntos} pts</p>
                     {mision.progreso !== undefined && (
                       <p className="text-xs text-muted-foreground">
-                        {mision.progreso}/{mision.objetivo || 1}
+                        {mision.progreso}/{mision.objetivo}
                       </p>
                     )}
                   </div>
@@ -350,7 +327,7 @@ export default function JuegosPage() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Ranking Global</h2>
         <div className="bg-card rounded-xl border overflow-hidden">
-          {!Array.isArray(ranking) || ranking.length === 0 ? (
+          {ranking.length === 0 ? (
             <div className="text-center py-8">
               <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
               <p className="text-muted-foreground">
@@ -359,9 +336,9 @@ export default function JuegosPage() {
             </div>
           ) : (
             <div className="divide-y">
-              {Array.isArray(ranking) && ranking.slice(0, 5).map((user, index) => (
+              {ranking.slice(0, 5).map((user, index) => (
                 <div
-                  key={user.id || index}
+                  key={user.id}
                   className={`flex items-center justify-between p-4 ${
                     index === 0 ? 'bg-yellow-50' : index === 1 ? 'bg-gray-50' : index === 2 ? 'bg-orange-50' : ''
                   }`}
@@ -376,8 +353,8 @@ export default function JuegosPage() {
                       {index + 1}
                     </div>
                     <div>
-                      <h4 className="font-semibold">{user.nombre || 'Usuario'}</h4>
-                      <p className="text-sm text-muted-foreground">{user.puntos || 0} puntos</p>
+                      <h4 className="font-semibold">{user.nombre}</h4>
+                      <p className="text-sm text-muted-foreground">{user.puntos} puntos</p>
                     </div>
                   </div>
                   {user.esUsuario && (
@@ -396,7 +373,7 @@ export default function JuegosPage() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Logros Desbloqueados</h2>
         <div className="grid md:grid-cols-3 gap-4">
-          {!Array.isArray(logros) || logros.length === 0 ? (
+          {logros.length === 0 ? (
             <div className="col-span-full text-center py-8 bg-card rounded-xl border">
               <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
               <p className="text-muted-foreground">
@@ -404,8 +381,8 @@ export default function JuegosPage() {
               </p>
             </div>
           ) : (
-            logros.map((usuarioLogro, index) => (
-              <AchievementCard key={usuarioLogro.id || index} logro={usuarioLogro.logro || usuarioLogro} />
+            logros.map((usuarioLogro) => (
+              <AchievementCard key={usuarioLogro.id} logro={usuarioLogro.logro || usuarioLogro} />
             ))
           )}
         </div>
@@ -415,20 +392,11 @@ export default function JuegosPage() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Logros Disponibles</h2>
         <div className="grid md:grid-cols-3 gap-4">
-          {!Array.isArray(allLogros) || allLogros.length === 0 ? (
-            <div className="col-span-full text-center py-8 bg-card rounded-xl border">
-              <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">
-                No hay logros disponibles
-              </p>
-            </div>
-          ) : (
-            allLogros
-              .filter(logro => !logros.find(ul => ul.logroId === logro.id))
-              .map((logro, index) => (
-                <AchievementCard key={logro.id || index} logro={logro} locked />
-              ))
-          )}
+          {allLogros
+            .filter(logro => !logros.find(ul => ul.logroId === logro.id))
+            .map((logro) => (
+              <AchievementCard key={logro.id} logro={logro} locked />
+            ))}
         </div>
       </div>
     </div>
@@ -474,18 +442,16 @@ const GameCard = React.memo(function GameCard({ game, onSelect }: any) {
 });
 
 function AchievementCard({ logro, locked }: any) {
-  if (!logro) return null;
-  
   return (
     <div className={`bg-card rounded-xl p-4 border ${locked ? 'opacity-60' : ''}`}>
       <div className="flex items-center space-x-3 mb-3">
-        <div className="text-2xl">{logro.icon || logro.emoji || '🏆'}</div>
+        <div className="text-2xl">{logro.icon || '🏆'}</div>
         <div>
-          <h4 className="font-semibold text-sm">{logro.nombre || logro.name || 'Logro'}</h4>
-          <p className="text-xs text-muted-foreground">+{logro.puntos || logro.points || 0} puntos</p>
+          <h4 className="font-semibold text-sm">{logro.nombre}</h4>
+          <p className="text-xs text-muted-foreground">+{logro.puntos} puntos</p>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">{logro.descripcion || logro.description || 'Descripción no disponible'}</p>
+      <p className="text-xs text-muted-foreground">{logro.descripcion}</p>
       {locked && (
         <div className="mt-2 flex items-center space-x-1 text-xs text-muted-foreground">
           <Lock className="h-3 w-3" />

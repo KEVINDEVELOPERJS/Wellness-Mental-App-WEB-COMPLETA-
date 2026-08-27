@@ -37,7 +37,7 @@ router.post('/send-test-email', authenticate, authorize(['ADMIN', 'PSICOLOGO']),
     console.log('🧪 Sending test email to:', toEmail);
     
     await EmailService.sendAlertEmail(toEmail, {
-      studentName: 'Estudiante de Prueba',
+      studentName: 'Usuario de Prueba',
       riskLevel: 'ALTO',
       type: 'TEST',
       timestamp: new Date().toISOString(),
@@ -104,22 +104,22 @@ router.get('/psychologists', authenticate, authorize(['ADMIN', 'PSICOLOGO']), as
 // Test complete alert system
 router.post('/test-alert-system', authenticate, authorize(['ADMIN', 'PSICOLOGO']), async (req, res) => {
   try {
-    const { estudianteId } = req.body;
+    const { usuarioId } = req.body;
     
-    if (!estudianteId) {
-      return res.status(400).json({ error: 'estudianteId is required' });
+    if (!usuarioId) {
+      return res.status(400).json({ error: 'usuarioId is required' });
     }
 
-    console.log('🧪 Testing complete alert system for student:', estudianteId);
+    console.log('🧪 Testing complete alert system for user:', usuarioId);
 
-    // Get student info
-    const estudiante = await prisma.usuario.findUnique({
-      where: { id: estudianteId },
+    // Get user info
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: usuarioId },
       select: { nombre: true, email: true }
     });
 
-    if (!estudiante) {
-      return res.status(404).json({ error: 'Student not found' });
+    if (!usuario) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
     // Get psychologists
@@ -136,7 +136,7 @@ router.post('/test-alert-system', authenticate, authorize(['ADMIN', 'PSICOLOGO']
       try {
         console.log('📧 Sending test alert to:', psicologo.email);
         await EmailService.sendAlertEmail(psicologo.email, {
-          studentName: estudiante.nombre,
+          studentName: usuario.nombre,
           riskLevel: 'ALTO',
           type: 'TEST',
           timestamp: new Date().toISOString(),
@@ -158,7 +158,7 @@ router.post('/test-alert-system', authenticate, authorize(['ADMIN', 'PSICOLOGO']
       success: true,
       message: 'Alert system test completed',
       timestamp: new Date().toISOString(),
-      student: estudiante.nombre,
+      student: usuario.nombre,
       psychologistsCount: psicologos.length,
       emailResults
     });
@@ -187,7 +187,7 @@ router.get('/recent-alerts', authenticate, authorize(['ADMIN', 'PSICOLOGO']), as
       total: alertas.length,
       alerts: alertas.map(a => ({
         id: a.id,
-        estudianteId: a.estudianteId,
+        usuarioId: a.usuarioId,
         nivelRiesgo: a.nivelRiesgo,
         tipo: a.tipo,
         extracto: a.extracto,

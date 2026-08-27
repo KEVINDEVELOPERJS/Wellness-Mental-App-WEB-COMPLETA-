@@ -18,7 +18,7 @@ Authorization: Bearer <access_token>
 ### Autenticación
 
 #### POST /auth/registro
-Registra un nuevo usuario estudiante.
+Registra un nuevo usuario.
 
 **Request Body:**
 ```json
@@ -39,7 +39,7 @@ Registra un nuevo usuario estudiante.
     "id": 1,
     "nombre": "string",
     "email": "string",
-    "rol": "ESTUDIANTE"
+    "rol": "USUARIO"
   },
   "accessToken": "string",
   "refreshToken": "string"
@@ -111,7 +111,7 @@ Obtiene información del usuario autenticado.
   "email": "string",
   "edad": 16,
   "grado": "string",
-  "rol": "ESTUDIANTE"
+  "rol": "USUARIO"
 }
 ```
 
@@ -501,7 +501,7 @@ Obtiene alertas pendientes (solo psicólogos).
 [
   {
     "id": 1,
-    "estudiante": { ... },
+    "usuario": { ... },
     "tipo": "evaluacion",
     "nivelRiesgo": "ALTO",
     "timestamp": "2024-01-15T10:00:00Z",

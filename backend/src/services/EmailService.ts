@@ -245,7 +245,7 @@ export class EmailService {
         html: `
           <h2 style="color: red;">⚠️ Alerta de Riesgo Detectada</h2>
           <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
-            <p><strong>Estudiante:</strong> ${alertData.studentName}</p>
+            <p><strong>Usuario:</strong> ${alertData.studentName}</p>
             <p><strong>Nivel de Riesgo:</strong> ${alertData.riskLevel}</p>
             <p><strong>Tipo:</strong> ${alertData.type}</p>
             <p><strong>Fecha:</strong> ${alertData.timestamp}</p>
@@ -289,7 +289,7 @@ export class EmailService {
       html: `
         <h2 style="color: red;">⚠️ Alerta de Riesgo Detectada</h2>
         <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
-          <p><strong>Estudiante:</strong> ${alertData.studentName}</p>
+          <p><strong>Usuario:</strong> ${alertData.studentName}</p>
           <p><strong>Nivel de Riesgo:</strong> ${alertData.riskLevel}</p>
           <p><strong>Tipo:</strong> ${alertData.type}</p>
           <p><strong>Fecha:</strong> ${alertData.timestamp}</p>
@@ -348,7 +348,7 @@ export class EmailService {
         html: `
           <h2 style="color: red;">⚠️ Alerta de Riesgo Detectada</h2>
           <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
-            <p><strong>Estudiante:</strong> ${alertData.studentName}</p>
+            <p><strong>Usuario:</strong> ${alertData.studentName}</p>
             <p><strong>Nivel de Riesgo:</strong> ${alertData.riskLevel}</p>
             <p><strong>Tipo:</strong> ${alertData.type}</p>
             <p><strong>Fecha:</strong> ${alertData.timestamp}</p>

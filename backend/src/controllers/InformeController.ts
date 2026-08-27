@@ -291,7 +291,7 @@ export class InformeController {
           <li>Se recomienda urgentemente consultar con un profesional de salud mental</li>
           <li>Establecer contacto con el psicólogo escolar lo antes posible</li>
           <li>Crear un ambiente de apoyo y comprensión en el hogar</li>
-          <li>Monitorear de cerca el bienestar emocional del estudiante</li>
+          <li>Monitorear de cerca el bienestar emocional del usuario</li>
           <li>Considerar terapia profesional y seguimiento continuo</li>
           <li>Mantener comunicación constante con la institución educativa</li>
         </ul>

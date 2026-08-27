@@ -334,7 +334,7 @@ export default function InformePadresPage() {
       {/* Disclaimer */}
       <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
         <p className="text-xs text-gray-600">
-          <strong>Aviso:</strong> Este informe es confidencial y está destinado exclusivamente para los padres/tutores del estudiante. 
+          <strong>Aviso:</strong> Este informe es confidencial y está destinado exclusivamente para los padres/tutores del usuario. 
           La información presentada no constituye un diagnóstico médico y debe ser utilizada como referencia para discusiones con profesionales de salud mental.
         </p>
       </div>

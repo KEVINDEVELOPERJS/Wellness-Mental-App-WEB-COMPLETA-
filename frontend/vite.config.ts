@@ -12,7 +12,7 @@ export default defineConfig({
     //   manifest: {
     //     name: 'Wellness Mental',
     //     short_name: 'Wellness',
-    //     description: 'App de bienestar mental para estudiantes',
+    //     description: 'App de bienestar mental para usuarios',
     //     theme_color: '#4CAF50',
     //     background_color: '#ffffff',
     //     display: 'standalone',

@@ -43,57 +43,27 @@ export const gamificacionService = {
   },
 
   async getMisionesDiarias(): Promise<any> {
-    try {
-      const response = await apiClient.get('/gamificacion/misiones-diarias');
-      return response.data;
-    } catch (error) {
-      console.log('Misiones diarias endpoint not available, returning empty array');
-      return [];
-    }
+    const response = await apiClient.get('/gamificacion/misiones-diarias');
+    return response.data;
   },
 
   async getRankingCalmaMatch(): Promise<any> {
-    try {
-      const response = await apiClient.get('/gamificacion/ranking/calma-match');
-      return response.data;
-    } catch (error) {
-      console.log('Ranking Calma Match endpoint not available, returning empty array');
-      return [];
-    }
+    const response = await apiClient.get('/gamificacion/ranking/calma-match');
+    return response.data;
   },
 
   async getEstadoGamificacion(): Promise<any> {
-    try {
-      const response = await apiClient.get('/gamificacion/estado');
-      return response.data;
-    } catch (error) {
-      console.log('Estado gamificacion endpoint not available, returning default state');
-      return {
-        rachaActividad: 0,
-        minutosRestantesHoy: 30,
-        posicionRanking: 0,
-        misionesCompletadasHoy: 0,
-        misionesTotalesHoy: 3
-      };
-    }
+    const response = await apiClient.get('/gamificacion/estado');
+    return response.data;
   },
 
   async registrarSesionJuego(tipoJuego: string, puntos: number, combo: number, duracion: number): Promise<any> {
-    try {
-      const response = await apiClient.post('/gamificacion/sesion-juego', { 
-        tipoJuego, 
-        puntos, 
-        combo, 
-        duracion 
-      });
-      return response.data;
-    } catch (error) {
-      console.log('Sesion juego endpoint not available, returning mock response');
-      return {
-        puntosGanados: Math.floor(puntos / 10),
-        nivelSubido: false,
-        logrosDesbloqueados: []
-      };
-    }
+    const response = await apiClient.post('/gamificacion/sesion-juego', { 
+      tipoJuego, 
+      puntos, 
+      combo, 
+      duracion 
+    });
+    return response.data;
   },
 };

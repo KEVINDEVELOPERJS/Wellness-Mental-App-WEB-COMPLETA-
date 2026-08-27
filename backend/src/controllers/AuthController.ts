@@ -14,7 +14,7 @@ const registroSchema = z.object({
   edad: z.number().min(13).max(100),
   grado: z.string().min(1).max(50),
   telefono: z.string().optional(),
-  rol: z.enum(['ESTUDIANTE', 'PSICOLOGO']).default('ESTUDIANTE'),
+  rol: z.enum(['USUARIO', 'PSICOLOGO']).default('USUARIO'),
   codigoVerificacion: z.string().optional(),
 });
 
@@ -65,8 +65,8 @@ export class AuthController {
         },
       } as any);
 
-      // Send verification email if under 16 (for students only)
-      if (data.rol === 'ESTUDIANTE' && data.edad < 16) {
+      // Send verification email if under 16 (for users only)
+      if (data.rol === 'USUARIO' && data.edad < 16) {
         const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         await EmailService.sendVerificationEmail(data.email, verificationCode);
       }

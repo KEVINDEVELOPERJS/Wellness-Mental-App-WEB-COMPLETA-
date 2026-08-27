@@ -41,7 +41,7 @@ La aplicación sigue una arquitectura MVC (Model-View-Controller) clásica adapt
 
 #### Pages (Rutas)
 - `LoginPage.tsx` - Autenticación de usuarios
-- `RegistroPage.tsx` - Registro de estudiantes
+- `RegistroPage.tsx` - Registro de usuarios
 - `DashboardPage.tsx` - Panel principal
 - `EvaluacionPage.tsx` - Cuestionarios psicológicos
 - `ChatIAPage.tsx` - Chat con asistente IA

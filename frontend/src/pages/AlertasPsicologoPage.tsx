@@ -133,7 +133,7 @@ export default function AlertasPsicologoPage() {
         <div>
           <h1 className="text-3xl font-bold mb-2">Alertas de Riesgo</h1>
           <p className="text-muted-foreground">
-            Monitoreo y gestión de alertas de bienestar estudiantil
+            Monitoreo y gestión de alertas de bienestar de usuarios
           </p>
         </div>
         <button
@@ -216,16 +216,16 @@ export default function AlertasPsicologoPage() {
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Estudiante</p>
+                  <p className="text-sm text-muted-foreground">Usuario</p>
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-primary" />
-                    <p className="font-medium">{selectedAlerta.estudiante?.nombre}</p>
+                    <p className="font-medium">{selectedAlerta.usuario?.nombre}</p>
                   </div>
                 </div>
 
                 <div>
                   <p className="text-sm text-muted-foreground">Grado</p>
-                  <p className="font-medium">{selectedAlerta.estudiante?.grado}</p>
+                  <p className="font-medium">{selectedAlerta.usuario?.grado}</p>
                 </div>
 
                 <div>
@@ -374,8 +374,8 @@ function AlertaCard({ alerta, isSelected, onSelect }: any) {
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div>
-            <p className="font-medium">{alerta.estudiante?.nombre}</p>
-            <p className="text-xs text-muted-foreground">{alerta.estudiante?.grado}</p>
+            <p className="font-medium">{alerta.usuario?.nombre}</p>
+            <p className="text-xs text-muted-foreground">{alerta.usuario?.grado}</p>
           </div>
         </div>
         <span className={`text-xs px-2 py-1 rounded-full ${getEstadoColor(alerta.estado)}`}>

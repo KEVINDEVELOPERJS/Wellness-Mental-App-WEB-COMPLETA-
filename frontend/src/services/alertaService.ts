@@ -71,8 +71,8 @@ export const alertaService = {
     await apiClient.post(`/alertas/${id}/email`, { psicologoEmail });
   },
 
-  async getAlertasByEstudiante(estudianteId: number): Promise<AlertaRiesgo[]> {
-    const response = await apiClient.get<AlertaRiesgo[]>(`/alertas/estudiante/${estudianteId}`);
+  async getAlertasByUsuario(usuarioId: number): Promise<AlertaRiesgo[]> {
+    const response = await apiClient.get<AlertaRiesgo[]>(`/alertas/usuario/${usuarioId}`);
     return response.data;
   },
 

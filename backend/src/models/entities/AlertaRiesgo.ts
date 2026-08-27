@@ -2,7 +2,7 @@ import { EstadoAlerta, NivelRiesgo } from '@prisma/client';
 
 export interface AlertaRiesgo {
   id: number;
-  estudianteId: number;
+  usuarioId: number;
   tipo: string;
   nivelRiesgo: NivelRiesgo;
   timestamp: Date;
@@ -26,7 +26,7 @@ export interface AuditoriaAlerta {
 }
 
 export interface AlertaDTO {
-  estudianteId: number;
+  usuarioId: number;
   tipo: string;
   nivelRiesgo: NivelRiesgo;
   extracto: string;

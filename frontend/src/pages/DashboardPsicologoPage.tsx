@@ -19,7 +19,7 @@ interface AlertaRiesgo {
   id: number;
   nivelRiesgo: 'ALTO' | 'MEDIO' | 'BAJO';
   estado: 'PENDIENTE' | 'ATENDIDA' | 'EN_SEGUIMIENTO' | 'DERIVADA';
-  estudiante: {
+  usuario: {
     id: number;
     nombre: string;
     grado: string;
@@ -228,8 +228,8 @@ export default function DashboardPsicologoPage() {
                         <AlertTriangle className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="font-medium">{alerta.estudiante.nombre}</p>
-                        <p className="text-xs text-muted-foreground">{alerta.estudiante.grado}</p>
+                        <p className="font-medium">{alerta.usuario.nombre}</p>
+                        <p className="text-xs text-muted-foreground">{alerta.usuario.grado}</p>
                       </div>
                     </div>
                     <span className="text-xs px-2 py-1 bg-red-200 text-red-700 rounded-full">
@@ -280,8 +280,8 @@ export default function DashboardPsicologoPage() {
                           <AlertCircle className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="font-medium">{alerta.estudiante.nombre}</p>
-                          <p className="text-xs text-muted-foreground">{alerta.estudiante.grado}</p>
+                          <p className="font-medium">{alerta.usuario.nombre}</p>
+                          <p className="text-xs text-muted-foreground">{alerta.usuario.grado}</p>
                         </div>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded-full ${getEstadoColor(alerta.estado)}`}>

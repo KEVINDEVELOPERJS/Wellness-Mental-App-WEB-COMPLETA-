@@ -108,7 +108,7 @@ function generateAlertEmail(alerta, psicologoNombre) {
         <div style="background: #fee; border-left: 4px solid #f44336; padding: 15px; margin: 20px 0;">
           <h2 style="color: #c62828; margin-top: 0;">Detalles de la Alerta</h2>
           <ul style="list-style: none; padding: 0;">
-            <li><strong>Estudiante:</strong> ${alerta.estudiante.nombre}</li>
+            <li><strong>Usuario:</strong> ${alerta.usuario.nombre}</li>
             <li><strong>Nivel de Riesgo:</strong> <span style="color: #c62828; font-weight: bold;">${alerta.nivelRiesgo}</span></li>
             <li><strong>Tipo:</strong> ${alerta.tipo}</li>
             <li><strong>Fecha:</strong> ${new Date(alerta.timestamp).toLocaleString('es-ES')}</li>
@@ -265,7 +265,7 @@ function doPost(e) {
 function testAlert() {
   const testAlerta = {
     id: Date.now(),
-    estudiante: { nombre: 'Juan Pérez' },
+    usuario: { nombre: 'Juan Pérez' },
     nivelRiesgo: 'ALTO',
     tipo: 'evaluacion',
     timestamp: new Date().toISOString(),
