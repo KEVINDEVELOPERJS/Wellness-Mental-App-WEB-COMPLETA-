@@ -132,11 +132,11 @@ export class PdfService {
       <body>
         <div class="header">
           <h1>Informe de Bienestar Mental</h1>
-          <p>Wellness Mental App - Evaluación de Salud de Usuarios</p>
+          <p>Wellness Mental App - Evaluación de Salud Estudiantil</p>
         </div>
 
         <div class="section">
-          <h2>Información del Usuario</h2>
+          <h2>Información del Estudiante</h2>
           <div class="info-grid">
             <div class="info-item">
               <strong>Nombre</strong>
@@ -197,9 +197,9 @@ export class PdfService {
         </div>
 
         <div class="footer">
-          <p>Este informe es confidencial y está destinado exclusivamente para los padres/tutores del usuario.</p>
+          <p>Este informe es confidencial y está destinado exclusivamente para los padres/tutores del estudiante.</p>
           <p>Generado el ${new Date().toLocaleDateString('es-ES')}</p>
-          <p>Wellness Mental App - Apoyo para el bienestar de usuarios</p>
+          <p>Wellness Mental App - Apoyo para el bienestar estudiantil</p>
         </div>
       </body>
       </html>

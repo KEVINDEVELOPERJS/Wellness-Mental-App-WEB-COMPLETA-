@@ -11,7 +11,7 @@ datasource db {
 }
 
 enum Rol {
-  USUARIO
+  ESTUDIANTE
   PSICOLOGO
   PADRE
   ADMIN
@@ -61,7 +61,7 @@ model Usuario {
   passwordHash      String
   edad              Int
   grado            String
-  rol               Rol         @default(USUARIO)
+  rol               Rol         @default(ESTUDIANTE)
   fechaRegistro     DateTime    @default(now())
   estado            EstadoUsuario @default(ACTIVO)
   consentimientoPadres Boolean  @default(false)
@@ -275,8 +275,8 @@ model UsuarioLogro {
 
 model AlertaRiesgo {
   id                Int         @id @default(autoincrement())
-  usuarioId         Int
-  usuario           Usuario     @relation(fields: [usuarioId], references: [id])
+  estudianteId      Int
+  estudiante        Usuario     @relation(fields: [estudianteId], references: [id])
   tipo              String      // "evaluacion", "chat", "manual"
   nivelRiesgo       NivelRiesgo
   timestamp         DateTime    @default(now())
@@ -292,7 +292,7 @@ model AlertaRiesgo {
   
   auditoria         AuditoriaAlerta[]
   
-  @@index([usuarioId])
+  @@index([estudianteId])
   @@index([estado])
   @@index([timestamp])
   @@index([nivelRiesgo])

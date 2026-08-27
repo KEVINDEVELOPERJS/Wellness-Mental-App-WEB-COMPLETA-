@@ -1,10 +1,10 @@
 # Wellness Mental Web App 🧠
 
-Aplicación web progresiva (PWA) para el bienestar mental de usuarios adolescentes (13-18 años). Implementada como una Single Page Application (SPA) con arquitectura MVC completa.
+Aplicación web progresiva (PWA) para el bienestar mental de estudiantes adolescentes (13-18 años). Implementada como una Single Page Application (SPA) con arquitectura MVC completa.
 
 ## 📋 Descripción del Proyecto
 
-Wellness Mental es una plataforma integral de bienestar mental diseñada específicamente para usuarios adolescentes. La aplicación proporciona herramientas de evaluación psicológica, chat con IA asistente empática, ejercicios de respiración guiada, comunidad de apoyo, gamificación y sistema de alertas de riesgo para psicólogos.
+Wellness Mental es una plataforma integral de bienestar mental diseñada específicamente para estudiantes adolescentes. La aplicación proporciona herramientas de evaluación psicológica, chat con IA asistente empática, ejercicios de respiración guiada, comunidad de apoyo, gamificación y sistema de alertas de riesgo para psicólogos.
 
 ## 🏗️ Arquitectura
 
@@ -77,7 +77,7 @@ wellness-mental-web/
 
 ### Historias de Usuario Implementadas
 
-**HU-01: Registro de Usuario** ✅
+**HU-01: Registro de Estudiante** ✅
 - Formulario de registro con validación en tiempo real
 - Validación de edad (13-18 años)
 - Consentimiento parental para menores de 16
@@ -116,7 +116,7 @@ wellness-mental-web/
 - Gráficos de tendencias 3 meses
 - Sistema de auditoría completo
 
-**HU-07: Comunidad de Usuarios** ✅
+**HU-07: Comunidad Estudiantil** ✅
 - Foros categorizados por temas
 - Sistema de posts y comentarios
 - Filtro de lenguaje inapropiado
@@ -322,4 +322,4 @@ Este proyecto está bajo la Licencia MIT.
 
 ---
 
-**Desarrollado con ❤️ para el bienestar de usuarios**
+**Desarrollado con ❤️ para el bienestar estudiantil**

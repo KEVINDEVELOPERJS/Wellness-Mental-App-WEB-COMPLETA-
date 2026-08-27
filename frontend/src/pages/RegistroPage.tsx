@@ -18,7 +18,7 @@ export default function RegistroPage() {
     edad: '',
     grado: '',
     telefono: '',
-    rol: 'USUARIO',
+    rol: 'ESTUDIANTE',
   });
   
   const [validations, setValidations] = useState({
@@ -84,8 +84,8 @@ export default function RegistroPage() {
       return;
     }
 
-    // Validaciones para usuarios
-    if (formData.rol === 'USUARIO') {
+    // Validaciones para estudiantes
+    if (formData.rol === 'ESTUDIANTE') {
       const edad = parseInt(formData.edad);
       if (edad < 13 || edad > 18) {
         addToast({
@@ -117,7 +117,7 @@ export default function RegistroPage() {
         edad: formData.rol === 'PSICOLOGO' ? 25 : parseInt(formData.edad),
         grado: formData.rol === 'PSICOLOGO' ? 'PROFESIONAL' : formData.grado,
         telefono: formData.telefono || undefined,
-        rol: formData.rol as 'USUARIO' | 'PSICOLOGO',
+        rol: formData.rol as 'ESTUDIANTE' | 'PSICOLOGO',
       });
       
       setAuth(response.usuario, response.accessToken, response.refreshToken);
@@ -189,13 +189,13 @@ export default function RegistroPage() {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors bg-white"
               >
-                <option value="USUARIO">� Usuario (13-18 años)</option>
+                <option value="ESTUDIANTE">👨‍🎓 Estudiante (13-18 años)</option>
                 <option value="PSICOLOGO">👨‍⚕️ Psicólogo (Profesional)</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">
                 {formData.rol === 'PSICOLOGO' 
                   ? 'Registro para profesionales de la salud mental' 
-                  : 'Registro para usuarios de secundaria'}
+                  : 'Registro para estudiantes de secundaria'}
               </p>
             </div>
 
@@ -298,8 +298,8 @@ export default function RegistroPage() {
               )}
             </div>
 
-            {/* Campos específicos para usuarios */}
-            {formData.rol === 'USUARIO' && (
+            {/* Campos específicos para estudiantes */}
+            {formData.rol === 'ESTUDIANTE' && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="edad" className="block text-sm font-medium text-gray-700 mb-2">
@@ -358,8 +358,8 @@ export default function RegistroPage() {
               />
             </div>
 
-            {/* Consentimiento solo para usuarios menores de 16 */}
-            {formData.rol === 'USUARIO' && parseInt(formData.edad) < 16 && (
+            {/* Consentimiento solo para estudiantes menores de 16 */}
+            {formData.rol === 'ESTUDIANTE' && parseInt(formData.edad) < 16 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <label className="flex items-start space-x-3">
                   <input

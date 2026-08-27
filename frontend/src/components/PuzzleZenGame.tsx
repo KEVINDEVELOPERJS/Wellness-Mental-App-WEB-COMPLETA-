@@ -4,7 +4,7 @@ import { animations } from '../utils/animations';
 
 interface PuzzleZenGameProps {
   onBack: () => void;
-  onGameComplete: (score: number, level: number) => void;
+  onGameComplete: (score: number, combo: number, level?: number) => void;
 }
 
 interface PuzzlePiece {
@@ -87,7 +87,7 @@ export default function PuzzleZenGame({ onBack, onGameComplete }: PuzzleZenGameP
     
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, level);
+        onGameComplete(score, 0, level);
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }

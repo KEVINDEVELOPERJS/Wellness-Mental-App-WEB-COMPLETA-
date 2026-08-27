@@ -8,7 +8,7 @@ import { z } from 'zod';
 import prisma from '../config/database';
 
 const alertaSchema = z.object({
-  usuarioId: z.number(),
+  estudianteId: z.number(),
   tipo: z.string(),
   nivelRiesgo: z.enum(['BAJO', 'MEDIO', 'ALTO']),
   extracto: z.string(),
@@ -171,7 +171,7 @@ export class AlertaController {
 
       await WebPushService.sendAlertNotification(subscription, {
         title: `Alerta: ${alerta.nivelRiesgo}`,
-        body: `Nueva alerta para usuario: ${alerta.usuario.nombre}`,
+        body: `Nueva alerta para estudiante: ${alerta.estudiante.nombre}`,
         data: { alertaId: alerta.id },
       });
 
@@ -192,7 +192,7 @@ export class AlertaController {
       }
 
       await EmailService.sendAlertEmail(psicologoEmail, {
-        studentName: alerta.usuario.nombre,
+        studentName: alerta.estudiante.nombre,
         riskLevel: alerta.nivelRiesgo,
         type: alerta.tipo,
         timestamp: alerta.timestamp.toISOString(),
@@ -205,10 +205,10 @@ export class AlertaController {
     }
   }
 
-  static async getAlertasByUsuario(req: Request, res: Response) {
+  static async getAlertasByEstudiante(req: Request, res: Response) {
     try {
-      const { usuarioId } = req.params;
-      const alertas = await AlertaRiesgoRepository.getAlertasByUsuario(parseInt(usuarioId));
+      const { estudianteId } = req.params;
+      const alertas = await AlertaRiesgoRepository.getAlertasByEstudiante(parseInt(estudianteId));
 
       res.json(alertas);
     } catch (error) {

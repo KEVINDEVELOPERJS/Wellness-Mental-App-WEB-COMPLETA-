@@ -4,7 +4,7 @@ export interface Usuario {
   email: string;
   edad: number;
   grado: string;
-  rol: 'USUARIO' | 'PSICOLOGO' | 'PADRE' | 'ADMIN';
+  rol: 'ESTUDIANTE' | 'PSICOLOGO' | 'PADRE' | 'ADMIN';
   avatar?: string;
   telefono?: string;
   fechaRegistro: string;
@@ -18,7 +18,7 @@ export interface UsuarioDTO {
   edad: number;
   grado: string;
   telefono?: string;
-  rol?: 'USUARIO' | 'PSICOLOGO';
+  rol?: 'ESTUDIANTE' | 'PSICOLOGO';
   codigoVerificacion?: string;
 }
 

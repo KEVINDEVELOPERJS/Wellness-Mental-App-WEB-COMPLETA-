@@ -14,9 +14,9 @@ export class UsuarioRepository {
         edad: usuarioDTO.edad,
         grado: usuarioDTO.grado,
         telefono: usuarioDTO.telefono,
-        rol: usuarioDTO.rol || 'USUARIO',
+        rol: usuarioDTO.rol || 'ESTUDIANTE',
         estado: 'ACTIVO',
-        consentimientoPadres: usuarioDTO.rol === 'USUARIO' && usuarioDTO.edad < 16,
+        consentimientoPadres: usuarioDTO.rol === 'ESTUDIANTE' && usuarioDTO.edad < 16,
       },
     });
     
@@ -62,11 +62,11 @@ export class UsuarioRepository {
     return user === null;
   }
 
-  static async validateAge(edad: number, rol: string = 'USUARIO'): Promise<boolean> {
+  static async validateAge(edad: number, rol: string = 'ESTUDIANTE'): Promise<boolean> {
     if (rol === 'PSICOLOGO') {
       return edad >= 21 && edad <= 100; // Psicólogos adultos
     }
-    return edad >= 13 && edad <= 18; // Usuarios adolescentes
+    return edad >= 13 && edad <= 18; // Estudiantes adolescentes
   }
 
   static async updatePassword(id: number, newPassword: string): Promise<void> {

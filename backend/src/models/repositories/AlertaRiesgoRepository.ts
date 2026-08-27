@@ -9,7 +9,7 @@ export class AlertaRiesgoRepository {
   static async create(alertaDTO: AlertaDTO, ip?: string, userAgent?: string): Promise<AlertaRiesgo> {
     return prisma.alertaRiesgo.create({
       data: {
-        usuarioId: alertaDTO.usuarioId,
+        estudianteId: alertaDTO.estudianteId,
         tipo: alertaDTO.tipo,
         nivelRiesgo: alertaDTO.nivelRiesgo,
         extracto: alertaDTO.extracto,
@@ -26,7 +26,7 @@ export class AlertaRiesgoRepository {
     return prisma.alertaRiesgo.findUnique({
       where: { id },
       include: {
-        usuario: {
+        estudiante: {
           select: {
             id: true,
             nombre: true,
@@ -53,7 +53,7 @@ export class AlertaRiesgoRepository {
         nivelRiesgo: nivelRiesgo as any || undefined,
       },
       include: {
-        usuario: {
+        estudiante: {
           select: {
             id: true,
             nombre: true,
@@ -109,8 +109,8 @@ export class AlertaRiesgoRepository {
     });
   }
 
-  static async generarAlertaEvaluacion(resultadoId: number, usuarioId: number): Promise<AlertaRiesgo | null> {
-    console.log('🚨 Starting alert generation for resultado:', resultadoId, 'usuario:', usuarioId);
+  static async generarAlertaEvaluacion(resultadoId: number, estudianteId: number): Promise<AlertaRiesgo | null> {
+    console.log('🚨 Starting alert generation for resultado:', resultadoId, 'estudiante:', estudianteId);
     
     const resultado = await prisma.resultado.findUnique({
       where: { id: resultadoId },
@@ -125,15 +125,15 @@ export class AlertaRiesgoRepository {
     console.log('✅ High risk detected, creating alert for:', resultado.nivelRiesgo);
 
     // Get student information for email before creating alert
-    const usuario = await prisma.usuario.findUnique({
-      where: { id: usuarioId },
+    const estudiante = await prisma.usuario.findUnique({
+      where: { id: estudianteId },
       select: { nombre: true, email: true }
     });
 
-    console.log('👤 Student info:', usuario?.nombre, usuario?.email);
+    console.log('👤 Student info:', estudiante?.nombre, estudiante?.email);
 
     const alerta = await this.create({
-      usuarioId,
+      estudianteId,
       tipo: 'evaluacion',
       nivelRiesgo: resultado.nivelRiesgo,
       extracto: `Evaluación ${resultado.cuestionario.titulo} con puntaje ${resultado.puntaje}`,
@@ -144,12 +144,12 @@ export class AlertaRiesgoRepository {
 
     // Send real-time notification via Socket.io (non-blocking)
     try {
-      const alertaConUsuario = await this.findById(alerta.id);
-      if (alertaConUsuario) {
-        SocketService.sendToPsychologists('nueva_alerta', alertaConUsuario);
+      const alertaConEstudiante = await this.findById(alerta.id);
+      if (alertaConEstudiante) {
+        SocketService.sendToPsychologists('nueva_alerta', alertaConEstudiante);
         
         // Send push notification to registered psychologists (async)
-        this.sendPushNotificationsToPsychologists(alertaConUsuario);
+        this.sendPushNotificationsToPsychologists(alertaConEstudiante);
       }
     } catch (error) {
       console.error('Failed to send socket notification:', error);
@@ -159,7 +159,7 @@ export class AlertaRiesgoRepository {
     // This runs in background and doesn't block the API response
     setImmediate(async () => {
       try {
-        if (usuario) {
+        if (estudiante) {
           const psicologos = await prisma.usuario.findMany({
             where: { rol: 'PSICOLOGO', estado: 'ACTIVO' },
             select: { email: true, nombre: true }
@@ -175,7 +175,7 @@ export class AlertaRiesgoRepository {
           for (const psicologo of psicologos) {
             console.log('📧 Sending email to:', psicologo.email);
             await EmailService.sendAlertEmail(psicologo.email, {
-              studentName: usuario.nombre,
+              studentName: estudiante.nombre,
               riskLevel: resultado.nivelRiesgo,
               type: 'evaluacion',
               timestamp: new Date().toISOString(),
@@ -193,12 +193,12 @@ export class AlertaRiesgoRepository {
 
     // Send real-time notification via Socket.io
     try {
-      const alertaConUsuario = await this.findById(alerta.id);
-      if (alertaConUsuario) {
-        SocketService.sendToPsychologists('nueva_alerta', alertaConUsuario);
+      const alertaConEstudiante = await this.findById(alerta.id);
+      if (alertaConEstudiante) {
+        SocketService.sendToPsychologists('nueva_alerta', alertaConEstudiante);
         
         // Send push notification to registered psychologists
-        this.sendPushNotificationsToPsychologists(alertaConUsuario);
+        this.sendPushNotificationsToPsychologists(alertaConEstudiante);
       }
     } catch (error) {
       console.error('Failed to send socket notification:', error);
@@ -226,7 +226,7 @@ export class AlertaRiesgoRepository {
         // if (subscriptions.length > 0) {
         //   await WebPushService.sendBulkNotifications(subscriptions, {
         //     title: `🚨 ALERTA DE ALTO RIESGO`,
-        //     body: `Nueva alerta para usuario: ${alerta.usuario.nombre}`,
+        //     body: `Nueva alerta para estudiante: ${alerta.estudiante.nombre}`,
         //     data: { alertaId: alerta.id, type: 'high_risk_alert' }
         //   });
         // }
@@ -236,9 +236,9 @@ export class AlertaRiesgoRepository {
     });
   }
 
-  static async generarAlertaChat(chatSessionId: number, usuarioId: number, extracto: string, nivelRiesgo: string = 'ALTO'): Promise<AlertaRiesgo> {
+  static async generarAlertaChat(chatSessionId: number, estudianteId: number, extracto: string, nivelRiesgo: string = 'ALTO'): Promise<AlertaRiesgo> {
     const alerta = await this.create({
-      usuarioId,
+      estudianteId,
       tipo: 'chat',
       nivelRiesgo: nivelRiesgo as any,
       extracto,
@@ -247,13 +247,13 @@ export class AlertaRiesgoRepository {
 
     // Send real-time notification via Socket.io (non-blocking)
     try {
-      const alertaConUsuario = await this.findById(alerta.id);
-      if (alertaConUsuario) {
-        SocketService.sendToPsychologists('nueva_alerta', alertaConUsuario);
+      const alertaConEstudiante = await this.findById(alerta.id);
+      if (alertaConEstudiante) {
+        SocketService.sendToPsychologists('nueva_alerta', alertaConEstudiante);
         
         // Send push notifications for high-risk alerts (async)
         if (nivelRiesgo === 'ALTO') {
-          this.sendPushNotificationsToPsychologists(alertaConUsuario);
+          this.sendPushNotificationsToPsychologists(alertaConEstudiante);
         }
       }
     } catch (error) {
@@ -265,12 +265,12 @@ export class AlertaRiesgoRepository {
       setImmediate(async () => {
         try {
           // Get student information for email
-          const usuario = await prisma.usuario.findUnique({
-            where: { id: usuarioId },
+          const estudiante = await prisma.usuario.findUnique({
+            where: { id: estudianteId },
             select: { nombre: true, email: true }
           });
           
-          if (usuario) {
+          if (estudiante) {
             // Get ALL registered psychologists
             const psicologos = await prisma.usuario.findMany({
               where: { rol: 'PSICOLOGO', estado: 'ACTIVO' },
@@ -279,7 +279,7 @@ export class AlertaRiesgoRepository {
 
             for (const psicologo of psicologos) {
               await EmailService.sendAlertEmail(psicologo.email, {
-                studentName: usuario.nombre,
+                studentName: estudiante.nombre,
                 riskLevel: alerta.nivelRiesgo,
                 type: alerta.tipo,
                 timestamp: alerta.timestamp.toISOString(),
@@ -295,13 +295,13 @@ export class AlertaRiesgoRepository {
 
     // Send real-time notification via Socket.io
     try {
-      const alertaConUsuario = await this.findById(alerta.id);
-      if (alertaConUsuario) {
-        SocketService.sendToPsychologists('nueva_alerta', alertaConUsuario);
+      const alertaConEstudiante = await this.findById(alerta.id);
+      if (alertaConEstudiante) {
+        SocketService.sendToPsychologists('nueva_alerta', alertaConEstudiante);
         
         // Send push notifications for high-risk alerts
         if (nivelRiesgo === 'ALTO') {
-          this.sendPushNotificationsToPsychologists(alertaConUsuario);
+          this.sendPushNotificationsToPsychologists(alertaConEstudiante);
         }
       }
     } catch (error) {
@@ -311,9 +311,9 @@ export class AlertaRiesgoRepository {
     return alerta;
   }
 
-  static async getAlertasByUsuario(usuarioId: number): Promise<AlertaRiesgo[]> {
+  static async getAlertasByEstudiante(estudianteId: number): Promise<AlertaRiesgo[]> {
     return prisma.alertaRiesgo.findMany({
-      where: { usuarioId },
+      where: { estudianteId },
       orderBy: { timestamp: 'desc' },
     });
   }

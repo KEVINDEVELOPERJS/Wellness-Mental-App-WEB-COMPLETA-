@@ -30,7 +30,7 @@ DROP TYPE IF EXISTS "EstadoModeracion";
 DROP TYPE IF EXISTS "TipoEjercicio";
 
 -- Create Enums
-CREATE TYPE "Rol" AS ENUM ('USUARIO', 'PSICOLOGO', 'PADRE', 'ADMIN');
+CREATE TYPE "Rol" AS ENUM ('ESTUDIANTE', 'PSICOLOGO', 'PADRE', 'ADMIN');
 
 CREATE TYPE "EstadoUsuario" AS ENUM ('ACTIVO', 'PENDIENTE', 'SUSPENDIDO');
 
@@ -54,7 +54,7 @@ CREATE TABLE "Usuario" (
     "passwordHash" VARCHAR(255) NOT NULL,
     "edad" INTEGER NOT NULL,
     "grado" VARCHAR(50) NOT NULL,
-    "rol" "Rol" NOT NULL DEFAULT 'USUARIO',
+    "rol" "Rol" NOT NULL DEFAULT 'ESTUDIANTE',
     "fechaRegistro" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "estado" "EstadoUsuario" NOT NULL DEFAULT 'ACTIVO',
     "consentimientoPadres" BOOLEAN NOT NULL DEFAULT false,
@@ -263,7 +263,7 @@ CREATE INDEX "UsuarioLogro_logroId_idx" ON "UsuarioLogro"("logroId");
 -- AlertaRiesgo table
 CREATE TABLE "AlertaRiesgo" (
     "id" SERIAL PRIMARY KEY,
-    "usuarioId" INTEGER NOT NULL,
+    "estudianteId" INTEGER NOT NULL,
     "tipo" VARCHAR(50) NOT NULL,
     "nivelRiesgo" "NivelRiesgo" NOT NULL,
     "timestamp" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -274,13 +274,13 @@ CREATE TABLE "AlertaRiesgo" (
     "chatSessionId" INTEGER,
     "ipOrigen" VARCHAR(50),
     "userAgent" TEXT,
-    CONSTRAINT "AlertaRiesgo_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "Usuario"("id"),
+    CONSTRAINT "AlertaRiesgo_estudianteId_fkey" FOREIGN KEY ("estudianteId") REFERENCES "Usuario"("id"),
     CONSTRAINT "AlertaRiesgo_resultadoId_fkey" FOREIGN KEY ("resultadoId") REFERENCES "Resultado"("id"),
     CONSTRAINT "AlertaRiesgo_chatSessionId_fkey" FOREIGN KEY ("chatSessionId") REFERENCES "ChatSession"("id")
 );
 
 -- Indexes for AlertaRiesgo
-CREATE INDEX "AlertaRiesgo_usuarioId_idx" ON "AlertaRiesgo"("usuarioId");
+CREATE INDEX "AlertaRiesgo_estudianteId_idx" ON "AlertaRiesgo"("estudianteId");
 CREATE INDEX "AlertaRiesgo_estado_idx" ON "AlertaRiesgo"("estado");
 CREATE INDEX "AlertaRiesgo_timestamp_idx" ON "AlertaRiesgo"("timestamp");
 CREATE INDEX "AlertaRiesgo_nivelRiesgo_idx" ON "AlertaRiesgo"("nivelRiesgo");
@@ -363,7 +363,7 @@ CREATE INDEX "PreferenciasUsuario_usuarioId_idx" ON "PreferenciasUsuario"("usuar
 -- Insert initial data (optional sample data)
 -- Sample Cuestionario
 INSERT INTO "Cuestionario" ("titulo", "descripcion", "instrucciones", "categoria", "estado") VALUES
-('Evaluación de Ansiedad', 'Cuestionario para evaluar niveles de ansiedad en usuarios', 'Responda cada pregunta sinceramente seleccionando la opción que mejor describa su situación', 'SALUD_MENTAL', 'publicado'),
+('Evaluación de Ansiedad', 'Cuestionario para evaluar niveles de ansiedad en estudiantes', 'Responda cada pregunta sinceramente seleccionando la opción que mejor describa su situación', 'SALUD_MENTAL', 'publicado'),
 ('Evaluación de Depresión', 'Cuestionario para detectar signos de depresión', 'Lea cada pregunta y responda según cómo se ha sentido durante las últimas dos semanas', 'SALUD_MENTAL', 'publicado');
 
 -- Sample Ejercicios

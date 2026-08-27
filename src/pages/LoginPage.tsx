@@ -123,7 +123,7 @@ export default function LoginPage() {
           {/* Info */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              <strong>Para usuarios de 13-18 años</strong>
+              <strong>Para estudiantes de 13-18 años</strong>
               <br />
               Tu bienestar mental es importante. Estamos aquí para apoyarte.
             </p>

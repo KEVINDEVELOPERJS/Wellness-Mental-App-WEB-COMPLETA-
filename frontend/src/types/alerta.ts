@@ -1,7 +1,7 @@
 export interface AlertaRiesgo {
   id: number;
-  usuarioId: number;
-  usuario?: {
+  estudianteId: number;
+  estudiante?: {
     id: number;
     nombre: string;
     email: string;

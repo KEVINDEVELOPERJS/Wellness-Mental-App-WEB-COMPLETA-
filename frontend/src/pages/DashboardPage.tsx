@@ -101,7 +101,7 @@ export default function DashboardPage() {
       {/* Welcome Header */}
       <div className="gradient-wellness rounded-2xl p-6 text-white">
         <h1 className="text-3xl font-bold mb-2">
-          ¡Hola, {user?.nombre || 'Usuario'}! 👋
+          ¡Hola, {user?.nombre || 'Estudiante'}! 👋
         </h1>
         <p className="text-white/90">
           Bienvenido de nuevo. Tu bienestar es nuestra prioridad.

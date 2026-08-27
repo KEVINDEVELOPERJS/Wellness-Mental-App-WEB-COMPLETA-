@@ -16,7 +16,7 @@ router.patch('/:id', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaCont
 router.get('/:id/auditoria', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAuditoria);
 router.post('/:id/notificacion', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.enviarNotificacionPush);
 router.post('/:id/email', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.enviarEmailPrioritario);
-router.get('/usuario/:usuarioId', authenticate, AlertaController.getAlertasByUsuario);
+router.get('/estudiante/:estudianteId', authenticate, AlertaController.getAlertasByEstudiante);
 router.get('/psicologo', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.getAlertasByPsicologo);
 router.post('/:id/auditoria', authenticate, authorize(['PSICOLOGO', 'ADMIN']), AlertaController.registrarAuditoria);
 

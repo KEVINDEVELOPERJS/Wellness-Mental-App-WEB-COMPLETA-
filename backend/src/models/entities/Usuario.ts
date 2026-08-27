@@ -23,7 +23,7 @@ export interface UsuarioDTO {
   edad: number;
   grado: string;
   telefono?: string;
-  rol?: 'USUARIO' | 'PSICOLOGO';
+  rol?: 'ESTUDIANTE' | 'PSICOLOGO';
   codigoVerificacion?: string;
 }
 
