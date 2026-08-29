@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { gamificacionService } from '../services/gamificacionService';
@@ -6,23 +6,33 @@ import { useUIStore } from '../store/uiStore';
 import { 
   Brain, 
   Heart, 
-  MessageSquare, 
   Users, 
   TrendingUp, 
   Award,
   Calendar,
   Clock,
-  Zap
+  Zap,
+  Bell,
+  Check,
+  Camera
 } from 'lucide-react';
 
 interface DashboardStats {
   ejerciciosCompletados: number;
-  chatsRealizados: number;
   evaluacionesCompletadas: number;
   postsComunidad: number;
   puntos: number;
   nivel: string;
   rachaDias: number;
+}
+
+interface Notification {
+  id: string;
+  type: 'ejercicio' | 'logro' | 'alerta';
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
 }
 
 export default function DashboardPage() {
@@ -31,6 +41,36 @@ export default function DashboardPage() {
   const { addToast } = useUIStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: '1',
+      type: 'logro',
+      title: '¡Logro desbloqueado!',
+      message: 'Has completado tu primer ejercicio de respiración',
+      time: 'Hace 1 hora',
+      read: false,
+    },
+    {
+      id: '2',
+      type: 'ejercicio',
+      title: 'Recordatorio de ejercicio',
+      message: 'No olvides completar tu ejercicio diario de respiración',
+      time: 'Hace 3 horas',
+      read: true,
+    },
+    {
+      id: '3',
+      type: 'alerta',
+      title: 'Evaluación pendiente',
+      message: 'Tienes una evaluación de bienestar pendiente',
+      time: 'Ayer',
+      read: true,
+    },
+  ]);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
     // Redirect psychologists to their specific dashboard
@@ -66,13 +106,6 @@ export default function DashboardPage() {
       onClick: () => navigate('/ejercicios'),
     },
     {
-      title: 'Chat con IA',
-      description: 'Habla con el asistente',
-      icon: MessageSquare,
-      color: 'bg-blue-500',
-      onClick: () => navigate('/chat-ia'),
-    },
-    {
       title: 'Evaluación',
       description: 'Test de bienestar',
       icon: Brain,
@@ -86,7 +119,67 @@ export default function DashboardPage() {
       color: 'bg-green-500',
       onClick: () => navigate('/comunidad'),
     },
+    {
+      title: 'Juegos',
+      description: 'Juegos recompensa',
+      icon: Zap,
+      color: 'bg-yellow-500',
+      onClick: () => navigate('/juegos'),
+    },
   ];
+
+  const markAsRead = (id: string) => {
+    setNotifications(notifications.map(notif => 
+      notif.id === id ? { ...notif, read: true } : notif
+    ));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(notif => ({ ...notif, read: true })));
+    addToast({
+      type: 'success',
+      title: 'Notificaciones leídas',
+      message: 'Todas las notificaciones han sido marcadas como leídas',
+    });
+  };
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Por favor selecciona un archivo de imagen válido',
+        });
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: 'La imagen no debe superar los 5MB',
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhoto(reader.result as string);
+        addToast({
+          type: 'success',
+          title: 'Foto actualizada',
+          message: 'Tu foto de perfil ha sido actualizada',
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
 
   if (isLoading) {
     return (
@@ -100,29 +193,48 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="gradient-wellness rounded-2xl p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">
-          ¡Hola, {user?.nombre || 'Estudiante'}! 👋
-        </h1>
-        <p className="text-white/90">
-          Bienvenido de nuevo. Tu bienestar es nuestra prioridad.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
+              ¡Hola, {user?.nombre || 'Estudiante'}! 👋
+            </h1>
+            <p className="text-white/90">
+              Bienvenido de nuevo. Tu bienestar es nuestra prioridad.
+            </p>
+          </div>
+          <div className="relative">
+            <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold overflow-hidden cursor-pointer hover:bg-white/30 transition-colors" onClick={handlePhotoClick}>
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                user?.nombre?.charAt(0) || 'U'
+              )}
+            </div>
+            <button 
+              onClick={handlePhotoClick}
+              className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 text-primary hover:bg-white/90 transition-colors"
+            >
+              <Camera className="h-3 w-3" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <StatCard
           icon={Heart}
           label="Ejercicios"
           value={stats?.ejerciciosCompletados || 0}
           color="text-pink-500"
           bgColor="bg-pink-50"
-        />
-        <StatCard
-          icon={MessageSquare}
-          label="Chats"
-          value={stats?.chatsRealizados || 0}
-          color="text-blue-500"
-          bgColor="bg-blue-50"
         />
         <StatCard
           icon={Brain}
@@ -203,6 +315,69 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Notifications */}
+      <div className="bg-card rounded-xl p-6 border">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Notificaciones</h3>
+          <div className="flex items-center space-x-2">
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-sm text-primary hover:underline"
+              >
+                Marcar todas como leídas
+              </button>
+            )}
+            <button
+              onClick={() => navigate('/notificaciones')}
+              className="text-sm text-primary hover:underline"
+            >
+              Ver todas
+            </button>
+          </div>
+        </div>
+        
+        {notifications.length === 0 ? (
+          <div className="text-center py-8">
+            <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">No tienes notificaciones</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {notifications.slice(0, 3).map((notification) => (
+              <div
+                key={notification.id}
+                className={`p-3 rounded-lg transition-all ${
+                  !notification.read ? 'bg-primary/5 border border-primary/20' : 'bg-secondary'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className={`font-medium text-sm ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      {notification.title}
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
+                    <div className="flex items-center space-x-1 text-xs text-muted-foreground mt-2">
+                      <Clock className="h-3 w-3" />
+                      <span>{notification.time}</span>
+                    </div>
+                  </div>
+                  {!notification.read && (
+                    <button
+                      onClick={() => markAsRead(notification.id)}
+                      className="p-1 hover:bg-accent rounded transition-colors ml-2"
+                      title="Marcar como leída"
+                    >
+                      <Check className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Recent Activity */}
       <div className="bg-card rounded-xl p-6 border">
         <div className="flex items-center justify-between mb-4">
@@ -215,7 +390,7 @@ export default function DashboardPage() {
           </button>
         </div>
         
-        {stats?.ejerciciosCompletados === 0 && stats?.chatsRealizados === 0 ? (
+        {stats?.ejerciciosCompletados === 0 ? (
           <div className="text-center py-8">
             <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground">
@@ -228,11 +403,6 @@ export default function DashboardPage() {
               icon={Heart}
               title="Ejercicio de respiración completado"
               time="Hace 2 horas"
-            />
-            <ActivityItem
-              icon={MessageSquare}
-              title="Sesión de chat con IA"
-              time="Ayer"
             />
             <ActivityItem
               icon={Brain}

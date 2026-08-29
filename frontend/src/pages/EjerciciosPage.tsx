@@ -329,6 +329,12 @@ function StatCard({ icon: Icon, label, value, color, bgColor }: any) {
 }
 
 function ExerciseCard({ ejercicio, onStart, disabled }: any) {
+  const handleStart = (duracion: number) => {
+    if (!disabled) {
+      onStart(duracion);
+    }
+  };
+
   return (
     <div className="bg-card rounded-xl p-6 border hover:shadow-lg transition-all">
       <div className="flex items-start justify-between mb-4">
@@ -352,7 +358,7 @@ function ExerciseCard({ ejercicio, onStart, disabled }: any) {
 
       <div className="space-y-2">
         <button
-          onClick={() => onStart(ejercicio.duracionMinima)}
+          onClick={() => handleStart(ejercicio.duracionMinima)}
           disabled={disabled}
           className="w-full py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
         >
@@ -361,14 +367,14 @@ function ExerciseCard({ ejercicio, onStart, disabled }: any) {
         
         <div className="flex space-x-2">
           <button
-            onClick={() => onStart(Math.ceil((ejercicio.duracionMinima + ejercicio.duracionMaxima) / 2))}
+            onClick={() => handleStart(Math.ceil((ejercicio.duracionMinima + ejercicio.duracionMaxima) / 2))}
             disabled={disabled}
             className="flex-1 py-2 bg-secondary rounded-lg font-medium hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
           >
             {Math.ceil((ejercicio.duracionMinima + ejercicio.duracionMaxima) / 2)} min
           </button>
           <button
-            onClick={() => onStart(ejercicio.duracionMaxima)}
+            onClick={() => handleStart(ejercicio.duracionMaxima)}
             disabled={disabled}
             className="flex-1 py-2 bg-secondary rounded-lg font-medium hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
           >

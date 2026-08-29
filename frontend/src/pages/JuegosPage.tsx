@@ -217,74 +217,74 @@ export default function JuegosPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Juegos de Recompensa</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Juegos de Recompensa</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Diviértete mientras mejoras tu bienestar mental
         </p>
       </div>
 
       {/* Level Progress */}
-      <div className="bg-card rounded-xl p-6 border">
+      <div className="bg-card rounded-xl p-4 md:p-6 border">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="bg-primary/10 rounded-full p-3">
               <Trophy className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold">{nivel?.nivel || 'Explorador Mental'}</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-semibold text-sm md:text-base">{nivel?.nivel || 'Explorador Mental'}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground">
                 {nivel?.puntosActuales || 0} / {nivel?.puntosSiguienteNivel || 500} puntos
               </p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">{Math.round(nivel?.progreso || 0)}%</p>
+            <p className="text-xl md:text-2xl font-bold text-primary">{Math.round(nivel?.progreso || 0)}%</p>
             <p className="text-xs text-muted-foreground">completado</p>
           </div>
         </div>
-        <div className="w-full bg-secondary rounded-full h-3">
+        <div className="w-full bg-secondary rounded-full h-2 md:h-3">
           <div
-            className="bg-primary h-3 rounded-full transition-all"
+            className="bg-primary h-2 md:h-3 rounded-full transition-all"
             style={{ width: `${nivel?.progreso || 0}%` }}
           />
         </div>
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card rounded-xl p-4 border">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="bg-card rounded-xl p-3 md:p-4 border">
           <div className="flex items-center gap-2 mb-2">
-            <Flame className="h-5 w-5 text-orange-500" />
-            <span className="text-sm text-muted-foreground">Racha</span>
+            <Flame className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
+            <span className="text-xs md:text-sm text-muted-foreground">Racha</span>
           </div>
-          <p className="text-2xl font-bold">{estadoGamificacion?.rachaActividad || 0}</p>
+          <p className="text-xl md:text-2xl font-bold">{estadoGamificacion?.rachaActividad || 0}</p>
         </div>
-        <div className="bg-card rounded-xl p-4 border">
+        <div className="bg-card rounded-xl p-3 md:p-4 border">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="h-5 w-5 text-blue-500" />
-            <span className="text-sm text-muted-foreground">Tiempo Hoy</span>
+            <Clock className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
+            <span className="text-xs md:text-sm text-muted-foreground">Tiempo Hoy</span>
           </div>
-          <p className="text-2xl font-bold">{estadoGamificacion?.minutosRestantesHoy || 0} min</p>
+          <p className="text-xl md:text-2xl font-bold">{estadoGamificacion?.minutosRestantesHoy || 0} min</p>
         </div>
-        <div className="bg-card rounded-xl p-4 border">
+        <div className="bg-card rounded-xl p-3 md:p-4 border">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="h-5 w-5 text-green-500" />
-            <span className="text-sm text-muted-foreground">Ranking</span>
+            <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
+            <span className="text-xs md:text-sm text-muted-foreground">Ranking</span>
           </div>
-          <p className="text-2xl font-bold">#{estadoGamificacion?.posicionRanking || 0}</p>
+          <p className="text-xl md:text-2xl font-bold">#{estadoGamificacion?.posicionRanking || 0}</p>
         </div>
-        <div className="bg-card rounded-xl p-4 border">
+        <div className="bg-card rounded-xl p-3 md:p-4 border">
           <div className="flex items-center gap-2 mb-2">
-            <Award className="h-5 w-5 text-purple-500" />
-            <span className="text-sm text-muted-foreground">Misiones</span>
+            <Award className="h-4 w-4 md:h-5 md:w-5 text-purple-500" />
+            <span className="text-xs md:text-sm text-muted-foreground">Misiones</span>
           </div>
-          <p className="text-2xl font-bold">{estadoGamificacion?.misionesCompletadasHoy || 0}/{estadoGamificacion?.misionesTotalesHoy || 3}</p>
+          <p className="text-xl md:text-2xl font-bold">{estadoGamificacion?.misionesCompletadasHoy || 0}/{estadoGamificacion?.misionesTotalesHoy || 3}</p>
         </div>
       </div>
 
       {/* Daily Missions */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Misiones Diarias</h2>
+        <h2 className="text-lg md:text-xl font-semibold mb-4">Misiones Diarias</h2>
         <div className="space-y-3">
           {!Array.isArray(misiones) || misiones.length === 0 ? (
             <div className="text-center py-8 bg-card rounded-xl border">
@@ -297,7 +297,7 @@ export default function JuegosPage() {
             misiones.map((mision, index) => (
               <div
                 key={mision.id || index}
-                className={`bg-card rounded-xl p-4 border ${
+                className={`bg-card rounded-xl p-3 md:p-4 border ${
                   mision.completada ? 'opacity-60' : ''
                 }`}
               >
@@ -312,13 +312,13 @@ export default function JuegosPage() {
                         <Star className="h-5 w-5 text-blue-600" />
                       )}
                     </div>
-                    <div>
-                      <h4 className="font-semibold">{mision.titulo || 'Misión'}</h4>
-                      <p className="text-sm text-muted-foreground">{mision.descripcion || 'Completa esta misión'}</p>
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-sm md:text-base">{mision.titulo || 'Misión'}</h4>
+                      <p className="text-xs md:text-sm text-muted-foreground">{mision.descripcion || 'Completa esta misión'}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-primary">+{mision.puntos || 0} pts</p>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-bold text-primary text-sm md:text-base">+{mision.puntos || 0} pts</p>
                     {mision.progreso !== undefined && (
                       <p className="text-xs text-muted-foreground">
                         {mision.progreso}/{mision.objetivo || 1}
@@ -334,8 +334,8 @@ export default function JuegosPage() {
 
       {/* Games Grid */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Mini Juegos</h2>
-        <div className="grid md:grid-cols-2 gap-6">
+        <h2 className="text-lg md:text-xl font-semibold mb-4">Mini Juegos</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
           {games.map((game) => (
             <GameCard
               key={game.id}
@@ -348,7 +348,7 @@ export default function JuegosPage() {
 
       {/* Ranking */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Ranking Global</h2>
+        <h2 className="text-lg md:text-xl font-semibold mb-4">Ranking Global</h2>
         <div className="bg-card rounded-xl border overflow-hidden">
           {!Array.isArray(ranking) || ranking.length === 0 ? (
             <div className="text-center py-8">
@@ -362,12 +362,12 @@ export default function JuegosPage() {
               {Array.isArray(ranking) && ranking.slice(0, 5).map((user, index) => (
                 <div
                   key={user.id || index}
-                  className={`flex items-center justify-between p-4 ${
+                  className={`flex items-center justify-between p-3 md:p-4 ${
                     index === 0 ? 'bg-yellow-50' : index === 1 ? 'bg-gray-50' : index === 2 ? 'bg-orange-50' : ''
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
                       index === 0 ? 'bg-yellow-500 text-white' : 
                       index === 1 ? 'bg-gray-400 text-white' : 
                       index === 2 ? 'bg-orange-400 text-white' : 
@@ -375,13 +375,13 @@ export default function JuegosPage() {
                     }`}>
                       {index + 1}
                     </div>
-                    <div>
-                      <h4 className="font-semibold">{user.nombre || 'Usuario'}</h4>
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-sm md:text-base truncate">{user.nombre || 'Usuario'}</h4>
                       <p className="text-sm text-muted-foreground">{user.puntos || 0} puntos</p>
                     </div>
                   </div>
                   {user.esUsuario && (
-                    <span className="text-xs bg-primary text-white px-2 py-1 rounded-full">
+                    <span className="text-xs bg-primary text-white px-2 py-1 rounded-full flex-shrink-0">
                       Tú
                     </span>
                   )}
@@ -394,8 +394,8 @@ export default function JuegosPage() {
 
       {/* Achievements */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Logros Desbloqueados</h2>
-        <div className="grid md:grid-cols-3 gap-4">
+        <h2 className="text-lg md:text-xl font-semibold mb-4">Logros Desbloqueados</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           {!Array.isArray(logros) || logros.length === 0 ? (
             <div className="col-span-full text-center py-8 bg-card rounded-xl border">
               <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
@@ -413,8 +413,8 @@ export default function JuegosPage() {
 
       {/* Available Achievements */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Logros Disponibles</h2>
-        <div className="grid md:grid-cols-3 gap-4">
+        <h2 className="text-lg md:text-xl font-semibold mb-4">Logros Disponibles</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           {!Array.isArray(allLogros) || allLogros.length === 0 ? (
             <div className="col-span-full text-center py-8 bg-card rounded-xl border">
               <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
@@ -443,7 +443,7 @@ const GameCard = React.memo(function GameCard({ game, onSelect }: any) {
   };
 
   return (
-    <div className="bg-card rounded-xl p-6 border hover:shadow-lg transition-all cursor-pointer">
+    <div className="bg-card rounded-xl p-4 md:p-6 border hover:shadow-lg transition-all cursor-pointer">
       <div className="flex items-start justify-between mb-4">
         <div className={`${game.color} rounded-full p-3`}>
           <game.icon className="h-6 w-6 text-white" />
@@ -455,7 +455,7 @@ const GameCard = React.memo(function GameCard({ game, onSelect }: any) {
         )}
       </div>
       
-      <h3 className="text-xl font-semibold mb-2">{game.name}</h3>
+      <h3 className="text-lg md:text-xl font-semibold mb-2">{game.name}</h3>
       <p className="text-sm text-muted-foreground mb-4">{game.description}</p>
       
       <button
@@ -464,7 +464,7 @@ const GameCard = React.memo(function GameCard({ game, onSelect }: any) {
           handleClick();
         }}
         disabled={!game.unlocked}
-        className="w-full py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+        className="w-full py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
       >
         <Play className="h-4 w-4" />
         <span>{game.unlocked ? 'Jugar' : 'Bloqueado'}</span>
@@ -477,15 +477,20 @@ function AchievementCard({ logro, locked }: any) {
   if (!logro) return null;
   
   return (
-    <div className={`bg-card rounded-xl p-4 border ${locked ? 'opacity-60' : ''}`}>
+    <div className={`bg-card rounded-xl p-3 md:p-4 border ${locked ? 'opacity-60' : ''}`}>
       <div className="flex items-center space-x-3 mb-3">
-        <div className="text-2xl">{logro.icon || logro.emoji || '🏆'}</div>
-        <div>
-          <h4 className="font-semibold text-sm">{logro.nombre || logro.name || 'Logro'}</h4>
+        <div className="text-xl md:text-2xl flex-shrink-0">{logro.icon || logro.emoji || '🏆'}</div>
+        <div className="min-w-0">
+          <h4 className="font-semibold text-sm md:text-base truncate">{logro.nombre || logro.name || 'Logro'}</h4>
           <p className="text-xs text-muted-foreground">+{logro.puntos || logro.points || 0} puntos</p>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">{logro.descripcion || logro.description || 'Descripción no disponible'}</p>
+      <p className="text-xs text-muted-foreground line-clamp-2 md:line-clamp-none" style={{
+        display: '-webkit-box',
+        WebkitLineClamp: '2',
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden'
+      }}>{logro.descripcion || logro.description || 'Descripción no disponible'}</p>
       {locked && (
         <div className="mt-2 flex items-center space-x-1 text-xs text-muted-foreground">
           <Lock className="h-3 w-3" />

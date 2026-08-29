@@ -121,7 +121,7 @@ export default function ComunidadPage() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
           <button
             onClick={() => navigate('/videos')}
-            className="flex items-center justify-center space-x-2 px-4 py-2 bg-secondary rounded-lg hover:bg-accent transition-colors"
+            className="flex items-center justify-center space-x-2 px-3 py-2 md:px-4 md:py-2 bg-secondary rounded-lg hover:bg-accent transition-colors text-sm md:text-base"
           >
             <Video className="h-4 w-4" />
             <span className="hidden sm:inline">Ver Videos</span>
@@ -129,7 +129,7 @@ export default function ComunidadPage() {
           </button>
           <button
             onClick={() => setShowNewPost(true)}
-            className="flex items-center justify-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            className="flex items-center justify-center space-x-2 px-3 py-2 md:px-4 md:py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm md:text-base"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nuevo Post</span>
@@ -142,7 +142,7 @@ export default function ComunidadPage() {
       <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-hide">
         <button
           onClick={() => setSelectedCategoria('')}
-          className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm whitespace-nowrap transition-colors ${
+          className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm whitespace-nowrap transition-colors flex-shrink-0 ${
             selectedCategoria === '' 
               ? 'bg-primary text-white' 
               : 'bg-secondary hover:bg-accent'
@@ -154,7 +154,7 @@ export default function ComunidadPage() {
           <button
             key={categoria}
             onClick={() => setSelectedCategoria(categoria)}
-            className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm whitespace-nowrap transition-colors ${
+            className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm whitespace-nowrap transition-colors flex-shrink-0 ${
               selectedCategoria === categoria 
                 ? 'bg-primary text-white' 
                 : 'bg-secondary hover:bg-accent'
@@ -259,15 +259,15 @@ function PostCard({ post, onLike }: any) {
     <div className="bg-card rounded-xl p-4 md:p-6 border hover:shadow-lg transition-all">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm md:text-base">
+          <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm md:text-base flex-shrink-0">
             {post.usuario?.nombre?.charAt(0) || 'U'}
           </div>
-          <div>
-            <p className="font-medium text-sm md:text-base">{post.usuario?.nombre || 'Anónimo'}</p>
+          <div className="min-w-0">
+            <p className="font-medium text-sm md:text-base truncate">{post.usuario?.nombre || 'Anónimo'}</p>
             <p className="text-xs text-muted-foreground">{timeAgo}</p>
           </div>
         </div>
-        <span className="text-xs bg-secondary px-2 py-1 rounded-full whitespace-nowrap">
+        <span className="text-xs bg-secondary px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
           {post.categoria}
         </span>
       </div>
@@ -289,7 +289,7 @@ function PostCard({ post, onLike }: any) {
             <span className="text-xs md:text-sm">{post.comentarios?.length || 0}</span>
           </button>
         </div>
-        <button className="text-xs md:text-sm text-muted-foreground hover:text-primary transition-colors">
+        <button className="text-xs md:text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
           Ver comentarios
         </button>
       </div>

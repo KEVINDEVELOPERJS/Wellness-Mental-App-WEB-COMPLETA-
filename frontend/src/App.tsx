@@ -6,7 +6,6 @@ import DashboardPage from './pages/DashboardPage';
 import DashboardPsicologoPage from './pages/DashboardPsicologoPage';
 import EvaluacionPage from './pages/EvaluacionPage';
 import ResultadoEvaluacionPage from './pages/ResultadoEvaluacionPage';
-import ChatIAPage from './pages/ChatIAPage';
 import EjerciciosPage from './pages/EjerciciosPage';
 import ComunidadPage from './pages/ComunidadPage';
 import VideosPage from './pages/VideosPage';
@@ -105,14 +104,6 @@ function App() {
           element={
             <ProtectedRoute>
               <ResultadoEvaluacionPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chat-ia"
-          element={
-            <ProtectedRoute>
-              <ChatIAPage />
             </ProtectedRoute>
           }
         />

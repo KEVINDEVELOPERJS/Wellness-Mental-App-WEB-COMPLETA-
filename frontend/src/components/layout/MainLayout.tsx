@@ -6,7 +6,6 @@ import { authService } from '../../services/authService';
 import { 
   Home, 
   Brain, 
-  MessageSquare, 
   Heart, 
   Users, 
   Video,
@@ -26,7 +25,6 @@ interface MainLayoutProps {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Evaluación', href: '/evaluacion', icon: Brain },
-  { name: 'Chat IA', href: '/chat-ia', icon: MessageSquare },
   { name: 'Ejercicios', href: '/ejercicios', icon: Heart },
   { name: 'Videos', href: '/videos', icon: Video },
   { name: 'Comunidad y Foros', href: '/comunidad', icon: Users },
@@ -212,7 +210,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 className="p-2 rounded-lg hover:bg-accent relative"
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
               </button>
               
               <button

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
@@ -27,6 +27,16 @@ export default function PerfilPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'estadisticas' | 'configuracion' | 'privacidad'>('estadisticas');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [notificationSettings, setNotificationSettings] = useState({
+    chat: true,
+    exercises: true,
+    community: true,
+    alerts: true,
+  });
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [language, setLanguage] = useState('es');
 
   useEffect(() => {
     loadStats();
@@ -87,6 +97,110 @@ export default function PerfilPage() {
     }
   };
 
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Por favor selecciona un archivo de imagen válido',
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: 'La imagen no debe superar los 5MB',
+        });
+        return;
+      }
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhoto(reader.result as string);
+        addToast({
+          type: 'success',
+          title: 'Foto actualizada',
+          message: 'Tu foto de perfil ha sido actualizada',
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleNotificationToggle = (setting: keyof typeof notificationSettings) => {
+    setNotificationSettings(prev => ({
+      ...prev,
+      [setting]: !prev[setting]
+    }));
+    addToast({
+      type: 'success',
+      title: 'Configuración actualizada',
+      message: 'Tus preferencias de notificación han sido actualizadas',
+    });
+  };
+
+  const handleDarkModeToggle = () => {
+    setIsDarkMode(!isDarkMode);
+    // You would integrate with your theme store here
+    addToast({
+      type: 'success',
+      title: 'Modo cambiado',
+      message: isDarkMode ? 'Modo claro activado' : 'Modo oscuro activado',
+    });
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    addToast({
+      type: 'success',
+      title: 'Idioma cambiado',
+      message: `Idioma cambiado a ${newLanguage === 'es' ? 'Español' : 'English'}`,
+    });
+  };
+
+  const handlePasswordChange = () => {
+    addToast({
+      type: 'info',
+      title: 'Funcionalidad en desarrollo',
+      message: 'El cambio de contraseña estará disponible próximamente',
+    });
+  };
+
+  const handleTwoFactorAuth = () => {
+    addToast({
+      type: 'info',
+      title: 'Funcionalidad en desarrollo',
+      message: 'La autenticación 2FA estará disponible próximamente',
+    });
+  };
+
+  const handleGenerateInviteCode = () => {
+    addToast({
+      type: 'success',
+      title: 'Código generado',
+      message: 'Código de invitación generado: ABC123XYZ',
+    });
+  };
+
+  const handleRevokeParentalAccess = () => {
+    addToast({
+      type: 'success',
+      title: 'Acceso revocado',
+      message: 'El acceso parental ha sido revocado',
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -101,12 +215,26 @@ export default function PerfilPage() {
       <div className="gradient-wellness rounded-2xl p-6 text-white">
         <div className="flex items-center space-x-4">
           <div className="relative">
-            <div className="h-20 w-20 rounded-full bg-white/20 flex items-center justify-center text-3xl font-bold">
-              {user?.nombre?.charAt(0) || 'U'}
+            <div className="h-20 w-20 rounded-full bg-white/20 flex items-center justify-center text-3xl font-bold overflow-hidden">
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                user?.nombre?.charAt(0) || 'U'
+              )}
             </div>
-            <button className="absolute bottom-0 right-0 bg-white rounded-full p-2 text-primary hover:bg-white/90 transition-colors">
+            <button 
+              onClick={handlePhotoClick}
+              className="absolute bottom-0 right-0 bg-white rounded-full p-2 text-primary hover:bg-white/90 transition-colors"
+            >
               <Camera className="h-4 w-4" />
             </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
           </div>
           <div>
             <h1 className="text-2xl font-bold">{user?.nombre || 'Usuario'}</h1>
@@ -167,7 +295,6 @@ export default function PerfilPage() {
             <h3 className="font-semibold mb-4">Historial de Actividad</h3>
             <div className="space-y-3">
               <ActivityItem title="Ejercicio completado" time="Hace 2 horas" />
-              <ActivityItem title="Chat con IA" time="Ayer" />
               <ActivityItem title="Evaluación finalizada" time="Hace 3 días" />
             </div>
           </div>
@@ -179,10 +306,26 @@ export default function PerfilPage() {
           <div className="bg-card rounded-xl p-6 border">
             <h3 className="font-semibold mb-4">Notificaciones</h3>
             <div className="space-y-4">
-              <NotificationItem label="Notificaciones de chat" defaultChecked />
-              <NotificationItem label="Recordatorios de ejercicios" defaultChecked />
-              <NotificationItem label="Actualizaciones de comunidad" defaultChecked />
-              <NotificationItem label="Alertas de riesgo" defaultChecked />
+              <NotificationItem 
+                label="Notificaciones de chat" 
+                checked={notificationSettings.chat}
+                onToggle={() => handleNotificationToggle('chat')}
+              />
+              <NotificationItem 
+                label="Recordatorios de ejercicios" 
+                checked={notificationSettings.exercises}
+                onToggle={() => handleNotificationToggle('exercises')}
+              />
+              <NotificationItem 
+                label="Actualizaciones de comunidad" 
+                checked={notificationSettings.community}
+                onToggle={() => handleNotificationToggle('community')}
+              />
+              <NotificationItem 
+                label="Alertas de riesgo" 
+                checked={notificationSettings.alerts}
+                onToggle={() => handleNotificationToggle('alerts')}
+              />
             </div>
           </div>
 
@@ -191,15 +334,26 @@ export default function PerfilPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span>Modo oscuro</span>
-                <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-secondary transition-colors">
-                  <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
+                <button 
+                  onClick={handleDarkModeToggle}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    isDarkMode ? 'bg-primary' : 'bg-secondary'
+                  }`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    isDarkMode ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
                 </button>
               </div>
               <div className="flex items-center justify-between">
                 <span>Idioma</span>
-                <select className="border rounded-lg px-3 py-2">
-                  <option>Español</option>
-                  <option>English</option>
+                <select 
+                  value={language}
+                  onChange={(e) => handleLanguageChange(e.target.value)}
+                  className="border rounded-lg px-3 py-2"
+                >
+                  <option value="es">Español</option>
+                  <option value="en">English</option>
                 </select>
               </div>
             </div>
@@ -212,13 +366,19 @@ export default function PerfilPage() {
           <div className="bg-card rounded-xl p-6 border">
             <h3 className="font-semibold mb-4">Seguridad</h3>
             <div className="space-y-3">
-              <button className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors">
+              <button 
+                onClick={handlePasswordChange}
+                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors"
+              >
                 <span className="flex items-center space-x-3">
                   <Shield className="h-5 w-5" />
                   <span>Cambiar contraseña</span>
                 </span>
               </button>
-              <button className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors">
+              <button 
+                onClick={handleTwoFactorAuth}
+                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors"
+              >
                 <span className="flex items-center space-x-3">
                   <Shield className="h-5 w-5" />
                   <span>Activar autenticación 2FA</span>
@@ -241,10 +401,16 @@ export default function PerfilPage() {
           <div className="bg-card rounded-xl p-6 border">
             <h3 className="font-semibold mb-4">Padres/Tutores</h3>
             <div className="space-y-3">
-              <button className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors">
+              <button 
+                onClick={handleGenerateInviteCode}
+                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors"
+              >
                 <span>Generar código de invitación</span>
               </button>
-              <button className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors">
+              <button 
+                onClick={handleRevokeParentalAccess}
+                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors"
+              >
                 <span>Revocar acceso parental</span>
               </button>
             </div>
@@ -285,12 +451,19 @@ function ActivityItem({ title, time }: any) {
   );
 }
 
-function NotificationItem({ label, defaultChecked }: any) {
+function NotificationItem({ label, checked, onToggle }: any) {
   return (
     <div className="flex items-center justify-between">
       <span>{label}</span>
-      <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-primary transition-colors">
-        <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+      <button 
+        onClick={onToggle}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+          checked ? 'bg-primary' : 'bg-secondary'
+        }`}
+      >
+        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+          checked ? 'translate-x-6' : 'translate-x-1'
+        }`} />
       </button>
     </div>
   );
