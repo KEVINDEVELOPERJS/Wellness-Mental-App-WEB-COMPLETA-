@@ -26,7 +26,9 @@ export default function EjerciciosPage() {
   const [isBreathing, setIsBreathing] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCache = useRef<Map<string, HTMLAudioElement>>(new Map());
   const [breathingPhase, setBreathingPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
+  const [lastPhase, setLastPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
 
   useEffect(() => {
     loadData();
@@ -40,19 +42,33 @@ export default function EjerciciosPage() {
         
         // Breathing phase logic
         const secondsInCycle = (selectedEjercicio?.duracionMinima * 60 - timer) % 12; // 12-second breathing cycle
+        let newPhase: 'inhale' | 'hold' | 'exhale';
+        
         if (secondsInCycle < 4) {
-          setBreathingPhase('inhale');
-          playAudio('INHALA');
+          newPhase = 'inhale';
         } else if (secondsInCycle < 8) {
-          setBreathingPhase('hold');
+          newPhase = 'hold';
         } else {
-          setBreathingPhase('exhale');
-          playAudio('EXHALA');
+          newPhase = 'exhale';
+        }
+        
+        // Only play audio when phase changes
+        if (newPhase !== lastPhase) {
+          setBreathingPhase(newPhase);
+          setLastPhase(newPhase);
+          
+          if (newPhase === 'inhale') {
+            playAudio('INHALA');
+          } else if (newPhase === 'exhale') {
+            playAudio('EXHALA');
+          } else if (newPhase === 'hold') {
+            playAudio('MANTEN');
+          }
         }
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isExerciseActive, timer, selectedEjercicio]);
+  }, [isExerciseActive, timer, selectedEjercicio, lastPhase]);
 
   const loadData = async () => {
     try {
@@ -82,17 +98,34 @@ export default function EjerciciosPage() {
     setIsExerciseActive(true);
     setIsBreathing(true);
     setBreathingPhase('inhale');
+    setLastPhase('inhale'); // Reset last phase to trigger initial audio
   };
 
   const playAudio = (type: 'INHALA' | 'EXHALA' | 'MANTEN') => {
     if (isMuted) return;
     
     try {
-      const audio = new Audio(`/audio/${type}.m4a`);
-      audio.volume = 0.5;
-      audio.play().catch(err => console.log('Audio play failed:', err));
+      // MANTEN file is in mp4 format, others are m4a
+      const fileExtension = type === 'MANTEN' ? 'mp4' : 'm4a';
+      const audioKey = `${type}.${fileExtension}`;
+      
+      // Use cached audio if available, otherwise create new
+      let audio = audioCache.current.get(audioKey);
+      if (!audio) {
+        audio = new Audio(`/audio/${audioKey}`);
+        audio.volume = 0.5;
+        audioCache.current.set(audioKey, audio);
+      }
+      
+      // Reset audio to beginning and play
+      audio.currentTime = 0;
+      audio.play().catch(err => {
+        console.error(`Audio play failed for ${audioKey}:`, err);
+        // Try to reload the audio if it fails
+        audio.load();
+      });
     } catch (error) {
-      console.log('Audio error:', error);
+      console.error('Audio error:', error);
     }
   };
 
@@ -120,6 +153,7 @@ export default function EjerciciosPage() {
       setIsExerciseActive(false);
       setIsBreathing(false);
       setBreathingPhase('inhale');
+      setLastPhase('inhale');
       setSelectedEjercicio(null);
       loadData();
     } catch (error) {
@@ -156,11 +190,9 @@ export default function EjerciciosPage() {
 
         {/* Breathing Animation */}
         <div className="flex justify-center">
-          <div className={`relative w-64 h-64 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center transition-all duration-300 ${
-            breathingPhase === 'inhale' ? 'scale-125' : 
-            breathingPhase === 'hold' ? 'scale-110' : 
-            'scale-100'
-          } ${isBreathing ? 'animate-breathe' : ''}`}>
+          <div className={`relative w-64 h-64 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center transition-all duration-1000 ${
+            isBreathing ? 'animate-breathe' : 'scale-100'
+          }`}>
             <div className="text-white text-center">
               <p className="text-4xl font-bold">{formatTime(timer)}</p>
               <p className="text-sm opacity-80">minutos restantes</p>
@@ -324,7 +356,7 @@ function ExerciseCard({ ejercicio, onStart, disabled }: any) {
           disabled={disabled}
           className="w-full py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
         >
-          {disabled ? 'Límite diario alcanzado' : `Comenzar (${ejercicio.duracionMinuta} min)`}
+          {disabled ? 'Límite diario alcanzado' : `Comenzar (${ejercicio.duracionMinima} min)`}
         </button>
         
         <div className="flex space-x-2">

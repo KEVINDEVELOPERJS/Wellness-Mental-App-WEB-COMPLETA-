@@ -60,13 +60,17 @@
 
 /* Custom animations */
 @keyframes breathe {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.1);
+  0%, 33.33% {
+    transform: scale(1.25); /* Inhale phase - expanded */
     opacity: 1;
+  }
+  33.34%, 66.66% {
+    transform: scale(1.1); /* Hold phase - sustained */
+    opacity: 0.9;
+  }
+  66.67%, 100% {
+    transform: scale(1); /* Exhale phase - contracted */
+    opacity: 0.8;
   }
 }
 
@@ -116,7 +120,7 @@
 }
 
 .animate-breathe {
-  animation: breathe 4s ease-in-out infinite;
+  animation: breathe 12s ease-in-out infinite; /* 12-second breathing cycle: 4s inhale, 4s hold, 4s exhale */
 }
 
 .animate-pulse-glow {

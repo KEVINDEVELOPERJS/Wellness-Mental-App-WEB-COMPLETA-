@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "permissions": {
+    "allow": [
+      "Write(**)",
+      "Exec(npm run)",
+      "Exec(git)",
+      "Exec(node)",
+      "Exec(python)",
+      "Exec(pip)"
+    ]
+  },
+  "read_config_from": {
+    "windsurf": true,
+    "claude": true
+  }
+}
