@@ -19,6 +19,9 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
   const [gameComplete, setGameComplete] = useState(false);
   const [feedback, setFeedback] = useState({ text: '', alpha: 0 });
   
+  // Session tracking for progress saving
+  const [sessionDuration, setSessionDuration] = useState(0);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -30,6 +33,35 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
 
   useEffect(() => {
     isMountedRef.current = true;
+    
+    // Initialize canvas when component mounts
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Initial render
+        ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+        const centerX = CANVAS_SIZE / 2;
+        const centerY = CANVAS_SIZE / 2;
+        const radius = CANVAS_SIZE * 0.32;
+        
+        // Draw initial circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        
+        // Draw initial indicator
+        const indicatorX = centerX + Math.cos(indicatorAngleRef.current) * radius;
+        const indicatorY = centerY + Math.sin(indicatorAngleRef.current) * radius;
+        ctx.beginPath();
+        ctx.arc(indicatorX, indicatorY, 12, 0, 2 * Math.PI);
+        ctx.fillStyle = '#6366f1';
+        ctx.fill();
+      }
+    }
+    
     return () => {
       isMountedRef.current = false;
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -45,21 +77,33 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
+    setSessionDuration(0);
     indicatorAngleRef.current = 0;
     speedRef.current = 2.8;
     
     // Set random tap zone
     tapZoneRef.current = Math.random() * 100;
     
+    // Save game start to localStorage
+    const gameSession = {
+      type: 'ritmo-calma',
+      startTime: new Date().toISOString(),
+      initialScore: 0,
+      initialCombo: 0
+    };
+    localStorage.setItem('currentGameSession', JSON.stringify(gameSession));
+    
     // Start timer
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) {
+        const newTime = prev - 1;
+        setSessionDuration(DURATION - newTime); // Track session duration
+        if (newTime <= 0) {
           endGame();
           return 0;
         }
-        return prev - 1;
+        return newTime;
       });
     }, 1000);
     
@@ -77,6 +121,21 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
     
     // Calculate duration
     const duration = DURATION - timeLeft;
+    
+    // Save final game session to localStorage
+    const gameSession = {
+      type: 'ritmo-calma',
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+      finalScore: score,
+      finalCombo: maxCombo,
+      duration: duration,
+      completed: true
+    };
+    localStorage.setItem('ritmoCalmaLastSession', JSON.stringify(gameSession));
+    
+    // Clear current game session
+    localStorage.removeItem('currentGameSession');
     
     if (typeof onGameComplete === 'function') {
       try {
@@ -96,7 +155,7 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    // Clear canvas
+    // Clear canvas with proper dimensions
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
     
     const centerX = CANVAS_SIZE / 2;
@@ -286,13 +345,16 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
       </div>
 
       <div className="flex justify-center mb-6">
-        <canvas
-          ref={canvasRef}
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          onClick={handleTap}
-          className="cursor-pointer"
-        />
+        <div className="relative" style={{ width: `${CANVAS_SIZE}px`, height: `${CANVAS_SIZE}px` }}>
+          <canvas
+            ref={canvasRef}
+            width={CANVAS_SIZE}
+            height={CANVAS_SIZE}
+            onClick={handleTap}
+            className="cursor-pointer w-full h-full"
+            style={{ maxWidth: '100%', height: 'auto' }}
+          />
+        </div>
       </div>
 
       <div className="flex justify-center gap-4">

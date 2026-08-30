@@ -26,6 +26,7 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
   const [motivationalPhrase, setMotivationalPhrase] = useState(getMotivationalPhrase(0));
+  const [sessionDuration, setSessionDuration] = useState(0);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
@@ -65,7 +66,17 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
+    setSessionDuration(0);
     setMotivationalPhrase(getMotivationalPhrase(0));
+    
+    // Save game start to localStorage
+    const gameSession = {
+      type: 'calma-match',
+      startTime: new Date().toISOString(),
+      initialScore: 0,
+      initialCombo: 0
+    };
+    localStorage.setItem('currentGameSession', JSON.stringify(gameSession));
     
     // Reset combo color
     setTimeout(() => {
@@ -91,11 +102,13 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
 
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
+        const newTime = prev - 1;
+        setSessionDuration(DURATION - newTime); // Track session duration
+        if (newTime <= 0) {
           endGame();
           return 0;
         }
-        return prev - 1;
+        return newTime;
       });
     }, 1000);
   };
@@ -112,6 +125,21 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     
     // Calculate duration
     const duration = DURATION - timeLeft;
+    
+    // Save final game session to localStorage
+    const gameSession = {
+      type: 'calma-match',
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+      finalScore: score,
+      finalCombo: maxCombo,
+      duration: duration,
+      completed: true
+    };
+    localStorage.setItem('calmaMatchLastSession', JSON.stringify(gameSession));
+    
+    // Clear current game session
+    localStorage.removeItem('currentGameSession');
     
     // Only call onGameComplete if it's a valid function
     if (typeof onGameComplete === 'function') {

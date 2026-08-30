@@ -75,6 +75,7 @@ export default function JardinMentalGame({ onBack, onGameComplete }: JardinMenta
     message: '',
     type: 'info'
   });
+  const [sessionScore, setSessionScore] = useState(0);
 
   const isMountedRef = useRef(true);
 
@@ -87,31 +88,63 @@ export default function JardinMentalGame({ onBack, onGameComplete }: JardinMenta
   }, []);
 
   const loadGarden = () => {
-    // Load plants from localStorage or initialize empty garden
-    const savedPlants = localStorage.getItem('jardin_plantas');
-    if (savedPlants) {
-      setPlants(JSON.parse(savedPlants));
-    } else {
+    // Load garden data from localStorage or initialize empty garden
+    try {
+      const savedData = localStorage.getItem('jardinMentalData');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        if (parsedData.plants && Array.isArray(parsedData.plants)) {
+          setPlants(parsedData.plants);
+          setStreak(parsedData.streak || 0);
+          setSessionScore(parsedData.sessionScore || 0);
+          
+          // Check if we can water today
+          if (parsedData.lastWatered) {
+            const now = new Date();
+            const lastWatered = new Date(parsedData.lastWatered);
+            const daysSinceLastWater = Math.floor((now.getTime() - lastWatered.getTime()) / (1000 * 60 * 60 * 24));
+            setCanWaterToday(daysSinceLastWater >= 1);
+          }
+        }
+      } else {
+        // Try legacy format
+        const savedPlants = localStorage.getItem('jardin_plantas');
+        if (savedPlants) {
+          setPlants(JSON.parse(savedPlants));
+        } else {
+          setPlants([]);
+        }
+        
+        const savedStreak = localStorage.getItem('jardin_streak');
+        if (savedStreak) {
+          setStreak(parseInt(savedStreak));
+        }
+        
+        const lastWaterDate = localStorage.getItem('jardin_last_water');
+        if (lastWaterDate) {
+          const today = new Date().toDateString();
+          const lastWater = new Date(lastWaterDate).toDateString();
+          setCanWaterToday(today !== lastWater);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading garden data:', error);
+      // Initialize with defaults if there's an error
       setPlants([]);
-    }
-    
-    const savedStreak = localStorage.getItem('jardin_streak');
-    if (savedStreak) {
-      setStreak(parseInt(savedStreak));
-    }
-    
-    const lastWaterDate = localStorage.getItem('jardin_last_water');
-    if (lastWaterDate) {
-      const today = new Date().toDateString();
-      const lastWater = new Date(lastWaterDate).toDateString();
-      setCanWaterToday(today !== lastWater);
+      setStreak(0);
+      setSessionScore(0);
+      setCanWaterToday(true);
     }
   };
 
   const saveGarden = () => {
-    localStorage.setItem('jardin_plantas', JSON.stringify(plants));
-    localStorage.setItem('jardin_streak', streak.toString());
-    localStorage.setItem('jardin_last_water', new Date().toDateString());
+    const gardenData = {
+      plants,
+      streak,
+      lastWatered: new Date().toISOString(),
+      sessionScore
+    };
+    localStorage.setItem('jardinMentalData', JSON.stringify(gardenData));
   };
 
   const getPlantEmoji = (plant: Plant) => {
@@ -177,10 +210,8 @@ export default function JardinMentalGame({ onBack, onGameComplete }: JardinMenta
     showNotification('¡Semilla plantada con éxito!', 'success');
     saveGarden();
     
-    // Award points for planting
-    if (typeof onGameComplete === 'function') {
-      onGameComplete(15, 0, 'jardin', 0);
-    }
+    // Track points internally without exiting the game
+    setSessionScore(prev => prev + 15);
   };
 
   const waterPlant = () => {
@@ -228,10 +259,8 @@ export default function JardinMentalGame({ onBack, onGameComplete }: JardinMenta
     showNotification('¡Planta regada con éxito!', 'success');
     saveGarden();
     
-    // Award points for watering
-    if (typeof onGameComplete === 'function') {
-      onGameComplete(25, 0, 'jardin', 0);
-    }
+    // Track points internally without exiting the game
+    setSessionScore(prev => prev + 25);
   };
 
   const showNotification = (message: string, type: 'success' | 'info') => {
@@ -274,6 +303,10 @@ export default function JardinMentalGame({ onBack, onGameComplete }: JardinMenta
             <Award className="h-5 w-5" />
             <span className="font-bold">Racha: {streak}</span>
           </div>
+          <div className="flex items-center gap-1 text-purple-600">
+            <Award className="h-5 w-5" />
+            <span className="font-bold">Puntos: {sessionScore}</span>
+          </div>
         </div>
       </div>
 
@@ -314,7 +347,7 @@ export default function JardinMentalGame({ onBack, onGameComplete }: JardinMenta
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center gap-4 mb-6">
+      <div className="flex justify-center gap-4 mb-6 flex-wrap">
         <button
           onClick={openPlantSelector}
           disabled={availableSlots <= 0}
@@ -330,6 +363,17 @@ export default function JardinMentalGame({ onBack, onGameComplete }: JardinMenta
         >
           <Droplets className="h-5 w-5" />
           <span>Regar</span>
+        </button>
+        <button
+          onClick={() => {
+            if (typeof onGameComplete === 'function') {
+              onGameComplete(sessionScore, 0, 'jardin', 0);
+            }
+          }}
+          className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center gap-2"
+        >
+          <Award className="h-5 w-5" />
+          <span>Terminar Sesión</span>
         </button>
       </div>
 

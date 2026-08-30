@@ -131,6 +131,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
             
             <div className="flex items-center space-x-2">
               <button
+                onClick={() => navigate('/perfil')}
+                className="p-2 rounded-lg hover:bg-accent relative"
+                title="Ir a perfil"
+              >
+                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm">
+                  {user?.nombre?.charAt(0) || 'U'}
+                </div>
+              </button>
+              
+              <button
                 onClick={() => navigate('/notificaciones')}
                 className="p-2 rounded-lg hover:bg-accent"
               >
@@ -219,11 +229,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 {theme === 'light' ? '🌙' : '☀️'}
               </button>
               
-              <div className="flex items-center space-x-3">
+              <button
+                onClick={() => navigate('/perfil')}
+                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                title="Ir a perfil"
+              >
                 <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
                   {user?.nombre?.charAt(0) || 'U'}
                 </div>
-              </div>
+              </button>
             </div>
           </header>
 
