@@ -37,7 +37,7 @@ interface Notification {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const { addToast } = useUIStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -81,6 +81,11 @@ export default function DashboardPage() {
     
     loadDashboardData();
   }, [user, navigate]);
+
+  useEffect(() => {
+    // Sync profile photo with user avatar
+    setProfilePhoto(user?.avatar || null);
+  }, [user?.avatar]);
 
   const loadDashboardData = async () => {
     try {
@@ -166,12 +171,21 @@ export default function DashboardPage() {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePhoto(reader.result as string);
-        addToast({
-          type: 'success',
-          title: 'Foto actualizada',
-          message: 'Tu foto de perfil ha sido actualizada',
-        });
+        const photoData = reader.result;
+        if (typeof photoData === 'string') {
+          setProfilePhoto(photoData);
+          
+          // Update user in store to persist the avatar
+          if (user) {
+            setUser({ ...user, avatar: photoData });
+          }
+          
+          addToast({
+            type: 'success',
+            title: 'Foto actualizada',
+            message: 'Tu foto de perfil ha sido actualizada',
+          });
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -196,7 +210,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              ¡Hola, {user?.nombre || 'Estudiante'}! 👋
+              ¡Hola, {user?.nombre || 'Usuario'}! 👋
             </h1>
             <p className="text-white/90">
               Bienvenido de nuevo. Tu bienestar es nuestra prioridad.

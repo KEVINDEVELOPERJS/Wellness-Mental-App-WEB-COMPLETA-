@@ -20,14 +20,14 @@ import {
 
 export default function PerfilPage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, logout, setUser } = useAuthStore();
   const { addToast } = useUIStore();
   
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'estadisticas' | 'configuracion' | 'privacidad'>('estadisticas');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.avatar || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [notificationSettings, setNotificationSettings] = useState({
     chat: true,
@@ -40,7 +40,9 @@ export default function PerfilPage() {
 
   useEffect(() => {
     loadStats();
-  }, []);
+    // Initialize profile photo from user avatar
+    setProfilePhoto(user?.avatar || null);
+  }, [user?.avatar]);
 
   const loadStats = async () => {
     try {
@@ -120,15 +122,24 @@ export default function PerfilPage() {
         return;
       }
 
-      // Create preview
+      // Create preview and update user
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePhoto(reader.result as string);
-        addToast({
-          type: 'success',
-          title: 'Foto actualizada',
-          message: 'Tu foto de perfil ha sido actualizada',
-        });
+        const photoData = reader.result;
+        if (typeof photoData === 'string') {
+          setProfilePhoto(photoData);
+          
+          // Update user in store to persist the avatar
+          if (user) {
+            setUser({ ...user, avatar: photoData });
+          }
+          
+          addToast({
+            type: 'success',
+            title: 'Foto actualizada',
+            message: 'Tu foto de perfil ha sido actualizada',
+          });
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -239,7 +250,7 @@ export default function PerfilPage() {
           <div>
             <h1 className="text-2xl font-bold">{user?.nombre || 'Usuario'}</h1>
             <p className="text-white/90">{user?.email}</p>
-            <p className="text-white/80 text-sm">{user?.grado} • {user?.rol}</p>
+            <p className="text-white/80 text-sm">{user?.grado} • Usuario</p>
           </div>
         </div>
       </div>

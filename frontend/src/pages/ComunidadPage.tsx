@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { comunidadService } from '../services/comunidadService';
 import { useUIStore } from '../store/uiStore';
+import { useAuthStore } from '../store/authStore';
 import { PostComunidad, PostDTO } from '../types/comunidad';
 import { 
   Users, 
@@ -17,6 +18,7 @@ import {
 
 export default function ComunidadPage() {
   const { addToast } = useUIStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<PostComunidad[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
@@ -244,7 +246,7 @@ export default function ComunidadPage() {
       ) : (
         <div className="space-y-4">
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} onLike={handleLike} />
+            <PostCard key={post.id} post={post} onLike={handleLike} currentUser={user} />
           ))}
         </div>
       )}
@@ -252,15 +254,19 @@ export default function ComunidadPage() {
   );
 }
 
-function PostCard({ post, onLike }: any) {
+function PostCard({ post, onLike, currentUser }: any) {
   const timeAgo = getTimeAgo(new Date(post.fecha));
 
   return (
     <div className="bg-card rounded-xl p-4 md:p-6 border hover:shadow-lg transition-all">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm md:text-base flex-shrink-0">
-            {post.usuario?.nombre?.charAt(0) || 'U'}
+          <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm md:text-base flex-shrink-0 overflow-hidden">
+            {post.usuario?.avatar ? (
+              <img src={post.usuario.avatar} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              post.usuario?.nombre?.charAt(0) || 'U'
+            )}
           </div>
           <div className="min-w-0">
             <p className="font-medium text-sm md:text-base truncate">{post.usuario?.nombre || 'Anónimo'}</p>
