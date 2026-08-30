@@ -112,15 +112,25 @@ export class LogroRepository {
 
     const tipoJuego = gameTypeMap[tipoActividad] || tipoActividad.toLowerCase();
 
-    await prisma.sesionJuego.create({
-      data: {
-        usuarioId,
-        tipoJuego,
-        puntos: cantidad,
-        combo: combo,
-        duracion: duracion,
+    // Try to create game session, but don't fail if table doesn't exist yet
+    try {
+      await prisma.sesionJuego.create({
+        data: {
+          usuarioId,
+          tipoJuego,
+          puntos: cantidad,
+          combo: combo,
+          duracion: duracion,
+        }
+      });
+    } catch (error: any) {
+      // If table doesn't exist, log the error but continue with achievement logic
+      if (error.code === 'P2021') {
+        console.log('SesionJuego table does not exist yet, skipping session storage');
+      } else {
+        console.error('Error creating game session:', error);
       }
-    });
+    }
 
     // Create a custom achievement entry for game points
     // First, let's check if there's a special game achievement logro, create one if not
@@ -141,12 +151,25 @@ export class LogroRepository {
     }
 
     // Calculate total game points for this user
-    const totalGamePoints = await prisma.sesionJuego.aggregate({
-      where: { usuarioId },
-      _sum: { puntos: true }
-    });
+    let userTotalPoints = cantidad; // Default to current session points if table doesn't exist
+    
+    try {
+      const totalGamePoints = await prisma.sesionJuego.aggregate({
+        where: { usuarioId },
+        _sum: { puntos: true }
+      });
 
-    const userTotalPoints = totalGamePoints._sum.puntos || 0;
+      userTotalPoints = totalGamePoints._sum.puntos || cantidad;
+    } catch (error: any) {
+      // If table doesn't exist, use current session points
+      if (error.code === 'P2021') {
+        console.log('SesionJuego table does not exist yet, using current session points');
+        userTotalPoints = cantidad;
+      } else {
+        console.error('Error calculating total game points:', error);
+        userTotalPoints = cantidad;
+      }
+    }
 
     // Check if user already has this game logro
     const existingGameLogro = await prisma.usuarioLogro.findFirst({

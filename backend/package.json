@@ -10,6 +10,7 @@
     "generate:prisma": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
+    "migrate:add-sesion-juego": "ts-node --transpile-only scripts/migrate-add-sesion-juego.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
