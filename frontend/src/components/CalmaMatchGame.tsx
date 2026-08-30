@@ -4,7 +4,7 @@ import { animations, getComboAnimation, getComboColor, getComboWord, getMotivati
 
 interface CalmaMatchGameProps {
   onBack: () => void;
-  onGameComplete: (score: number, combo: number, gameType?: string) => void;
+  onGameComplete: (score: number, combo: number, gameType?: string, duration?: number) => void;
 }
 
 export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGameProps) {
@@ -110,10 +110,13 @@ export default function CalmaMatchGame({ onBack, onGameComplete }: CalmaMatchGam
     
     setGameComplete(true);
     
+    // Calculate duration
+    const duration = DURATION - timeLeft;
+    
     // Only call onGameComplete if it's a valid function
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, maxCombo, 'calma-match');
+        onGameComplete(score, maxCombo, 'calma-match', duration);
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }

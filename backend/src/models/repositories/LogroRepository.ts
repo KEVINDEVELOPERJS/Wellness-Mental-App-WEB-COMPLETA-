@@ -100,7 +100,83 @@ export class LogroRepository {
     };
   }
 
-  static async otorgarPuntos(usuarioId: number, tipoActividad: string, cantidad: number): Promise<void> {
+  static async otorgarPuntos(usuarioId: number, tipoActividad: string, cantidad: number, combo: number = 0, duracion: number = 0): Promise<void> {
+    // Store game session in the new SesionJuego table
+    const gameTypeMap: Record<string, string> = {
+      'JUEGO_CALMA_MATCH': 'calma-match',
+      'JUEGO_PUZZLE_ZEN': 'puzzle-zen',
+      'JUEGO_ARTE_EMOCIONAL': 'arte-emocional',
+      'JUEGO_RITMO_CALMA': 'ritmo-calma',
+      'JUEGO_JARDIN_MENTAL': 'jardin-mental',
+    };
+
+    const tipoJuego = gameTypeMap[tipoActividad] || tipoActividad.toLowerCase();
+
+    await prisma.sesionJuego.create({
+      data: {
+        usuarioId,
+        tipoJuego,
+        puntos: cantidad,
+        combo: combo,
+        duracion: duracion,
+      }
+    });
+
+    // Create a custom achievement entry for game points
+    // First, let's check if there's a special game achievement logro, create one if not
+    let gameLogro = await prisma.logro.findFirst({
+      where: { nombre: 'Puntos de Juegos' }
+    });
+
+    if (!gameLogro) {
+      gameLogro = await prisma.logro.create({
+        data: {
+          nombre: 'Puntos de Juegos',
+          descripcion: 'Puntos acumulados en mini-juegos',
+          icono: '🎮',
+          puntos: 0, // This will be dynamic
+          criterio: JSON.stringify({ tipo: 'puntos_juegos' }),
+        }
+      });
+    }
+
+    // Calculate total game points for this user
+    const totalGamePoints = await prisma.sesionJuego.aggregate({
+      where: { usuarioId },
+      _sum: { puntos: true }
+    });
+
+    const userTotalPoints = totalGamePoints._sum.puntos || 0;
+
+    // Check if user already has this game logro
+    const existingGameLogro = await prisma.usuarioLogro.findFirst({
+      where: {
+        usuarioId,
+        logroId: gameLogro.id
+      }
+    });
+
+    if (existingGameLogro) {
+      // Update the points value by deleting and recreating with new points
+      await prisma.usuarioLogro.delete({
+        where: { id: existingGameLogro.id }
+      });
+    }
+
+    // Create new entry with accumulated points
+    await prisma.usuarioLogro.create({
+      data: {
+        usuarioId,
+        logroId: gameLogro.id,
+      }
+    });
+
+    // Update the special game logro points to reflect total game points
+    await prisma.logro.update({
+      where: { id: gameLogro.id },
+      data: { puntos: userTotalPoints }
+    });
+
     // Points are calculated based on achievements, not directly stored
     // This method triggers achievement checking
     const userStats = {

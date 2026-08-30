@@ -93,10 +93,22 @@ export default function JuegosPage() {
     loadData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleGameComplete = (gameScore: number, gameCombo?: number, gameType?: string) => {
+  const handleGameComplete = (gameScore: number, gameCombo?: number, gameType?: string, gameDuration?: number) => {
     // Update gamification stats
     const pointsEarned = Math.floor(gameScore / 10);
-    gamificacionService.addPuntos(pointsEarned).then(() => {
+    
+    // Map game types to activity types for the backend
+    const gameTypeToActivityType: Record<string, string> = {
+      'calma-match': 'JUEGO_CALMA_MATCH',
+      'puzzle': 'JUEGO_PUZZLE_ZEN',
+      'arte': 'JUEGO_ARTE_EMOCIONAL',
+      'ritmo': 'JUEGO_RITMO_CALMA',
+      'jardin': 'JUEGO_JARDIN_MENTAL',
+    };
+    
+    const activityType = gameType ? gameTypeToActivityType[gameType] || 'JUEGO_CALMA_MATCH' : 'JUEGO_CALMA_MATCH';
+    
+    gamificacionService.addPuntos(pointsEarned, activityType, gameCombo || 0, gameDuration || 0).then(() => {
       addToast({
         type: 'success',
         title: '¡Juego Completado!',
@@ -164,7 +176,7 @@ export default function JuegosPage() {
     return (
       <CalmaMatchGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score, combo) => handleGameComplete(score, combo, 'calma-match')}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
       />
     );
   }
@@ -173,7 +185,7 @@ export default function JuegosPage() {
     return (
       <RitmoCalmaGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score, combo) => handleGameComplete(score, combo, 'ritmo')}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
       />
     );
   }
@@ -182,7 +194,7 @@ export default function JuegosPage() {
     return (
       <JardinMentalGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score) => handleGameComplete(score, 0, 'jardin')}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
       />
     );
   }
@@ -191,7 +203,7 @@ export default function JuegosPage() {
     return (
       <PuzzleZenGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score, level) => handleGameComplete(score, 0, 'puzzle')}
+        onGameComplete={(score, combo, level, duration) => handleGameComplete(score, combo, 'puzzle', duration)}
       />
     );
   }
@@ -200,7 +212,7 @@ export default function JuegosPage() {
     return (
       <ArteEmocionalGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score) => handleGameComplete(score, 0, 'arte')}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
       />
     );
   }

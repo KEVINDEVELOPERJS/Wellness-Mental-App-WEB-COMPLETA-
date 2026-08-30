@@ -38,9 +38,9 @@ export class GamificacionController {
   static async otorgarPuntos(req: Request, res: Response) {
     try {
       const userId = (req as any).user?.userId;
-      const { tipoActividad, cantidad } = req.body;
+      const { tipoActividad, cantidad, combo, duracion } = req.body;
 
-      await LogroRepository.otorgarPuntos(userId, tipoActividad, cantidad);
+      await LogroRepository.otorgarPuntos(userId, tipoActividad, cantidad, combo, duracion);
 
       // Check for newly unlocked achievements
       const userStats = await UsuarioRepository.getStatistics(userId);
@@ -49,6 +49,7 @@ export class GamificacionController {
       res.json({
         message: 'Points awarded',
         nuevosLogros,
+        puntosGanados: cantidad,
       });
     } catch (error) {
       throw error;

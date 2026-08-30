@@ -37,8 +37,8 @@ export const gamificacionService = {
     return response.data;
   },
 
-  async addPuntos(puntos: number): Promise<any> {
-    const response = await apiClient.post('/gamificacion/puntos', { tipoActividad: 'JUEGO_CALMA_MATCH', cantidad: puntos });
+  async addPuntos(puntos: number, tipoJuego: string = 'JUEGO_CALMA_MATCH', combo: number = 0, duracion: number = 0): Promise<any> {
+    const response = await apiClient.post('/gamificacion/puntos', { tipoActividad: tipoJuego, cantidad: puntos, combo, duracion });
     return response.data;
   },
 

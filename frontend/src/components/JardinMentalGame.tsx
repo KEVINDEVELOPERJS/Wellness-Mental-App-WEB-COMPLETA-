@@ -4,7 +4,7 @@ import { animations } from '../utils/animations';
 
 interface JardinMentalGameProps {
   onBack: () => void;
-  onGameComplete: (score: number, combo?: number) => void;
+  onGameComplete: (score: number, combo?: number, gameType?: string, duration?: number) => void;
 }
 
 interface Plant {
@@ -179,7 +179,7 @@ export default function JardinMentalGame({ onBack, onGameComplete }: JardinMenta
     
     // Award points for planting
     if (typeof onGameComplete === 'function') {
-      onGameComplete(15, 0);
+      onGameComplete(15, 0, 'jardin', 0);
     }
   };
 
@@ -230,7 +230,7 @@ export default function JardinMentalGame({ onBack, onGameComplete }: JardinMenta
     
     // Award points for watering
     if (typeof onGameComplete === 'function') {
-      onGameComplete(25, 0);
+      onGameComplete(25, 0, 'jardin', 0);
     }
   };
 

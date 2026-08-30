@@ -82,6 +82,7 @@ model Usuario {
   informesGenerados Informe[]      @relation("PsicologoInformes")
   sesionesActivas   SesionActiva[]
   preferencias      PreferenciasUsuario?
+  sesionesJuego     SesionJuego[]
   
   @@index([email])
   @@index([rol])
@@ -363,4 +364,19 @@ model PreferenciasUsuario {
   idioma            String      @default("es")
   
   @@index([usuarioId])
+}
+
+model SesionJuego {
+  id                Int         @id @default(autoincrement())
+  usuarioId         Int
+  usuario           Usuario     @relation(fields: [usuarioId], references: [id])
+  tipoJuego         String      // 'calma-match', 'puzzle-zen', 'ritmo-calma', etc.
+  puntos            Int         @default(0)
+  combo             Int         @default(0)
+  duracion          Int         // segundos
+  fechaSesion       DateTime    @default(now())
+  
+  @@index([usuarioId])
+  @@index([tipoJuego])
+  @@index([fechaSesion])
 }

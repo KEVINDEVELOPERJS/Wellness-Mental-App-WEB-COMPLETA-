@@ -4,7 +4,7 @@ import { animations } from '../utils/animations';
 
 interface PuzzleZenGameProps {
   onBack: () => void;
-  onGameComplete: (score: number, combo: number, level?: number) => void;
+  onGameComplete: (score: number, combo: number, level?: number, duration?: number) => void;
 }
 
 interface PuzzlePiece {
@@ -87,7 +87,7 @@ export default function PuzzleZenGame({ onBack, onGameComplete }: PuzzleZenGameP
     
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, 0, level);
+        onGameComplete(score, 0, level, timeElapsed);
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }
@@ -141,19 +141,7 @@ export default function PuzzleZenGame({ onBack, onGameComplete }: PuzzleZenGameP
     
     setTimeout(() => {
       if (!isMountedRef.current) return;
-      
-      if (level < 5) {
-        setLevel(prev => prev + 1);
-        initializePuzzle();
-        setStatusMessage(`¡Nivel ${level} completado! Iniciando nivel ${level + 1}...`);
-        
-        if (timerRef.current) clearInterval(timerRef.current);
-        timerRef.current = setInterval(() => {
-          setTimeElapsed(prev => prev + 1);
-        }, 1000);
-      } else {
-        endGame();
-      }
+      endGame();
     }, 2000);
   };
 
