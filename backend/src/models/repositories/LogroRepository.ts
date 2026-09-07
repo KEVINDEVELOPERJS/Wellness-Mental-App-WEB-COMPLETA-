@@ -108,6 +108,11 @@ export class LogroRepository {
       'JUEGO_ARTE_EMOCIONAL': 'arte-emocional',
       'JUEGO_RITMO_CALMA': 'ritmo-calma',
       'JUEGO_JARDIN_MENTAL': 'jardin-mental',
+      'JUEGO_RESPIRA_ZEN': 'respira-zen',
+      'JUEGO_POP_ESTRES': 'pop-estres',
+      'JUEGO_FLUJO_ZEN': 'flujo-zen',
+      'JUEGO_MEMO_SERENO': 'memo-sereno',
+      'JUEGO_ORDENA_ZEN': 'ordena-zen',
     };
 
     const tipoJuego = gameTypeMap[tipoActividad] || tipoActividad.toLowerCase();

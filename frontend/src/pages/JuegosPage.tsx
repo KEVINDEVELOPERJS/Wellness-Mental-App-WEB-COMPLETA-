@@ -8,25 +8,32 @@ import RitmoCalmaGame from '../components/RitmoCalmaGame';
 import JardinMentalGame from '../components/JardinMentalGame';
 import PuzzleZenGame from '../components/PuzzleZenGame';
 import ArteEmocionalGame from '../components/ArteEmocionalGame';
-import { animations } from '../utils/animations';
+import RespiraZenGame from '../components/RespiraZenGame';
+import PopEstresGame from '../components/PopEstresGame';
+import FlujoZenGame from '../components/FlujoZenGame';
+import MemoSerenoGame from '../components/MemoSerenoGame';
+import OrdenaZenGame from '../components/OrdenaZenGame';
+import { resolveActivityType } from '../types/juego';
 import { 
-  Gamepad2, 
   Trophy, 
   Star, 
   Lock, 
   Play,
-  Loader2,
   Target,
   Palette,
   Music,
   Sprout,
   Candy,
-  ArrowLeft,
   Flame,
   Clock,
   Award,
   TrendingUp,
-  CheckCircle
+  CheckCircle,
+  Wind,
+  CircleDot,
+  Feather,
+  Brain,
+  Layers
 } from 'lucide-react';
 
 export default function JuegosPage() {
@@ -97,16 +104,8 @@ export default function JuegosPage() {
     // Update gamification stats
     const pointsEarned = Math.floor(gameScore / 10);
     
-    // Map game types to activity types for the backend
-    const gameTypeToActivityType: Record<string, string> = {
-      'calma-match': 'JUEGO_CALMA_MATCH',
-      'puzzle': 'JUEGO_PUZZLE_ZEN',
-      'arte': 'JUEGO_ARTE_EMOCIONAL',
-      'ritmo': 'JUEGO_RITMO_CALMA',
-      'jardin': 'JUEGO_JARDIN_MENTAL',
-    };
-    
-    const activityType = gameType ? gameTypeToActivityType[gameType] || 'JUEGO_CALMA_MATCH' : 'JUEGO_CALMA_MATCH';
+    // Map game type -> backend activity type (typed helper from types/juego.ts)
+    const activityType = resolveActivityType(gameType);
     
     gamificacionService.addPuntos(pointsEarned, activityType, gameCombo || 0, gameDuration || 0).then(() => {
       addToast({
@@ -170,6 +169,46 @@ export default function JuegosPage() {
       color: 'bg-green-500',
       unlocked: (nivel?.puntosActuales || 0) >= 100,
     },
+    {
+      id: 'respira',
+      name: 'RespiraZen',
+      description: 'Respiración 4-7-8 antiestrés',
+      icon: Wind,
+      color: 'bg-emerald-500',
+      unlocked: true,
+    },
+    {
+      id: 'pop',
+      name: 'PopEstrés',
+      description: 'Revienta globos de tensión',
+      icon: CircleDot,
+      color: 'bg-rose-500',
+      unlocked: true,
+    },
+    {
+      id: 'flujo',
+      name: 'Flujo Zen',
+      description: 'Vuela en calma, un solo toque',
+      icon: Feather,
+      color: 'bg-indigo-500',
+      unlocked: (nivel?.puntosActuales || 0) >= 150,
+    },
+    {
+      id: 'memo',
+      name: 'MemoSereno',
+      description: 'Empareja emociones serenas',
+      icon: Brain,
+      color: 'bg-purple-500',
+      unlocked: true,
+    },
+    {
+      id: 'ordena',
+      name: 'OrdenaZen',
+      description: 'Ordena y encuentra la paz',
+      icon: Layers,
+      color: 'bg-teal-500',
+      unlocked: (nivel?.puntosActuales || 0) >= 200,
+    },
   ], [nivel?.puntosActuales]);
 
   if (selectedGame === 'calma-match') {
@@ -203,7 +242,7 @@ export default function JuegosPage() {
     return (
       <PuzzleZenGame
         onBack={() => setSelectedGame(null)}
-        onGameComplete={(score, combo, level, duration) => handleGameComplete(score, combo, 'puzzle', duration)}
+        onGameComplete={(score, combo, _level, duration) => handleGameComplete(score, combo, 'puzzle', duration)}
       />
     );
   }
@@ -211,6 +250,51 @@ export default function JuegosPage() {
   if (selectedGame === 'arte') {
     return (
       <ArteEmocionalGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
+      />
+    );
+  }
+
+  if (selectedGame === 'respira') {
+    return (
+      <RespiraZenGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
+      />
+    );
+  }
+
+  if (selectedGame === 'pop') {
+    return (
+      <PopEstresGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
+      />
+    );
+  }
+
+  if (selectedGame === 'flujo') {
+    return (
+      <FlujoZenGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
+      />
+    );
+  }
+
+  if (selectedGame === 'memo') {
+    return (
+      <MemoSerenoGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
+      />
+    );
+  }
+
+  if (selectedGame === 'ordena') {
+    return (
+      <OrdenaZenGame
         onBack={() => setSelectedGame(null)}
         onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
       />
