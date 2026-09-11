@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowLeft, Crosshair, Heart, Clock, Coins, Zap, Shield, Maximize, Minimize, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Crosshair, Heart, Clock, Coins, Zap, Maximize, Minimize, RefreshCw } from 'lucide-react';
 import { useEsMovil } from '../utils/device';
 import VirtualJoystick from './VirtualJoystick';
 
@@ -746,6 +746,14 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
   const joystickGiroRef = useRef({ x: 0 });
   /** Indica si la pantalla completa está activa. */
   const [pantallaCompleta, setPantallaCompleta] = useState(false);
+  /** Indica si el dispositivo está en orientación horizontal (landscape). */
+  const [esHorizontal, setEsHorizontal] = useState(false);
+
+  /**
+   * Modo inmersivo: el juego ocupa toda la pantalla y los controles se
+   * superponen al lienzo. Se activa en móvil o al entrar en pantalla completa.
+   */
+  const modoInmersivo = esMovil || pantallaCompleta;
 
   // Armas
   const armasRef = useRef<Record<string, EstadoArma>>({
@@ -981,6 +989,22 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
     return () => {
       document.removeEventListener('fullscreenchange', onCambio);
       document.removeEventListener('webkitfullscreenchange', onCambio);
+    };
+  }, []);
+
+  // Detecta la orientación (horizontal/vertical) del dispositivo.
+  useEffect(() => {
+    const actualizar = () => {
+      const horizontal =
+        typeof window !== 'undefined' && window.innerWidth > window.innerHeight;
+      setEsHorizontal(horizontal);
+    };
+    actualizar();
+    window.addEventListener('resize', actualizar);
+    window.addEventListener('orientationchange', actualizar);
+    return () => {
+      window.removeEventListener('resize', actualizar);
+      window.removeEventListener('orientationchange', actualizar);
     };
   }, []);
 
@@ -1836,40 +1860,205 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
                 Comenzar
               </button>
             </div>
-          ) : (
-            <div>
-              {/* HUD superior (solo escritorio; en móvil el HUD va dentro del canvas) */}
-              {!esMovil && (
-                <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <Coins className="h-5 w-5 text-amber-500" />
-                    <span className="font-bold text-amber-600">{puntuacion}</span>
-                    {combo > 1 && (
-                      <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-semibold">
-                        {combo}x
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
-                      Ronda {ronda}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Heart className="h-5 w-5 text-rose-500" />
-                    <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-rose-500 transition-all"
-                        style={{ width: `${vida}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Clock className="h-5 w-5 text-blue-500" />
-                    <span className="font-semibold">{formatTime(tiempoRestante)}</span>
-                  </div>
+          ) : modoInmersivo ? (
+            /* ── MODO INMERSIVO (móvil / pantalla completa): el juego ocupa toda
+               la pantalla y los controles se superponen al lienzo. ── */
+            <div className="fixed inset-0 z-50 bg-black flex flex-col">
+              {/* Barra superior mínima con salida y pantalla completa */}
+              <div className="flex items-center justify-between px-3 py-2 bg-black/70 text-white flex-shrink-0">
+                <button
+                  onClick={onBack}
+                  className="flex items-center gap-1 text-sm font-medium"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Salir
+                </button>
+                <span className="text-xs font-semibold text-cyan-300">
+                  Mente Guerrera 3D
+                </span>
+                <button
+                  onClick={alternarPantallaCompleta}
+                  className="flex items-center gap-1 text-xs font-medium"
+                >
+                  {pantallaCompleta ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                  {pantallaCompleta ? 'Salir' : 'Pantalla completa'}
+                </button>
+              </div>
+
+              {/* Aviso de rotar a horizontal */}
+              {!esHorizontal && (
+                <div className="bg-amber-500/90 text-white text-xs text-center py-1 flex-shrink-0">
+                  Gira tu teléfono en horizontal para una mejor experiencia
                 </div>
               )}
+
+              {/* Lienzo + controles superpuestos */}
+              <div className="relative flex-1 min-h-0 overflow-hidden">
+                <canvas
+                  ref={canvasRef}
+                  width={ANCHO}
+                  height={ALTO}
+                  className="absolute inset-0 w-full h-full select-none bg-sky-100"
+                  style={{ touchAction: 'none', objectFit: 'cover' }}
+                  onClick={disparar}
+                  onTouchStart={(e) => {
+                    const touch = e.touches[0];
+                    if (!touch) return;
+                    const startX = touch.clientX;
+                    const startDir = jugadorRef.current.dir;
+                    const onMove = (ev: TouchEvent) => {
+                      const t = ev.touches[0];
+                      if (!t) return;
+                      jugadorRef.current.dir = startDir + (t.clientX - startX) * 0.008;
+                    };
+                    const onEnd = () => {
+                      window.removeEventListener('touchmove', onMove);
+                      window.removeEventListener('touchend', onEnd);
+                    };
+                    window.addEventListener('touchmove', onMove, { passive: true });
+                    window.addEventListener('touchend', onEnd);
+                  }}
+                />
+
+                {/* Indicador de estresores (arriba centro) */}
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full pointer-events-none">
+                  <Crosshair className="h-3 w-3 inline mr-1" />
+                  {estresoresRestantes} estresores
+                </div>
+
+                {/* Prompt de compra de arma de pared */}
+                {armaCercana && (
+                  <button
+                    onClick={() => comprarArma(armaCercana)}
+                    className="absolute top-10 left-1/2 -translate-x-1/2 bg-amber-500/95 text-white text-[11px] px-3 py-1.5 rounded-lg text-center font-semibold shadow-lg"
+                  >
+                    {ARMAS[armaCercana.armaId]?.icono}{' '}
+                    {armasCompradas.includes(armaCercana.armaId)
+                      ? `Reabastecer ${ARMAS[armaCercana.armaId]?.nombre}`
+                      : `Comprar ${ARMAS[armaCercana.armaId]?.nombre} (${ARMAS[armaCercana.armaId]?.precio})`}
+                  </button>
+                )}
+
+                {/* Aviso de recarga */}
+                {recargando && (
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white text-sm px-4 py-2 rounded-lg pointer-events-none">
+                    Recargando…
+                  </div>
+                )}
+
+                {/* ── Stick izquierdo: MOVER (abajo izquierda) ── */}
+                <div className="absolute bottom-3 left-3">
+                  <VirtualJoystick
+                    size={esHorizontal ? 128 : 108}
+                    label="MOVER"
+                    color="#06b6d4"
+                    onChange={(v) => {
+                      joystickMovRef.current = v;
+                    }}
+                  />
+                </div>
+
+                {/* ── Stick derecho: GIRAR (abajo derecha) ── */}
+                <div className="absolute bottom-3 right-3">
+                  <VirtualJoystick
+                    size={esHorizontal ? 128 : 108}
+                    label="GIRAR"
+                    color="#8b5cf6"
+                    onChange={(v) => {
+                      joystickGiroRef.current = { x: v.x };
+                    }}
+                  />
+                </div>
+
+                {/* ── Botones de acción (centro derecha) ── */}
+                <div className="absolute bottom-3 right-40 flex flex-col items-center gap-2">
+                  <button
+                    onClick={disparar}
+                    className="w-16 h-16 bg-cyan-600 text-white rounded-full font-bold text-2xl active:bg-cyan-700 shadow-lg touch-none"
+                  >
+                    ✦
+                  </button>
+                  <button
+                    onClick={recargar}
+                    disabled={recargando}
+                    className="w-16 py-1.5 bg-gray-800/90 text-white rounded-lg text-[10px] font-semibold active:bg-gray-700 disabled:opacity-50 touch-none"
+                  >
+                    {recargando ? 'Recargando…' : 'Recargar'}
+                  </button>
+                </div>
+
+                {/* ── Botón cambiar de arma (centro izquierda) ── */}
+                <button
+                  onClick={ciclarArma}
+                  className="absolute bottom-24 left-40 flex items-center gap-1.5 px-2 py-2 bg-gray-800/90 text-white rounded-lg text-[10px] font-semibold active:bg-gray-700 touch-none max-w-[130px]"
+                >
+                  <RefreshCw className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="text-sm leading-none flex-shrink-0">{armaInfo?.icono}</span>
+                  <span className="truncate">{armaInfo?.nombre}</span>
+                </button>
+
+                {/* ── Selector de armas (arriba izquierda) ── */}
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  {ORDEN_ARMAS.map((id) => {
+                    const tiene = armasCompradas.includes(id);
+                    const activa = armaActual === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => cambiarArma(id)}
+                        disabled={!tiene}
+                        className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center border-2 transition-all touch-none ${
+                          activa
+                            ? 'bg-cyan-600 border-cyan-300 text-white'
+                            : tiene
+                              ? 'bg-black/50 border-white/40'
+                              : 'bg-black/30 border-white/20 opacity-40'
+                        }`}
+                      >
+                        {tiene ? ARMAS[id]?.icono : '🔒'}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Mensaje terapéutico (abajo, sobre el lienzo) */}
+              <p className="text-center text-[11px] text-cyan-200 bg-black/70 py-1 flex-shrink-0">
+                {mensaje}
+              </p>
+            </div>
+          ) : (
+            <div>
+              {/* HUD superior (escritorio) */}
+              <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Coins className="h-5 w-5 text-amber-500" />
+                  <span className="font-bold text-amber-600">{puntuacion}</span>
+                  {combo > 1 && (
+                    <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-semibold">
+                      {combo}x
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
+                    Ronda {ronda}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Heart className="h-5 w-5 text-rose-500" />
+                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-rose-500 transition-all"
+                      style={{ width: `${vida}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Clock className="h-5 w-5 text-blue-500" />
+                  <span className="font-semibold">{formatTime(tiempoRestante)}</span>
+                </div>
+              </div>
 
               <div className="relative">
                 <canvas
@@ -1940,155 +2129,52 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
                 )}
               </div>
 
-              {/* HUD inferior (solo escritorio) */}
-              {!esMovil && (
-                <div className="flex items-center justify-between mt-3 gap-3 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{armaInfo?.icono}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800 leading-tight">{armaInfo?.nombre}</p>
-                      <p className="text-xs text-gray-500">
-                        {cargador} / {reserva}
-                      </p>
-                    </div>
+              {/* HUD inferior (escritorio) */}
+              <div className="flex items-center justify-between mt-3 gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{armaInfo?.icono}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">{armaInfo?.nombre}</p>
+                    <p className="text-xs text-gray-500">
+                      {cargador} / {reserva}
+                    </p>
                   </div>
-
-                  <div className="flex items-center gap-1">
-                    {ORDEN_ARMAS.map((id) => {
-                      const tiene = armasCompradas.includes(id);
-                      const activa = armaActual === id;
-                      return (
-                        <button
-                          key={id}
-                          onClick={() => cambiarArma(id)}
-                          disabled={!tiene}
-                          title={ARMAS[id]?.nombre}
-                          className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center border transition-all ${
-                            activa
-                              ? 'bg-cyan-600 border-cyan-700 text-white'
-                              : tiene
-                                ? 'bg-white border-gray-300 hover:border-cyan-400'
-                                : 'bg-gray-100 border-gray-200 opacity-40'
-                          }`}
-                        >
-                          {tiene ? ARMAS[id]?.icono : '🔒'}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    onClick={recargar}
-                    disabled={recargando}
-                    className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50"
-                  >
-                    <Zap className="h-4 w-4" /> Recargar (R)
-                  </button>
                 </div>
-              )}
 
-              {/* Botón de compra para móvil */}
-              {esMovil && armaCercana && (
+                <div className="flex items-center gap-1">
+                  {ORDEN_ARMAS.map((id) => {
+                    const tiene = armasCompradas.includes(id);
+                    const activa = armaActual === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => cambiarArma(id)}
+                        disabled={!tiene}
+                        title={ARMAS[id]?.nombre}
+                        className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center border transition-all ${
+                          activa
+                            ? 'bg-cyan-600 border-cyan-700 text-white'
+                            : tiene
+                              ? 'bg-white border-gray-300 hover:border-cyan-400'
+                              : 'bg-gray-100 border-gray-200 opacity-40'
+                        }`}
+                      >
+                        {tiene ? ARMAS[id]?.icono : '🔒'}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <button
-                  onClick={() => comprarArma(armaCercana)}
-                  className="mt-3 w-full py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
+                  onClick={recargar}
+                  disabled={recargando}
+                  className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50"
                 >
-                  <Shield className="h-4 w-4" />
-                  {armasCompradas.includes(armaCercana.armaId)
-                    ? 'Reabastecer munición'
-                    : `Comprar ${ARMAS[armaCercana.armaId]?.nombre} (${ARMAS[armaCercana.armaId]?.precio})`}
+                  <Zap className="h-4 w-4" /> Recargar (R)
                 </button>
-              )}
+              </div>
 
               <p className="text-center text-sm text-cyan-700 mt-3 font-medium">{mensaje}</p>
-
-              {/* ── HUD móvil completo: sticks virtuales + botones de acción ── */}
-              {esMovil && (
-                <div className="mt-3 select-none">
-                  {/* Fila superior: pantalla completa + cambio de arma */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <button
-                      onClick={ciclarArma}
-                      className="flex items-center gap-1.5 px-2 py-2 bg-gray-800 text-white rounded-lg text-xs font-semibold active:bg-gray-700 touch-none min-w-0 flex-1"
-                    >
-                      <RefreshCw className="h-4 w-4 flex-shrink-0" />
-                      <span className="text-base leading-none flex-shrink-0">{armaInfo?.icono}</span>
-                      <span className="truncate">{armaInfo?.nombre}</span>
-                    </button>
-                    <button
-                      onClick={alternarPantallaCompleta}
-                      className="flex items-center gap-1.5 px-2 py-2 bg-gray-800 text-white rounded-lg text-xs font-semibold active:bg-gray-700 touch-none flex-shrink-0"
-                    >
-                      {pantallaCompleta ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                      <span>{pantallaCompleta ? 'Salir' : 'Pantalla completa'}</span>
-                    </button>
-                  </div>
-
-                  {/* Sticks virtuales + botones de acción */}
-                  <div className="flex items-end justify-between gap-1 w-full overflow-hidden">
-                    {/* Stick izquierdo: movimiento (WASD) */}
-                    <VirtualJoystick
-                      size={116}
-                      label="MOVER"
-                      color="#06b6d4"
-                      onChange={(v) => {
-                        joystickMovRef.current = v;
-                      }}
-                    />
-
-                    {/* Botones de acción */}
-                    <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={disparar}
-                        className="w-16 h-16 bg-cyan-600 text-white rounded-full font-bold text-2xl active:bg-cyan-700 shadow-lg touch-none"
-                      >
-                        ✦
-                      </button>
-                      <button
-                        onClick={recargar}
-                        disabled={recargando}
-                        className="w-16 py-2 bg-gray-800 text-white rounded-lg text-[10px] font-semibold active:bg-gray-700 disabled:opacity-50 touch-none"
-                      >
-                        {recargando ? 'Recargando…' : 'Recargar'}
-                      </button>
-                    </div>
-
-                    {/* Stick derecho: girar vista */}
-                    <VirtualJoystick
-                      size={116}
-                      label="GIRAR"
-                      color="#8b5cf6"
-                      onChange={(v) => {
-                        joystickGiroRef.current = { x: v.x };
-                      }}
-                    />
-                  </div>
-
-                  {/* Selector de armas móvil */}
-                  <div className="flex items-center justify-center gap-2 mt-3">
-                    {ORDEN_ARMAS.map((id) => {
-                      const tiene = armasCompradas.includes(id);
-                      const activa = armaActual === id;
-                      return (
-                        <button
-                          key={id}
-                          onClick={() => cambiarArma(id)}
-                          disabled={!tiene}
-                          className={`w-11 h-11 rounded-lg text-xl flex items-center justify-center border-2 transition-all touch-none ${
-                            activa
-                              ? 'bg-cyan-600 border-cyan-700 text-white'
-                              : tiene
-                                ? 'bg-white border-gray-300'
-                                : 'bg-gray-100 border-gray-200 opacity-40'
-                          }`}
-                        >
-                          {tiene ? ARMAS[id]?.icono : '🔒'}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
