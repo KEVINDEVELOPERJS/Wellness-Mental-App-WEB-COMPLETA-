@@ -44,6 +44,10 @@ interface Estresor {
   recompensa: number;
   /** Tiempo (ms) desde el último toque al jugador, para el cooldown de daño. */
   ultimoToque: number;
+  /** Animación de muerte: 0 = vivo, 1 = recién disipado. */
+  muerte: number;
+  /** Indica que está reproduciendo la animación de muerte (ya no colisiona ni persigue). */
+  muriendo: boolean;
 }
 
 /** Proyectil de calma disparado por el jugador. */
@@ -64,7 +68,12 @@ interface Proyectil {
   borde: string;
   /** Tamaño visual base del proyectil. */
   tamano: number;
+  /** Forma del proyectil (según el cañón del arma). */
+  forma: FormaBala;
 }
+
+/** Formas de bala/proyectil, temáticas por cañón. */
+type FormaBala = 'orbe' | 'chispa' | 'abanico' | 'dardo' | 'onda';
 
 /** Partícula de impacto para feedback visual. */
 interface Particula {
@@ -89,7 +98,7 @@ interface Rayo {
 interface ArmaDef {
   id: string;
   nombre: string;
-  /** Emoji/icono del arma en la pared y en el HUD. */
+  /** Emoji/icono del arma en el HUD. */
   icono: string;
   /** Precio en puntos de calma. */
   precio: number;
@@ -113,9 +122,16 @@ interface ArmaDef {
   borde: string;
   /** Tamaño visual del proyectil. */
   tamano: number;
+  /** Forma del proyectil (temática del cañón). */
+  forma: FormaBala;
+  /** Estilo visual del cañón (viewmodel en primera persona y panel de pared). */
+  estilo: EstiloCanon;
   /** Descripción terapéutica breve. */
   descripcion: string;
 }
+
+/** Estilos de cañón dibujados con Canvas (silueta de arma). */
+type EstiloCanon = 'pistola' | 'ametralladora' | 'escopeta' | 'francotirador' | 'lanzador';
 
 /** Arma montada en una pared del mapa. */
 interface ArmaPared {
@@ -166,12 +182,16 @@ const COLORES_PARED: Record<number, { base: string; sombra: string }> = {
   3: { base: '#38bdf8', sombra: '#0284c7' },
 };
 
+/**
+ * Tipos de estresor. Todos tienen 5 de vida: con el arma predeterminada
+ * (1 de daño) hacen falta exactamente 5 disparos para disiparlos.
+ */
 const TIPOS_ESTRESOR = [
-  { emoji: '😰', nombre: 'Ansiedad', hp: 3, velocidad: 0.010, recompensa: 100 },
-  { emoji: '🌪️', nombre: 'Rumiación', hp: 4, velocidad: 0.008, recompensa: 120 },
-  { emoji: '🌙', nombre: 'Insomnio', hp: 2, velocidad: 0.014, recompensa: 80 },
+  { emoji: '😰', nombre: 'Ansiedad', hp: 5, velocidad: 0.010, recompensa: 100 },
+  { emoji: '🌪️', nombre: 'Rumiación', hp: 5, velocidad: 0.008, recompensa: 120 },
+  { emoji: '🌙', nombre: 'Insomnio', hp: 5, velocidad: 0.014, recompensa: 80 },
   { emoji: '⛈️', nombre: 'Estrés', hp: 5, velocidad: 0.007, recompensa: 150 },
-  { emoji: '🕳️', nombre: 'Desánimo', hp: 3, velocidad: 0.011, recompensa: 110 },
+  { emoji: '🕳️', nombre: 'Desánimo', hp: 5, velocidad: 0.011, recompensa: 110 },
 ] as const;
 
 /**
@@ -181,7 +201,7 @@ const TIPOS_ESTRESOR = [
 const ARMAS: Record<string, ArmaDef> = {
   calma: {
     id: 'calma',
-    nombre: 'Pistola de Calma',
+    nombre: 'Cañón de Calma',
     icono: '🔫',
     precio: 0,
     dano: 1,
@@ -194,11 +214,13 @@ const ARMAS: Record<string, ArmaDef> = {
     color: '#67e8f9',
     borde: '#06b6d4',
     tamano: 12,
-    descripcion: 'Arma inicial. Disparos precisos de serenidad.',
+    forma: 'orbe',
+    estilo: 'pistola',
+    descripcion: 'Cañón inicial de serenidad. 5 disparos disipan un estresor.',
   },
   respiracion: {
     id: 'respiracion',
-    nombre: 'Ráfaga de Aliento',
+    nombre: 'Cañón de Aliento',
     icono: '💨',
     precio: 500,
     dano: 1,
@@ -211,11 +233,13 @@ const ARMAS: Record<string, ArmaDef> = {
     color: '#a5f3fc',
     borde: '#22d3ee',
     tamano: 9,
-    descripcion: 'Fuego automático rápido. Ráfagas de respiración consciente.',
+    forma: 'chispa',
+    estilo: 'ametralladora',
+    descripcion: 'Cañón automático. Ráfagas rápidas de respiración consciente.',
   },
   gratitud: {
     id: 'gratitud',
-    nombre: 'Escopeta de Gratitud',
+    nombre: 'Cañón de Gratitud',
     icono: '🌻',
     precio: 900,
     dano: 2,
@@ -228,11 +252,13 @@ const ARMAS: Record<string, ArmaDef> = {
     color: '#fde68a',
     borde: '#f59e0b',
     tamano: 8,
-    descripcion: 'Dispersa gratitud en abanico. Devastadora de cerca.',
+    forma: 'abanico',
+    estilo: 'escopeta',
+    descripcion: 'Cañón de doble boca. Dispersa gratitud en abanico.',
   },
   enfoque: {
     id: 'enfoque',
-    nombre: 'Rifle de Enfoque',
+    nombre: 'Cañón de Enfoque',
     icono: '🎯',
     precio: 1400,
     dano: 4,
@@ -245,7 +271,9 @@ const ARMAS: Record<string, ArmaDef> = {
     color: '#c4b5fd',
     borde: '#8b5cf6',
     tamano: 14,
-    descripcion: 'Un disparo, una intención. Precisión que atraviesa el ruido.',
+    forma: 'dardo',
+    estilo: 'francotirador',
+    descripcion: 'Cañón de precisión. Un disparo, una intención clara.',
   },
   armonia: {
     id: 'armonia',
@@ -262,7 +290,9 @@ const ARMAS: Record<string, ArmaDef> = {
     color: '#fca5a5',
     borde: '#ef4444',
     tamano: 16,
-    descripcion: 'Proyectil explosivo que armoniza una zona entera.',
+    forma: 'onda',
+    estilo: 'lanzador',
+    descripcion: 'Cañón lanzador explosivo que armoniza una zona entera.',
   },
 };
 
@@ -294,6 +324,244 @@ const PUNTOS_POR_TOQUE = 10;
 const MAX_ESTRESORES = 8;
 const TIEMPO_RECARGA = 1000;
 
+/**
+ * Dibuja el cañón del arma en primera persona (viewmodel) en la parte inferior
+ * de la pantalla. Cada estilo tiene una silueta creativa distinta, con colores
+ * del proyectil del arma. `recoil` (0-1) desplaza el arma al disparar.
+ */
+function dibujarCanon(
+  ctx: CanvasRenderingContext2D,
+  estilo: EstiloCanon,
+  color: string,
+  borde: string,
+  recoil: number,
+): void {
+  const baseX = ANCHO / 2;
+  const baseY = ALTO + recoil * 26; // sube al retroceder
+  const escala = 1;
+
+  ctx.save();
+  ctx.translate(baseX, baseY);
+  ctx.scale(escala, escala);
+
+  // Sombra suave bajo el arma
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(0, -6, 120, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Color de cuerpo metálico oscuro con acento del arma
+  const cuerpo = '#1f2937';
+  const cuerpoClaro = '#374151';
+  const acento = color;
+
+  const rect = (x: number, y: number, w: number, h: number, r: number, fill: string) => {
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  if (estilo === 'pistola') {
+    // Cañón de Calma: pistola compacta y elegante
+    rect(-26, -78, 52, 60, 8, cuerpo);          // cuerpo
+    rect(-14, -96, 28, 26, 6, cuerpoClaro);     // cañón
+    rect(-9, -104, 18, 12, 4, acento);          // boca
+    rect(-22, -30, 44, 34, 6, cuerpo);          // empuñadura
+    rect(-16, -24, 32, 8, 3, acento);           // detalle
+    ctx.fillStyle = acento;
+    ctx.beginPath();
+    ctx.arc(0, -66, 6, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (estilo === 'ametralladora') {
+    // Cañón de Aliento: subfusil con cargador
+    rect(-30, -96, 60, 46, 8, cuerpo);          // cuerpo
+    rect(-12, -122, 24, 32, 6, cuerpoClaro);    // cañón
+    rect(-7, -132, 14, 12, 3, acento);          // boca
+    rect(-18, -60, 36, 46, 6, cuerpoClaro);     // cargador
+    rect(-18, -56, 36, 8, 3, acento);           // banda
+    rect(-40, -104, 14, 60, 6, cuerpo);         // culata
+    ctx.fillStyle = acento;
+    ctx.fillRect(-12, -108, 24, 5);
+  } else if (estilo === 'escopeta') {
+    // Cañón de Gratitud: doble boca ancha
+    rect(-40, -100, 80, 44, 8, cuerpo);         // cuerpo
+    rect(-42, -132, 26, 36, 6, cuerpoClaro);    // cañón izq
+    rect(16, -132, 26, 36, 6, cuerpoClaro);     // cañón der
+    rect(-38, -140, 18, 12, 3, acento);         // boca izq
+    rect(20, -140, 18, 12, 3, acento);          // boca der
+    rect(-20, -62, 40, 40, 6, cuerpoClaro);     // guardamanos
+    rect(-26, -34, 52, 30, 6, cuerpo);          // culata
+  } else if (estilo === 'francotirador') {
+    // Cañón de Enfoque: rifle largo con mira
+    rect(-22, -104, 44, 40, 8, cuerpo);         // cuerpo
+    rect(-9, -150, 18, 50, 5, cuerpoClaro);     // cañón largo
+    rect(-5, -160, 10, 12, 3, acento);          // boca
+    rect(-16, -128, 32, 10, 4, '#111827');      // mira
+    ctx.fillStyle = acento;
+    ctx.beginPath();
+    ctx.arc(0, -123, 4, 0, Math.PI * 2);
+    ctx.fill();
+    rect(-24, -66, 48, 42, 6, cuerpoClaro);     // culata
+    rect(-14, -30, 28, 26, 5, cuerpo);          // empuñadura
+  } else {
+    // Lanzador de Armonía: tubo grueso con proyectil visible
+    rect(-34, -104, 68, 52, 10, cuerpo);        // cuerpo
+    rect(-22, -148, 44, 48, 12, cuerpoClaro);   // tubo lanzador
+    ctx.fillStyle = acento;
+    ctx.beginPath();
+    ctx.arc(0, -150, 18, 0, Math.PI * 2);       // proyectil en la boca
+    ctx.fill();
+    ctx.strokeStyle = borde;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    rect(-28, -60, 56, 46, 8, cuerpoClaro);     // depósito
+    rect(-14, -28, 28, 24, 5, cuerpo);          // empuñadura
+  }
+
+  // Acento luminoso común (línea de energía)
+  ctx.strokeStyle = acento;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-18, -84);
+  ctx.lineTo(18, -84);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+/**
+ * Dibuja la silueta de un arma para el panel de compra de la pared.
+ * `tam` controla el tamaño; el dibujo se centra en (cx, cy).
+ */
+function dibujarSiluetaArma(
+  ctx: CanvasRenderingContext2D,
+  estilo: EstiloCanon,
+  cx: number,
+  cy: number,
+  tam: number,
+  color: string,
+): void {
+  const s = tam / 60; // factor de escala
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(s, s);
+
+  ctx.fillStyle = '#e5e7eb';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+
+  const rect = (x: number, y: number, w: number, h: number, r: number) => {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  };
+
+  if (estilo === 'pistola') {
+    rect(-22, -18, 44, 22, 4);
+    rect(-10, -30, 20, 14, 3);
+    rect(-16, 4, 32, 16, 3);
+  } else if (estilo === 'ametralladora') {
+    rect(-30, -18, 60, 20, 4);
+    rect(-12, -32, 24, 16, 3);
+    rect(-16, 2, 32, 18, 3);
+    rect(-40, -20, 12, 26, 3);
+  } else if (estilo === 'escopeta') {
+    rect(-34, -16, 68, 18, 4);
+    rect(-32, -30, 20, 16, 3);
+    rect(12, -30, 20, 16, 3);
+    rect(-20, 2, 40, 16, 3);
+  } else if (estilo === 'francotirador') {
+    rect(-20, -18, 40, 18, 4);
+    rect(-8, -40, 16, 24, 3);
+    rect(-14, -30, 28, 8, 2);
+    rect(-22, 0, 44, 16, 3);
+  } else {
+    rect(-30, -18, 60, 22, 6);
+    rect(-18, -40, 36, 24, 8);
+    ctx.beginPath();
+    ctx.arc(0, -42, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    rect(-24, 4, 48, 18, 4);
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Dibuja un proyectil temático según la forma del cañón.
+ */
+function dibujarBala(
+  ctx: CanvasRenderingContext2D,
+  forma: FormaBala,
+  sx: number,
+  sy: number,
+  r: number,
+  color: string,
+  borde: string,
+): void {
+  ctx.save();
+  ctx.strokeStyle = borde;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.5;
+
+  if (forma === 'orbe') {
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  } else if (forma === 'chispa') {
+    // Trazo alargado (chispa veloz)
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, r * 1.8, r * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  } else if (forma === 'abanico') {
+    // Pequeño rombo (perdigón)
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - r);
+    ctx.lineTo(sx + r, sy);
+    ctx.lineTo(sx, sy + r);
+    ctx.lineTo(sx - r, sy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (forma === 'dardo') {
+    // Dardo afilado
+    ctx.beginPath();
+    ctx.moveTo(sx + r * 2, sy);
+    ctx.lineTo(sx - r, sy - r * 0.7);
+    ctx.lineTo(sx - r, sy + r * 0.7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    // Onda: anillo expansivo
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(sx, sy, r * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
 export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerreraGameProps) {
   const [iniciado, setIniciado] = useState(false);
   const [completado, setCompletado] = useState(false);
@@ -319,7 +587,8 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
   const runningRef = useRef(false);
 
   // Estado del jugador (refs para el bucle de animación, sin re-render).
-  const jugadorRef = useRef({ x: 2.5, y: 2.5, dir: 0 });
+  // (1.5, 1.5) es una celda libre del mapa (MAPA[1][1] === 0).
+  const jugadorRef = useRef({ x: 1.5, y: 1.5, dir: 0 });
   const teclasRef = useRef<Set<string>>(new Set());
   const estresoresRef = useRef<Estresor[]>([]);
   const proyectilesRef = useRef<Proyectil[]>([]);
@@ -335,6 +604,10 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
   const mensajeRef = useRef('Respira. El estrés no te define.');
   const rondaRef = useRef(1);
   const toqueFlashRef = useRef(0);
+  /** Retroceso del arma (0-1) para animar el viewmodel al disparar. */
+  const recoilRef = useRef(0);
+  /** Destello del cañón (0-1) al disparar. */
+  const muzzleRef = useRef(0);
 
   // Armas
   const armasRef = useRef<Record<string, EstadoArma>>({
@@ -404,11 +677,12 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
   /** Genera un estresor en una posición libre aleatoria del mapa. */
   const generarEstresor = useCallback((): Estresor => {
     const tipo = TIPOS_ESTRESOR[Math.floor(Math.random() * TIPOS_ESTRESOR.length)] ?? TIPOS_ESTRESOR[0];
-    let x = 2.5;
-    let y = 2.5;
-    for (let intento = 0; intento < 50; intento++) {
-      const cx = 1 + Math.random() * (MAPA_ANCHO - 2);
-      const cy = 1 + Math.random() * (MAPA_ALTO - 2);
+    // Posición de respaldo garantizada libre (celda 1,1 del mapa).
+    let x = 1.5;
+    let y = 1.5;
+    for (let intento = 0; intento < 80; intento++) {
+      const cx = 1.5 + Math.random() * (MAPA_ANCHO - 3);
+      const cy = 1.5 + Math.random() * (MAPA_ALTO - 3);
       if (esLibre(cx, cy)) {
         const dx = cx - jugadorRef.current.x;
         const dy = cy - jugadorRef.current.y;
@@ -436,6 +710,8 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
       velocidad: tipo.velocidad * factorRonda,
       recompensa: tipo.recompensa,
       ultimoToque: 0,
+      muerte: 0,
+      muriendo: false,
     };
   }, [esLibre]);
 
@@ -494,6 +770,8 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
 
     ultimoDisparoRef.current = ahora;
     estado.cargador -= 1;
+    recoilRef.current = 1;
+    muzzleRef.current = 1;
 
     const { x, y, dir } = jugadorRef.current;
     for (let i = 0; i < arma.perdigones; i++) {
@@ -511,6 +789,7 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
         color: arma.color,
         borde: arma.borde,
         tamano: arma.tamano,
+        forma: arma.forma,
       });
     }
 
@@ -593,52 +872,85 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
     // Proyectiles
     for (const p of proyectilesRef.current) {
       if (!p.alive) continue;
-      p.x += p.dirX * 0.18;
-      p.y += p.dirY * 0.18;
-      p.life -= 1;
+      const pasoX = p.dirX * 0.18;
+      const pasoY = p.dirY * 0.18;
+      // Colisión barrida: comprueba varios puntos del recorrido para evitar
+      // que el proyectil "atraviese" al enemigo entre fotogramas (tunneling).
+      const SUBPASOS = 4;
+      let impacto = false;
 
-      if (p.life <= 0 || !esLibre(p.x, p.y)) {
-        p.alive = false;
-        continue;
-      }
+      for (let s = 1; s <= SUBPASOS && !impacto; s++) {
+        const nx = p.x + (pasoX * s) / SUBPASOS;
+        const ny = p.y + (pasoY * s) / SUBPASOS;
 
-      for (const e of estresoresRef.current) {
-        if (!e.alive) continue;
-        const dx = e.x - p.x;
-        const dy = e.y - p.y;
-        if (dx * dx + dy * dy < p.radio * p.radio) {
-          e.hp -= p.dano;
-          e.hitFlash = 1;
+        if (!esLibre(nx, ny)) {
           p.alive = false;
-
-          // Partículas de calma
-          for (let i = 0; i < 8; i++) {
-            particulasRef.current.push({
-              x: e.x,
-              y: e.y,
-              vx: (Math.random() - 0.5) * 0.04,
-              vy: (Math.random() - 0.5) * 0.04,
-              life: 30,
-              maxLife: 30,
-              color: p.color,
-            });
-          }
-
-          if (e.hp <= 0) {
-            e.alive = false;
-            comboRef.current += 1;
-            maxComboRef.current = Math.max(maxComboRef.current, comboRef.current);
-            const bonus = e.recompensa * comboRef.current;
-            puntuacionRef.current += bonus;
-            setPuntuacion(puntuacionRef.current);
-            setCombo(comboRef.current);
-            setMaxCombo(maxComboRef.current);
-            mensajeRef.current = `¡${e.nombre} disipado! +${bonus} calma`;
-            setMensaje(mensajeRef.current);
-          }
+          impacto = true;
           break;
         }
+
+        for (const e of estresoresRef.current) {
+          if (!e.alive || e.muriendo) continue;
+          const dx = e.x - nx;
+          const dy = e.y - ny;
+          if (dx * dx + dy * dy < p.radio * p.radio) {
+            e.hp -= p.dano;
+            e.hitFlash = 1;
+            p.alive = false;
+            impacto = true;
+
+            // Partículas de calma
+            for (let i = 0; i < 8; i++) {
+              particulasRef.current.push({
+                x: e.x,
+                y: e.y,
+                vx: (Math.random() - 0.5) * 0.04,
+                vy: (Math.random() - 0.5) * 0.04,
+                life: 30,
+                maxLife: 30,
+                color: p.color,
+              });
+            }
+
+            if (e.hp <= 0) {
+              // Inicia la animación de muerte (no desaparece de golpe).
+              e.hp = 0;
+              e.muriendo = true;
+              e.muerte = 1;
+              comboRef.current += 1;
+              maxComboRef.current = Math.max(maxComboRef.current, comboRef.current);
+              const bonus = e.recompensa * comboRef.current;
+              puntuacionRef.current += bonus;
+              setPuntuacion(puntuacionRef.current);
+              setCombo(comboRef.current);
+              setMaxCombo(maxComboRef.current);
+              mensajeRef.current = `¡${e.nombre} disipado! +${bonus} calma`;
+              setMensaje(mensajeRef.current);
+              // Estallido de partículas de disipación
+              for (let i = 0; i < 16; i++) {
+                particulasRef.current.push({
+                  x: e.x,
+                  y: e.y,
+                  vx: (Math.random() - 0.5) * 0.07,
+                  vy: (Math.random() - 0.5) * 0.07,
+                  life: 40,
+                  maxLife: 40,
+                  color: p.color,
+                });
+              }
+            }
+            break;
+          }
+        }
       }
+
+      if (impacto) continue;
+
+      // Avanza el proyectil solo si no impactó.
+      p.x += pasoX;
+      p.y += pasoY;
+      p.life -= 1;
+      if (p.life <= 0) p.alive = false;
     }
     proyectilesRef.current = proyectilesRef.current.filter((p) => p.alive);
 
@@ -653,6 +965,17 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
     // IA: los estresores persiguen al jugador y le quitan vida al tocarle.
     for (const e of estresoresRef.current) {
       if (!e.alive) continue;
+
+      // Enemigos en animación de muerte: avanzan su animación y no interactúan.
+      if (e.muriendo) {
+        e.muerte -= 0.045;
+        if (e.muerte <= 0) {
+          e.muerte = 0;
+          e.alive = false;
+        }
+        continue;
+      }
+
       const dx = jugador.x - e.x;
       const dy = jugador.y - e.y;
       const dist = Math.hypot(dx, dy);
@@ -687,7 +1010,7 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
     }
 
     // Spawn progresivo de estresores (aumenta con la ronda).
-    const vivos = estresoresRef.current.filter((e) => e.alive).length;
+    const vivos = estresoresRef.current.filter((e) => e.alive && !e.muriendo).length;
     const limiteRonda = Math.min(MAX_ESTRESORES, 5 + rondaRef.current);
     if (vivos < limiteRonda && ahora - ultimoSpawnRef.current > Math.max(700, 2000 - rondaRef.current * 150)) {
       ultimoSpawnRef.current = ahora;
@@ -695,7 +1018,7 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
     }
 
     estresoresRef.current = estresoresRef.current.filter((e) => e.alive);
-    setEstresoresRestantes(estresoresRef.current.length);
+    setEstresoresRestantes(estresoresRef.current.filter((e) => !e.muriendo).length);
 
     // Subida de ronda cada 30 segundos.
     const rondaCalculada = 1 + Math.floor((DURACION - tiempoRef.current) / 30);
@@ -782,28 +1105,53 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
       const spriteWidth = spriteHeight;
       const inicioY = Math.floor(-spriteHeight / 2 + ALTO / 2);
 
-      // Sombra en el suelo
-      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      // Animación de muerte: se expande, se eleva y se desvanece.
+      const progresoMuerte = e.muriendo ? 1 - e.muerte : 0; // 0 -> 1
+      const escalaMuerte = e.muriendo ? 1 + progresoMuerte * 0.8 : 1;
+      const alfaMuerte = e.muriendo ? Math.max(0, e.muerte) : 1;
+      const elevacionMuerte = e.muriendo ? progresoMuerte * spriteHeight * 0.5 : 0;
+      const altoSprite = spriteHeight * escalaMuerte;
+
+      // Sombra en el suelo (se desvanece en la muerte)
+      ctx.fillStyle = `rgba(0,0,0,${0.18 * alfaMuerte})`;
       ctx.beginPath();
       ctx.ellipse(spriteScreenX, ALTO / 2 + spriteHeight * 0.42, spriteWidth * 0.28, spriteHeight * 0.06, 0, 0, Math.PI * 2);
       ctx.fill();
 
+      // Aura de disipación (anillo que se expande al morir)
+      if (e.muriendo) {
+        ctx.save();
+        ctx.globalAlpha = alfaMuerte * 0.6;
+        ctx.strokeStyle = '#a5f3fc';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(spriteScreenX, ALTO / 2 - elevacionMuerte, spriteWidth * (0.3 + progresoMuerte * 0.5), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       // Cuerpo del estresor (nube temática)
-      ctx.font = `${Math.max(16, spriteHeight * 0.7)}px serif`;
+      ctx.save();
+      ctx.globalAlpha = alfaMuerte * (e.hitFlash > 0 ? 0.5 : 0.95);
+      ctx.font = `${Math.max(16, altoSprite * 0.7)}px serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.globalAlpha = e.hitFlash > 0 ? 0.5 : 0.95;
-      ctx.fillText(e.emoji, spriteScreenX, ALTO / 2 - spriteHeight * 0.05);
+      ctx.fillText(e.emoji, spriteScreenX, ALTO / 2 - altoSprite * 0.05 - elevacionMuerte);
+      ctx.restore();
       ctx.globalAlpha = 1;
 
-      // Barra de vida (calma restante)
-      const barraAncho = spriteWidth * 0.6;
-      const barraX = spriteScreenX - barraAncho / 2;
-      const barraY = inicioY + spriteHeight * 0.05;
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.fillRect(barraX, barraY, barraAncho, 5);
-      ctx.fillStyle = '#22d3ee';
-      ctx.fillRect(barraX, barraY, barraAncho * (e.hp / e.maxHp), 5);
+      // Barra de vida (calma restante) — solo mientras está vivo.
+      if (!e.muriendo) {
+        const barraAncho = spriteWidth * 0.6;
+        const barraX = spriteScreenX - barraAncho / 2;
+        const barraY = inicioY + spriteHeight * 0.05;
+        const fraccion = Math.max(0, e.hp / e.maxHp);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fillRect(barraX, barraY, barraAncho, 5);
+        // Color según vida restante: verde -> ámbar -> rojo.
+        ctx.fillStyle = fraccion > 0.6 ? '#22d3ee' : fraccion > 0.3 ? '#facc15' : '#f87171';
+        ctx.fillRect(barraX, barraY, barraAncho * fraccion, 5);
+      }
 
       if (e.hitFlash > 0) e.hitFlash -= 0.08;
     }
@@ -831,30 +1179,24 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
       ctx.fill();
       ctx.stroke();
 
-      ctx.font = `${Math.max(14, tam * 0.7)}px serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(arma.icono, sx, py + panelAlto * 0.35);
+      // Silueta del arma (cañón) en el panel
+      dibujarSiluetaArma(ctx, arma.estilo, sx, py + panelAlto * 0.4, tam * 0.9, arma.color);
 
       ctx.font = `bold ${Math.max(9, tam * 0.32)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillStyle = yaComprada ? '#ecfdf5' : '#fde047';
-      ctx.fillText(yaComprada ? 'MUNICIÓN' : `${arma.precio}`, sx, py + panelAlto * 0.72);
+      ctx.fillText(yaComprada ? 'MUNICIÓN' : `${arma.precio}`, sx, py + panelAlto * 0.82);
     }
 
-    // Proyectiles de calma
+    // Proyectiles de calma (balas temáticas según el cañón)
     for (const p of proyectilesRef.current) {
       const proj = proyectar(p.x, p.y);
       if (!proj) continue;
       const { sx, transformY } = proj;
       const sy = ALTO / 2;
       const r = Math.max(2, (p.tamano / transformY) * 1.4);
-      ctx.beginPath();
-      ctx.arc(sx, sy, r, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.fill();
-      ctx.strokeStyle = p.borde;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      dibujarBala(ctx, p.forma, sx, sy, r, p.color, p.borde);
     }
 
     // Partículas
@@ -875,6 +1217,30 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
     ctx.fillStyle = vineta;
     ctx.fillRect(0, 0, ANCHO, ALTO);
     if (toqueFlashRef.current > 0) toqueFlashRef.current = Math.max(0, toqueFlashRef.current - 0.04);
+
+    // Viewmodel: cañón en primera persona (siempre visible).
+    const armaVista = ARMAS[armaActualRef.current];
+    if (armaVista) {
+      dibujarCanon(ctx, armaVista.estilo, armaVista.color, armaVista.borde, recoilRef.current);
+      // Destello de boca al disparar.
+      if (muzzleRef.current > 0) {
+        ctx.save();
+        ctx.globalAlpha = muzzleRef.current;
+        ctx.fillStyle = armaVista.color;
+        ctx.beginPath();
+        ctx.arc(ANCHO / 2, ALTO - 150, 22 * muzzleRef.current, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = muzzleRef.current * 0.6;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ANCHO / 2, ALTO - 150, 12 * muzzleRef.current, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    // Decaimiento de la animación del arma.
+    if (recoilRef.current > 0) recoilRef.current = Math.max(0, recoilRef.current - 0.08);
+    if (muzzleRef.current > 0) muzzleRef.current = Math.max(0, muzzleRef.current - 0.15);
 
     // Retícula
     ctx.strokeStyle = 'rgba(255,255,255,0.85)';
@@ -970,7 +1336,7 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
   const startGame = useCallback(() => {
     if (!isMountedRef.current) return;
 
-    jugadorRef.current = { x: 2.5, y: 2.5, dir: 0 };
+    jugadorRef.current = { x: 1.5, y: 1.5, dir: 0 };
     teclasRef.current = new Set();
     proyectilesRef.current = [];
     particulasRef.current = [];
