@@ -232,3 +232,38 @@ textarea:focus-visible {
 .gradient-energy {
   @apply bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500;
 }
+
+/* ── Responsividad global para móvil / Android ── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  /* Evita el desbordamiento horizontal en pantallas pequeñas. */
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Las imágenes y medios nunca desbordan su contenedor. */
+img,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* En pantallas pequeñas, reduce el espaciado del contenido principal. */
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Utilidad para contenedores que deben ajustarse al ancho del dispositivo. */
+.ajustar-ancho {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+

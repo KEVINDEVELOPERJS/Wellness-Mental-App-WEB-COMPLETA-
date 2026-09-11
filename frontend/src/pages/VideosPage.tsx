@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { videos, categorias, forumPosts, Video, ForumPost } from '../data/videos';
 import { useUIStore } from '../store/uiStore';
 import { 
@@ -19,7 +18,6 @@ import {
 } from 'lucide-react';
 
 export default function VideosPage() {
-  const navigate = useNavigate();
   const { addToast } = useUIStore();
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('Todas');
@@ -64,7 +62,7 @@ export default function VideosPage() {
     addToast({
       type: 'success',
       title: 'Guardado',
-      message: 'Video guardado en tus favoritos'
+      message: `Video guardado: ${video.titulo}`
     });
   };
 
@@ -113,7 +111,7 @@ export default function VideosPage() {
 
   if (selectedVideo && !showForum) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
         {/* Video Player */}
         <div className="bg-black rounded-xl overflow-hidden aspect-video">
           <video
@@ -127,16 +125,16 @@ export default function VideosPage() {
         {/* Video Info */}
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full mb-2 inline-block">
                 {selectedVideo.categoria}
               </span>
-              <h1 className="text-3xl font-bold mb-2">{selectedVideo.titulo}</h1>
-              <p className="text-muted-foreground">{selectedVideo.descripcion}</p>
+              <h1 className="text-xl md:text-3xl font-bold mb-2 break-words">{selectedVideo.titulo}</h1>
+              <p className="text-sm md:text-base text-muted-foreground">{selectedVideo.descripcion}</p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm text-muted-foreground">
             <div className="flex items-center space-x-2">
               <Eye className="h-4 w-4" />
               <span>{selectedVideo.vistas} vistas</span>
@@ -152,31 +150,31 @@ export default function VideosPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => handleOpenForum(selectedVideo)}
-              className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              className="flex items-center space-x-2 px-3 py-2 md:px-4 md:py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm md:text-base"
             >
               <MessageCircle className="h-4 w-4" />
               <span>Discutir en Foro</span>
             </button>
             <button
               onClick={() => handleShare(selectedVideo)}
-              className="flex items-center space-x-2 px-4 py-2 bg-secondary rounded-lg hover:bg-accent transition-colors"
+              className="flex items-center space-x-2 px-3 py-2 md:px-4 md:py-2 bg-secondary rounded-lg hover:bg-accent transition-colors text-sm md:text-base"
             >
               <Share2 className="h-4 w-4" />
               <span>Compartir</span>
             </button>
             <button
               onClick={() => handleBookmark(selectedVideo)}
-              className="flex items-center space-x-2 px-4 py-2 bg-secondary rounded-lg hover:bg-accent transition-colors"
+              className="flex items-center space-x-2 px-3 py-2 md:px-4 md:py-2 bg-secondary rounded-lg hover:bg-accent transition-colors text-sm md:text-base"
             >
               <Bookmark className="h-4 w-4" />
               <span>Guardar</span>
             </button>
             <button
               onClick={() => setSelectedVideo(null)}
-              className="flex items-center space-x-2 px-4 py-2 bg-secondary rounded-lg hover:bg-accent transition-colors"
+              className="flex items-center space-x-2 px-3 py-2 md:px-4 md:py-2 bg-secondary rounded-lg hover:bg-accent transition-colors text-sm md:text-base"
             >
               <span>Volver a Videos</span>
             </button>
@@ -185,8 +183,8 @@ export default function VideosPage() {
 
         {/* Related Videos */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">Videos Relacionados</h2>
-          <div className="grid md:grid-cols-3 gap-4">
+          <h2 className="text-lg md:text-xl font-semibold mb-4">Videos Relacionados</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {Array.isArray(videos) && videos
               .filter(v => v.id !== selectedVideo.id && v.categoria === selectedVideo.categoria)
               .slice(0, 3)
@@ -206,42 +204,42 @@ export default function VideosPage() {
 
   if (selectedVideo && showForum) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="min-w-0">
             <button
               onClick={() => setShowForum(false)}
               className="text-sm text-muted-foreground hover:text-primary mb-2"
             >
               ← Volver al video
             </button>
-            <h1 className="text-2xl font-bold">Foro: {selectedVideo.titulo}</h1>
-            <p className="text-muted-foreground">Comparte tus pensamientos y experiencias sobre este video</p>
+            <h1 className="text-lg md:text-2xl font-bold break-words">Foro: {selectedVideo.titulo}</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Comparte tus pensamientos y experiencias sobre este video</p>
           </div>
         </div>
 
         {/* Forum Content */}
-        <div className="bg-card rounded-xl p-6 border">
+        <div className="bg-card rounded-xl p-4 md:p-6 border">
           <div className="mb-6">
-            <h3 className="text-xl font-semibold mb-2">Foro de Discusión</h3>
-            <p className="text-muted-foreground">Comparte tus pensamientos y experiencias sobre este video</p>
+            <h3 className="text-lg md:text-xl font-semibold mb-2">Foro de Discusión</h3>
+            <p className="text-sm md:text-base text-muted-foreground">Comparte tus pensamientos y experiencias sobre este video</p>
           </div>
 
           {/* New Comment Form */}
           <div className="mb-6">
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Escribe tu comentario..."
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm md:text-base"
                   rows={3}
                 />
               </div>
               <button
                 onClick={handleAddComment}
-                className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors self-end"
+                className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors sm:self-end flex items-center justify-center"
               >
                 <Send className="h-4 w-4 mr-2" />
                 Publicar
@@ -290,11 +288,11 @@ export default function VideosPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Videos Educativos</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Videos Educativos</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Contenido educativo sobre salud mental y bienestar emocional
         </p>
       </div>
@@ -328,13 +326,13 @@ export default function VideosPage() {
 
       {/* Featured Video */}
       {videos.length > 0 && (
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white">
+        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-4 md:p-6 text-white">
           <div className="flex items-center space-x-2 mb-2">
             <TrendingUp className="h-5 w-5" />
             <span className="font-semibold">Destacado</span>
           </div>
-          <h2 className="text-2xl font-bold mb-2">{videos[0].titulo}</h2>
-          <p className="opacity-90 mb-4">{videos[0].descripcion}</p>
+          <h2 className="text-lg md:text-2xl font-bold mb-2 break-words">{videos[0].titulo}</h2>
+          <p className="opacity-90 mb-4 text-sm md:text-base">{videos[0].descripcion}</p>
           <button
             onClick={() => handleVideoClick(videos[0])}
             className="flex items-center space-x-2 bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold hover:bg-purple-50 transition-colors"
@@ -346,7 +344,7 @@ export default function VideosPage() {
       )}
 
       {/* Video Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {filteredVideos.map(video => (
           <VideoCard
             key={video.id}

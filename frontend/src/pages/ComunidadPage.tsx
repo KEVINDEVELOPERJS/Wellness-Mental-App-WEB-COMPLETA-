@@ -2,23 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { comunidadService } from '../services/comunidadService';
 import { useUIStore } from '../store/uiStore';
-import { useAuthStore } from '../store/authStore';
 import { PostComunidad, PostDTO } from '../types/comunidad';
 import { 
   Users, 
   Heart, 
   MessageSquare, 
-  Send, 
-  Loader2,
   Plus,
-  Filter,
-  TrendingUp,
   Video
 } from 'lucide-react';
 
 export default function ComunidadPage() {
   const { addToast } = useUIStore();
-  const { user } = useAuthStore();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<PostComunidad[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
@@ -111,7 +105,7 @@ export default function ComunidadPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="min-w-0">
@@ -246,7 +240,7 @@ export default function ComunidadPage() {
       ) : (
         <div className="space-y-4">
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} onLike={handleLike} currentUser={user} />
+            <PostCard key={post.id} post={post} onLike={handleLike} />
           ))}
         </div>
       )}
@@ -254,7 +248,7 @@ export default function ComunidadPage() {
   );
 }
 
-function PostCard({ post, onLike, currentUser }: any) {
+function PostCard({ post, onLike }: any) {
   const timeAgo = getTimeAgo(new Date(post.fecha));
 
   return (
@@ -278,8 +272,8 @@ function PostCard({ post, onLike, currentUser }: any) {
         </span>
       </div>
 
-      <h3 className="text-base md:text-lg font-semibold mb-2">{post.titulo}</h3>
-      <p className="text-sm md:text-base text-muted-foreground mb-4 line-clamp-3 md:line-clamp-none">{post.contenido}</p>
+      <h3 className="text-base md:text-lg font-semibold mb-2 break-words">{post.titulo}</h3>
+      <p className="text-sm md:text-base text-muted-foreground mb-4 line-clamp-3 md:line-clamp-none break-words">{post.contenido}</p>
 
       <div className="flex items-center justify-between pt-4 border-t">
         <div className="flex items-center space-x-3 md:space-x-4">

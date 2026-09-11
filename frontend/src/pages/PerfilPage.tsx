@@ -3,25 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
 import { gamificacionService } from '../services/gamificacionService';
+import { perfilService } from '../services/perfilService';
 import { useUIStore } from '../store/uiStore';
 import { 
-  User, 
   Settings, 
   Shield, 
-  Bell, 
   Download,
   LogOut,
   Loader2,
   Camera,
   Calendar,
   Award,
-  TrendingUp
+  TrendingUp,
+  Trash2,
+  KeyRound,
+  QrCode,
+  UserPlus,
+  X
 } from 'lucide-react';
 
 export default function PerfilPage() {
   const navigate = useNavigate();
   const { user, logout, setUser } = useAuthStore();
-  const { addToast } = useUIStore();
+  const { addToast, theme, setTheme } = useUIStore();
   
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,14 +39,41 @@ export default function PerfilPage() {
     community: true,
     alerts: true,
   });
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [language, setLanguage] = useState('es');
+
+  // Modales de privacidad
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordActual, setPasswordActual] = useState('');
+  const [passwordNueva, setPasswordNueva] = useState('');
+  const [passwordConfirmar, setPasswordConfirmar] = useState('');
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [twoFactorData, setTwoFactorData] = useState<{ secret: string; qrCode: string } | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
 
   useEffect(() => {
     loadStats();
-    // Initialize profile photo from user avatar
+    loadPerfil();
+  }, []);
+
+  useEffect(() => {
     setProfilePhoto(user?.avatar || null);
   }, [user?.avatar]);
+
+  const loadPerfil = async () => {
+    try {
+      const perfil = await perfilService.getPerfil();
+      // Sincroniza el usuario (incluida la foto) desde el backend para que
+      // persista en cualquier dispositivo donde inicie sesión.
+      if (user) {
+        setUser({ ...user, ...perfil });
+      }
+      if (perfil.avatar) setProfilePhoto(perfil.avatar);
+    } catch (error) {
+      // Silencioso: el backend puede no estar disponible en desarrollo.
+      console.warn('No se pudo cargar el perfil desde el backend');
+    }
+  };
 
   const loadStats = async () => {
     try {
@@ -124,7 +155,7 @@ export default function PerfilPage() {
 
       // Create preview and update user
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const photoData = reader.result;
         if (typeof photoData === 'string') {
           setProfilePhoto(photoData);
@@ -132,6 +163,13 @@ export default function PerfilPage() {
           // Update user in store to persist the avatar
           if (user) {
             setUser({ ...user, avatar: photoData });
+          }
+
+          // Persistir en el backend para que se mantenga en cualquier dispositivo.
+          try {
+            await perfilService.guardarAvatar(photoData);
+          } catch {
+            console.warn('No se pudo sincronizar la foto con el backend');
           }
           
           addToast({
@@ -145,15 +183,40 @@ export default function PerfilPage() {
     }
   };
 
+  const handleRemovePhoto = async () => {
+    setProfilePhoto(null);
+    if (user) {
+      setUser({ ...user, avatar: undefined });
+    }
+    try {
+      await perfilService.eliminarAvatar();
+    } catch {
+      console.warn('No se pudo eliminar la foto en el backend');
+    }
+    addToast({
+      type: 'success',
+      title: 'Foto eliminada',
+      message: 'Tu foto de perfil ha sido eliminada',
+    });
+  };
+
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
   };
 
   const handleNotificationToggle = (setting: keyof typeof notificationSettings) => {
-    setNotificationSettings(prev => ({
-      ...prev,
-      [setting]: !prev[setting]
-    }));
+    const nuevo = {
+      ...notificationSettings,
+      [setting]: !notificationSettings[setting],
+    };
+    setNotificationSettings(nuevo);
+    // Sincroniza con el backend (best-effort).
+    void perfilService.actualizarNotificaciones({
+      notificacionesChat: nuevo.chat,
+      notificacionesEjercicios: nuevo.exercises,
+      notificacionesComunidad: nuevo.community,
+      notificacionesAlertas: nuevo.alerts,
+    }).catch(() => undefined);
     addToast({
       type: 'success',
       title: 'Configuración actualizada',
@@ -162,12 +225,13 @@ export default function PerfilPage() {
   };
 
   const handleDarkModeToggle = () => {
-    setIsDarkMode(!isDarkMode);
-    // You would integrate with your theme store here
+    const nuevoTema = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nuevoTema);
+    void perfilService.actualizarNotificaciones({ temaOscuro: nuevoTema === 'dark' }).catch(() => undefined);
     addToast({
       type: 'success',
       title: 'Modo cambiado',
-      message: isDarkMode ? 'Modo claro activado' : 'Modo oscuro activado',
+      message: nuevoTema === 'dark' ? 'Modo oscuro activado' : 'Modo claro activado',
     });
   };
 
@@ -180,36 +244,94 @@ export default function PerfilPage() {
     });
   };
 
-  const handlePasswordChange = () => {
-    addToast({
-      type: 'info',
-      title: 'Funcionalidad en desarrollo',
-      message: 'El cambio de contraseña estará disponible próximamente',
-    });
+  // ── Cambio de contraseña ──
+  const handlePasswordChange = async () => {
+    if (!passwordActual || !passwordNueva) {
+      addToast({ type: 'error', title: 'Error', message: 'Completa todos los campos' });
+      return;
+    }
+    if (passwordNueva.length < 8) {
+      addToast({ type: 'error', title: 'Error', message: 'La nueva contraseña debe tener al menos 8 caracteres' });
+      return;
+    }
+    if (passwordNueva !== passwordConfirmar) {
+      addToast({ type: 'error', title: 'Error', message: 'Las contraseñas no coinciden' });
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      await perfilService.cambiarPassword(passwordActual, passwordNueva);
+      addToast({ type: 'success', title: 'Contraseña actualizada', message: 'Tu contraseña ha sido cambiada' });
+      setShowPasswordModal(false);
+      setPasswordActual('');
+      setPasswordNueva('');
+      setPasswordConfirmar('');
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || 'No se pudo cambiar la contraseña';
+      addToast({ type: 'error', title: 'Error', message: msg });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleTwoFactorAuth = () => {
-    addToast({
-      type: 'info',
-      title: 'Funcionalidad en desarrollo',
-      message: 'La autenticación 2FA estará disponible próximamente',
-    });
+  // ── 2FA ──
+  const handleTwoFactorAuth = async () => {
+    setIsUpdating(true);
+    try {
+      const data = await perfilService.activar2FA();
+      setTwoFactorData({ secret: data.secret, qrCode: data.qrCode });
+      setShow2FAModal(true);
+    } catch {
+      addToast({ type: 'error', title: 'Error', message: 'No se pudo iniciar la activación de 2FA' });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleGenerateInviteCode = () => {
-    addToast({
-      type: 'success',
-      title: 'Código generado',
-      message: 'Código de invitación generado: ABC123XYZ',
-    });
+  const handleConfirm2FA = async () => {
+    if (!twoFactorData || !twoFactorCode) return;
+    setIsUpdating(true);
+    try {
+      const { valido } = await perfilService.validar2FA(twoFactorCode, twoFactorData.secret);
+      if (valido) {
+        addToast({ type: 'success', title: '2FA activado', message: 'La autenticación en dos pasos está activa' });
+        setShow2FAModal(false);
+        setTwoFactorCode('');
+        setTwoFactorData(null);
+      } else {
+        addToast({ type: 'error', title: 'Código inválido', message: 'Verifica el código e inténtalo de nuevo' });
+      }
+    } catch {
+      addToast({ type: 'error', title: 'Error', message: 'No se pudo validar el código 2FA' });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleRevokeParentalAccess = () => {
-    addToast({
-      type: 'success',
-      title: 'Acceso revocado',
-      message: 'El acceso parental ha sido revocado',
-    });
+  // ── Código de invitación ──
+  const handleGenerateInviteCode = async () => {
+    setIsUpdating(true);
+    try {
+      const { codigo } = await perfilService.generarInvitacionPadre();
+      setInviteCode(codigo);
+      addToast({ type: 'success', title: 'Código generado', message: `Código de invitación: ${codigo}` });
+    } catch {
+      addToast({ type: 'error', title: 'Error', message: 'No se pudo generar el código de invitación' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRevokeParentalAccess = async () => {
+    setIsUpdating(true);
+    try {
+      await perfilService.revocarAccesoPadre();
+      addToast({ type: 'success', title: 'Acceso revocado', message: 'El acceso parental ha sido revocado' });
+    } catch {
+      addToast({ type: 'error', title: 'Error', message: 'No se pudo revocar el acceso parental' });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   if (isLoading) {
@@ -236,9 +358,19 @@ export default function PerfilPage() {
             <button 
               onClick={handlePhotoClick}
               className="absolute bottom-0 right-0 bg-white rounded-full p-2 text-primary hover:bg-white/90 transition-colors"
+              title="Cambiar foto"
             >
               <Camera className="h-4 w-4" />
             </button>
+            {profilePhoto && (
+              <button
+                onClick={handleRemovePhoto}
+                className="absolute bottom-0 left-0 bg-white rounded-full p-2 text-destructive hover:bg-white/90 transition-colors"
+                title="Eliminar foto"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -348,11 +480,11 @@ export default function PerfilPage() {
                 <button 
                   onClick={handleDarkModeToggle}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isDarkMode ? 'bg-primary' : 'bg-secondary'
+                    theme === 'dark' ? 'bg-primary' : 'bg-secondary'
                   }`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    isDarkMode ? 'translate-x-6' : 'translate-x-1'
+                    theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
@@ -378,20 +510,21 @@ export default function PerfilPage() {
             <h3 className="font-semibold mb-4">Seguridad</h3>
             <div className="space-y-3">
               <button 
-                onClick={handlePasswordChange}
+                onClick={() => setShowPasswordModal(true)}
                 className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors"
               >
                 <span className="flex items-center space-x-3">
-                  <Shield className="h-5 w-5" />
+                  <KeyRound className="h-5 w-5" />
                   <span>Cambiar contraseña</span>
                 </span>
               </button>
               <button 
                 onClick={handleTwoFactorAuth}
-                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors"
+                disabled={isUpdating}
+                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
               >
                 <span className="flex items-center space-x-3">
-                  <Shield className="h-5 w-5" />
+                  <QrCode className="h-5 w-5" />
                   <span>Activar autenticación 2FA</span>
                 </span>
               </button>
@@ -414,13 +547,24 @@ export default function PerfilPage() {
             <div className="space-y-3">
               <button 
                 onClick={handleGenerateInviteCode}
-                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors"
+                disabled={isUpdating}
+                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
               >
-                <span>Generar código de invitación</span>
+                <span className="flex items-center space-x-3">
+                  <UserPlus className="h-5 w-5" />
+                  <span>Generar código de invitación</span>
+                </span>
               </button>
+              {inviteCode && (
+                <div className="p-3 bg-primary/10 rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Código de invitación (válido 7 días)</p>
+                  <p className="text-lg font-mono font-bold text-primary tracking-widest">{inviteCode}</p>
+                </div>
+              )}
               <button 
                 onClick={handleRevokeParentalAccess}
-                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors"
+                disabled={isUpdating}
+                className="w-full flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
               >
                 <span>Revocar acceso parental</span>
               </button>
@@ -434,6 +578,119 @@ export default function PerfilPage() {
             <LogOut className="h-5 w-5" />
             <span>Cerrar Sesión</span>
           </button>
+        </div>
+      )}
+
+      {/* ── Modal: Cambiar contraseña ── */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl p-6 max-w-md w-full border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Cambiar contraseña</h3>
+              <button onClick={() => setShowPasswordModal(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Contraseña actual</label>
+                <input
+                  type="password"
+                  value={passwordActual}
+                  onChange={(e) => setPasswordActual(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Nueva contraseña</label>
+                <input
+                  type="password"
+                  value={passwordNueva}
+                  onChange={(e) => setPasswordNueva(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Mínimo 8 caracteres"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Confirmar nueva contraseña</label>
+                <input
+                  type="password"
+                  value={passwordConfirmar}
+                  onChange={(e) => setPasswordConfirmar(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Repite la contraseña"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 py-2 border rounded-lg hover:bg-accent transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handlePasswordChange}
+                  disabled={isUpdating}
+                  className="flex-1 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isUpdating && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: 2FA ── */}
+      {show2FAModal && twoFactorData && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl p-6 max-w-md w-full border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Activar 2FA</h3>
+              <button onClick={() => setShow2FAModal(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
+              Escanea este código con tu app de autenticación (Google Authenticator, Authy, etc.).
+            </p>
+            <div className="bg-secondary rounded-lg p-3 mb-3 break-all">
+              <p className="text-xs text-muted-foreground mb-1">Secreto (introdúcelo manualmente si es necesario):</p>
+              <p className="font-mono text-sm">{twoFactorData.secret}</p>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Código de 6 dígitos</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
+                  className="w-full px-3 py-2 border rounded-lg text-center text-lg tracking-widest focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="000000"
+                />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => setShow2FAModal(false)}
+                  className="flex-1 py-2 border rounded-lg hover:bg-accent transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirm2FA}
+                  disabled={isUpdating || twoFactorCode.length !== 6}
+                  className="flex-1 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isUpdating && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Verificar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

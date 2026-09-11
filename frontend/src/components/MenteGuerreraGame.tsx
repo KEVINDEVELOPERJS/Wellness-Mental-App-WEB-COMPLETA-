@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowLeft, Crosshair, Heart, Clock, Coins, Zap, Shield } from 'lucide-react';
+import { ArrowLeft, Crosshair, Heart, Clock, Coins, Zap, Shield, Maximize, Minimize, RefreshCw } from 'lucide-react';
+import { useEsMovil } from '../utils/device';
+import VirtualJoystick from './VirtualJoystick';
 
 /**
  * Mente Guerrera — shooter 3D en primera persona con temática de salud mental.
@@ -84,6 +86,16 @@ interface Particula {
   life: number;
   maxLife: number;
   color: string;
+}
+
+/** Texto flotante de puntos ganados (popup "+100"). */
+interface PopupPuntos {
+  x: number;
+  y: number;
+  texto: string;
+  color: string;
+  life: number;
+  maxLife: number;
 }
 
 /** Rayo de renderizado del raycasting. */
@@ -562,7 +574,120 @@ function dibujarBala(
   ctx.restore();
 }
 
+/**
+ * Dibuja el HUD dentro del canvas: barra de vida del jugador, arma actual,
+ * munición, calma (puntos), combo, ronda y tiempo. Así el HUD del videojuego
+ * queda integrado en la vista (necesario para la versión móvil).
+ */
+function dibujarHUDCanvas(
+  ctx: CanvasRenderingContext2D,
+  datos: {
+    vida: number;
+    vidaMax: number;
+    cargador: number;
+    reserva: number;
+    armaNombre: string;
+    armaColor: string;
+    puntuacion: number;
+    combo: number;
+    ronda: number;
+    tiempo: number;
+    recargando: boolean;
+  },
+): void {
+  ctx.save();
+
+  // ── Barra de vida (esquina inferior izquierda) ──
+  const vidaX = 14;
+  const vidaY = ALTO - 30;
+  const vidaAncho = 150;
+  const vidaAlto = 14;
+  const fraccion = Math.max(0, Math.min(1, datos.vida / datos.vidaMax));
+
+  // Panel de fondo
+  ctx.fillStyle = 'rgba(15,23,42,0.65)';
+  ctx.beginPath();
+  ctx.roundRect?.(vidaX - 6, vidaY - 20, vidaAncho + 12, vidaAlto + 30, 8);
+  if (!ctx.roundRect) ctx.rect(vidaX - 6, vidaY - 20, vidaAncho + 12, vidaAlto + 30);
+  ctx.fill();
+
+  // Etiqueta
+  ctx.fillStyle = '#fca5a5';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('VIDA', vidaX, vidaY - 8);
+
+  // Fondo de la barra
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(vidaX, vidaY, vidaAncho, vidaAlto);
+
+  // Relleno (verde -> ámbar -> rojo)
+  ctx.fillStyle = fraccion > 0.6 ? '#22c55e' : fraccion > 0.3 ? '#facc15' : '#ef4444';
+  ctx.fillRect(vidaX, vidaY, vidaAncho * fraccion, vidaAlto);
+
+  // Borde
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(vidaX, vidaY, vidaAncho, vidaAlto);
+
+  // Segmentos (3 toques)
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 3; i++) {
+    const sx = vidaX + (vidaAncho / 3) * i;
+    ctx.beginPath();
+    ctx.moveTo(sx, vidaY);
+    ctx.lineTo(sx, vidaY + vidaAlto);
+    ctx.stroke();
+  }
+
+  // ── Arma + munición (esquina inferior derecha) ──
+  const armaX = ANCHO - 14;
+  ctx.textAlign = 'right';
+  ctx.fillStyle = datos.armaColor;
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText(datos.armaNombre.toUpperCase(), armaX, ALTO - 34);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText(`${datos.cargador} / ${datos.reserva}`, armaX, ALTO - 14);
+
+  if (datos.recargando) {
+    ctx.fillStyle = '#facc15';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('RECARGANDO…', armaX, ALTO - 52);
+  }
+
+  // ── Calma (puntos) y combo (esquina superior izquierda) ──
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.fillText(`◈ ${datos.puntuacion}`, 14, 24);
+
+  if (datos.combo >= 2) {
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(`COMBO x${datos.combo}`, 14, 44);
+  }
+
+  // ── Ronda y tiempo (esquina superior derecha) ──
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText(`RONDA ${datos.ronda}`, ANCHO - 14, 24);
+
+  const mins = Math.floor(Math.max(0, datos.tiempo) / 60);
+  const segs = Math.max(0, datos.tiempo) % 60;
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = 'bold 13px monospace';
+  ctx.fillText(`${mins}:${segs.toString().padStart(2, '0')}`, ANCHO - 14, 42);
+
+  ctx.restore();
+}
+
 export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerreraGameProps) {
+  const esMovil = useEsMovil();
   const [iniciado, setIniciado] = useState(false);
   const [completado, setCompletado] = useState(false);
   const [puntuacion, setPuntuacion] = useState(0);
@@ -593,6 +718,7 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
   const estresoresRef = useRef<Estresor[]>([]);
   const proyectilesRef = useRef<Proyectil[]>([]);
   const particulasRef = useRef<Particula[]>([]);
+  const popupsRef = useRef<PopupPuntos[]>([]);
   const puntuacionRef = useRef(0);
   const comboRef = useRef(0);
   const maxComboRef = useRef(0);
@@ -608,6 +734,18 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
   const recoilRef = useRef(0);
   /** Destello del cañón (0-1) al disparar. */
   const muzzleRef = useRef(0);
+  /**
+   * Vector de movimiento del stick virtual izquierdo (como WASD).
+   * x = desplazamiento lateral (-1..1), y = avance/retroceso (-1..1).
+   */
+  const joystickMovRef = useRef({ x: 0, y: 0 });
+  /**
+   * Vector del stick virtual derecho para girar la vista (como el ratón).
+   * x = giro (-1..1).
+   */
+  const joystickGiroRef = useRef({ x: 0 });
+  /** Indica si la pantalla completa está activa. */
+  const [pantallaCompleta, setPantallaCompleta] = useState(false);
 
   // Armas
   const armasRef = useRef<Record<string, EstadoArma>>({
@@ -803,6 +941,49 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
     sincronizarArma();
   }, [sincronizarArma]);
 
+  /** Cicla a la siguiente arma comprada (para el botón de cambio de arma móvil). */
+  const ciclarArma = useCallback(() => {
+    const compradas = ORDEN_ARMAS.filter((id) => armasRef.current[id]);
+    if (compradas.length <= 1) return;
+    const idx = compradas.indexOf(armaActualRef.current as typeof compradas[number]);
+    const siguiente = compradas[(idx + 1) % compradas.length];
+    if (siguiente) cambiarArma(siguiente);
+  }, [cambiarArma]);
+
+  /** Alterna la pantalla completa (móvil). */
+  const alternarPantallaCompleta = useCallback(() => {
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      webkitExitFullscreen?: () => Promise<void>;
+      webkitRequestFullscreen?: () => Promise<void>;
+    };
+    const el = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void>;
+    };
+    const activo = !!(document.fullscreenElement || doc.webkitFullscreenElement);
+    if (activo) {
+      if (document.exitFullscreen) void document.exitFullscreen();
+      else if (doc.webkitExitFullscreen) void doc.webkitExitFullscreen();
+    } else {
+      if (el.requestFullscreen) void el.requestFullscreen().catch(() => undefined);
+      else if (el.webkitRequestFullscreen) void el.webkitRequestFullscreen();
+    }
+  }, []);
+
+  // Mantiene el estado del botón de pantalla completa sincronizado.
+  useEffect(() => {
+    const onCambio = () => {
+      const doc = document as Document & { webkitFullscreenElement?: Element | null };
+      setPantallaCompleta(!!(document.fullscreenElement || doc.webkitFullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', onCambio);
+    document.addEventListener('webkitfullscreenchange', onCambio);
+    return () => {
+      document.removeEventListener('fullscreenchange', onCambio);
+      document.removeEventListener('webkitfullscreenchange', onCambio);
+    };
+  }, []);
+
   /** Intenta comprar (o reabastecer) el arma de la pared indicada. */
   const comprarArma = useCallback((pared: ArmaPared) => {
     if (!runningRef.current) return;
@@ -926,6 +1107,15 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
               setMaxCombo(maxComboRef.current);
               mensajeRef.current = `¡${e.nombre} disipado! +${bonus} calma`;
               setMensaje(mensajeRef.current);
+              // Popup de puntos ganados en el mundo.
+              popupsRef.current.push({
+                x: e.x,
+                y: e.y,
+                texto: `+${bonus}`,
+                color: comboRef.current >= 2 ? '#fde047' : '#67e8f9',
+                life: 60,
+                maxLife: 60,
+              });
               // Estallido de partículas de disipación
               for (let i = 0; i < 16; i++) {
                 particulasRef.current.push({
@@ -961,6 +1151,12 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
       pa.life -= 1;
     }
     particulasRef.current = particulasRef.current.filter((pa) => pa.life > 0);
+
+    // Popups de puntos (flotan hacia arriba y se desvanecen).
+    for (const pop of popupsRef.current) {
+      pop.life -= 1;
+    }
+    popupsRef.current = popupsRef.current.filter((pop) => pop.life > 0);
 
     // IA: los estresores persiguen al jugador y le quitan vida al tocarle.
     for (const e of estresoresRef.current) {
@@ -1001,6 +1197,15 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
         toqueFlashRef.current = 1;
         mensajeRef.current = `¡${e.nombre} te alcanzó! Respira y retrocede.`;
         setMensaje(mensajeRef.current);
+        // Popup de daño recibido.
+        popupsRef.current.push({
+          x: jugador.x,
+          y: jugador.y,
+          texto: `-${Math.round(DANO_POR_TOQUE)} vida`,
+          color: '#f87171',
+          life: 50,
+          maxLife: 50,
+        });
 
         if (vidaRef.current <= 0) {
           endGame(true);
@@ -1130,13 +1335,29 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
         ctx.restore();
       }
 
-      // Cuerpo del estresor (nube temática)
+      // Cuerpo del estresor (nube temática) con halo para máxima visibilidad.
       ctx.save();
-      ctx.globalAlpha = alfaMuerte * (e.hitFlash > 0 ? 0.5 : 0.95);
-      ctx.font = `${Math.max(16, altoSprite * 0.7)}px serif`;
+      ctx.globalAlpha = alfaMuerte * (e.hitFlash > 0 ? 0.6 : 1);
+      const tamEmoji = Math.max(20, altoSprite * 0.8);
+      ctx.font = `${tamEmoji}px serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(e.emoji, spriteScreenX, ALTO / 2 - altoSprite * 0.05 - elevacionMuerte);
+      const ey = ALTO / 2 - altoSprite * 0.05 - elevacionMuerte;
+      // Halo luminoso detrás del emoji para que resalte sobre cualquier fondo.
+      const halo = ctx.createRadialGradient(spriteScreenX, ey, 2, spriteScreenX, ey, tamEmoji * 0.75);
+      halo.addColorStop(0, 'rgba(255,255,255,0.85)');
+      halo.addColorStop(0.55, 'rgba(165,243,252,0.55)');
+      halo.addColorStop(1, 'rgba(165,243,252,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(spriteScreenX, ey, tamEmoji * 0.75, 0, Math.PI * 2);
+      ctx.fill();
+      // Contorno oscuro para contraste.
+      ctx.lineWidth = Math.max(3, tamEmoji * 0.12);
+      ctx.strokeStyle = 'rgba(15,23,42,0.85)';
+      ctx.strokeText(e.emoji, spriteScreenX, ey);
+      // Emoji a color, ligeramente agrandado.
+      ctx.fillText(e.emoji, spriteScreenX, ey);
       ctx.restore();
       ctx.globalAlpha = 1;
 
@@ -1209,6 +1430,27 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
       ctx.globalAlpha = 1;
     }
 
+    // Popups de puntos ganados (+100) flotando en el mundo.
+    for (const pop of popupsRef.current) {
+      const proj = proyectar(pop.x, pop.y);
+      if (!proj) continue;
+      const progreso = 1 - pop.life / pop.maxLife; // 0 -> 1
+      const alfa = Math.min(1, pop.life / (pop.maxLife * 0.5));
+      const escala = 1 + progreso * 0.5;
+      ctx.save();
+      ctx.globalAlpha = alfa;
+      ctx.font = `bold ${Math.max(16, Math.round((26 * escala) / proj.transformY) * 4)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+      const py = ALTO / 2 - 20 - progreso * 55;
+      ctx.strokeText(pop.texto, proj.sx, py);
+      ctx.fillStyle = pop.color;
+      ctx.fillText(pop.texto, proj.sx, py);
+      ctx.restore();
+    }
+
     // Viñeta de calma (borde suave), se intensifica al recibir daño.
     const intensidadDano = toqueFlashRef.current * 0.5;
     const vineta = ctx.createRadialGradient(ANCHO / 2, ALTO / 2, ALTO * 0.3, ANCHO / 2, ALTO / 2, ALTO * 0.75);
@@ -1242,6 +1484,21 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
     if (recoilRef.current > 0) recoilRef.current = Math.max(0, recoilRef.current - 0.08);
     if (muzzleRef.current > 0) muzzleRef.current = Math.max(0, muzzleRef.current - 0.15);
 
+    // ── HUD dentro del canvas (salud del jugador + arma + calma) ──
+    dibujarHUDCanvas(ctx, {
+      vida: vidaRef.current,
+      vidaMax: VIDA_MAX,
+      cargador: armasRef.current[armaActualRef.current]?.cargador ?? 0,
+      reserva: armasRef.current[armaActualRef.current]?.reserva ?? 0,
+      armaNombre: ARMAS[armaActualRef.current]?.nombre ?? '',
+      armaColor: ARMAS[armaActualRef.current]?.color ?? '#67e8f9',
+      puntuacion: puntuacionRef.current,
+      combo: comboRef.current,
+      ronda: rondaRef.current,
+      tiempo: tiempoRef.current,
+      recargando: recargandoRef.current,
+    });
+
     // Retícula
     ctx.strokeStyle = 'rgba(255,255,255,0.85)';
     ctx.lineWidth = 2;
@@ -1267,23 +1524,44 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
 
     const jugador = jugadorRef.current;
     const teclas = teclasRef.current;
+    const stick = joystickMovRef.current;
+    const stickGiro = joystickGiroRef.current;
 
-    // Rotación
+    // ── Rotación (teclado + stick derecho) ──
     if (teclas.has('ArrowLeft') || teclas.has('a')) jugador.dir -= VELOCIDAD_ROT;
     if (teclas.has('ArrowRight') || teclas.has('d')) jugador.dir += VELOCIDAD_ROT;
+    // Stick derecho: giro analógico proporcional a la inclinación.
+    if (Math.abs(stickGiro.x) > 0.08) {
+      jugador.dir += stickGiro.x * VELOCIDAD_ROT * 1.6;
+    }
 
-    // Movimiento con colisión
+    // ── Movimiento con colisión (teclado + stick izquierdo) ──
     const dirX = Math.cos(jugador.dir);
     const dirY = Math.sin(jugador.dir);
-    if (teclas.has('ArrowUp') || teclas.has('w')) {
-      const nx = jugador.x + dirX * VELOCIDAD_MOV;
-      const ny = jugador.y + dirY * VELOCIDAD_MOV;
-      if (esLibre(nx, jugador.y)) jugador.x = nx;
-      if (esLibre(jugador.x, ny)) jugador.y = ny;
+    // Vector lateral (perpendicular a la vista) para el desplazamiento lateral.
+    const lateralX = -dirY;
+    const lateralY = dirX;
+
+    // Entrada de teclado: avance/retroceso (WASD/flechas).
+    let avance = 0;
+    let lateral = 0;
+    if (teclas.has('ArrowUp') || teclas.has('w')) avance += 1;
+    if (teclas.has('ArrowDown') || teclas.has('s')) avance -= 1;
+
+    // Entrada del stick virtual (analógica): avance y desplazamiento lateral.
+    avance += -stick.y; // stick hacia arriba (y negativo) = avanzar
+    lateral += stick.x;
+
+    // Normaliza para no ir más rápido en diagonal.
+    const magnitud = Math.hypot(avance, lateral);
+    if (magnitud > 1) {
+      avance /= magnitud;
+      lateral /= magnitud;
     }
-    if (teclas.has('ArrowDown') || teclas.has('s')) {
-      const nx = jugador.x - dirX * VELOCIDAD_MOV;
-      const ny = jugador.y - dirY * VELOCIDAD_MOV;
+
+    if (Math.abs(avance) > 0.02 || Math.abs(lateral) > 0.02) {
+      const nx = jugador.x + (dirX * avance + lateralX * lateral) * VELOCIDAD_MOV;
+      const ny = jugador.y + (dirY * avance + lateralY * lateral) * VELOCIDAD_MOV;
       if (esLibre(nx, jugador.y)) jugador.x = nx;
       if (esLibre(jugador.x, ny)) jugador.y = ny;
     }
@@ -1533,11 +1811,23 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
               </p>
               <div className="bg-sky-50 rounded-lg p-3 my-4 text-left text-sm text-gray-700 max-w-md mx-auto">
                 <p className="font-semibold mb-1">Controles:</p>
-                <p>• <strong>W A S D</strong> o <strong>flechas</strong>: moverte</p>
-                <p>• <strong>Ratón</strong>: girar (arrastra sobre el lienzo)</p>
-                <p>• <strong>Espacio</strong> o <strong>clic</strong>: disparar</p>
-                <p>• <strong>R</strong>: recargar · <strong>1-5</strong>: cambiar de arma</p>
-                <p>• <strong>E</strong>: comprar arma de la pared cercana</p>
+                {esMovil ? (
+                  <>
+                    <p>• <strong>Stick izquierdo</strong>: moverte (como WASD)</p>
+                    <p>• <strong>Stick derecho</strong>: girar la vista</p>
+                    <p>• <strong>Botón ✦</strong>: disparar · <strong>Recargar</strong> abajo</p>
+                    <p>• <strong>Cambiar arma</strong> y <strong>selector</strong> en pantalla</p>
+                    <p>• <strong>Pantalla completa</strong>: botón superior derecho</p>
+                  </>
+                ) : (
+                  <>
+                    <p>• <strong>W A S D</strong> o <strong>flechas</strong>: moverte</p>
+                    <p>• <strong>Ratón</strong>: girar (arrastra sobre el lienzo)</p>
+                    <p>• <strong>Espacio</strong> o <strong>clic</strong>: disparar</p>
+                    <p>• <strong>R</strong>: recargar · <strong>1-5</strong>: cambiar de arma</p>
+                    <p>• <strong>E</strong>: comprar arma de la pared cercana</p>
+                  </>
+                )}
               </div>
               <button
                 onClick={startGame}
@@ -1548,36 +1838,38 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
             </div>
           ) : (
             <div>
-              {/* HUD superior */}
-              <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <Coins className="h-5 w-5 text-amber-500" />
-                  <span className="font-bold text-amber-600">{puntuacion}</span>
-                  {combo > 1 && (
-                    <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-semibold">
-                      {combo}x
+              {/* HUD superior (solo escritorio; en móvil el HUD va dentro del canvas) */}
+              {!esMovil && (
+                <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-5 w-5 text-amber-500" />
+                    <span className="font-bold text-amber-600">{puntuacion}</span>
+                    {combo > 1 && (
+                      <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-semibold">
+                        {combo}x
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
+                      Ronda {ronda}
                     </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
-                    Ronda {ronda}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Heart className="h-5 w-5 text-rose-500" />
-                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-rose-500 transition-all"
-                      style={{ width: `${vida}%` }}
-                    />
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Heart className="h-5 w-5 text-rose-500" />
+                    <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-rose-500 transition-all"
+                        style={{ width: `${vida}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Clock className="h-5 w-5 text-blue-500" />
+                    <span className="font-semibold">{formatTime(tiempoRestante)}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Clock className="h-5 w-5 text-blue-500" />
-                  <span className="font-semibold">{formatTime(tiempoRestante)}</span>
-                </div>
-              </div>
+              )}
 
               <div className="relative">
                 <canvas
@@ -1599,6 +1891,24 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
                     };
                     window.addEventListener('mousemove', onMove);
                     window.addEventListener('mouseup', onUp);
+                  }}
+                  onTouchStart={(e) => {
+                    // Arrastrar con el dedo para girar la vista (móvil).
+                    const touch = e.touches[0];
+                    if (!touch) return;
+                    const startX = touch.clientX;
+                    const startDir = jugadorRef.current.dir;
+                    const onMove = (ev: TouchEvent) => {
+                      const t = ev.touches[0];
+                      if (!t) return;
+                      jugadorRef.current.dir = startDir + (t.clientX - startX) * 0.008;
+                    };
+                    const onEnd = () => {
+                      window.removeEventListener('touchmove', onMove);
+                      window.removeEventListener('touchend', onEnd);
+                    };
+                    window.addEventListener('touchmove', onMove, { passive: true });
+                    window.addEventListener('touchend', onEnd);
                   }}
                 />
 
@@ -1630,56 +1940,58 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
                 )}
               </div>
 
-              {/* HUD inferior: arma, munición y vida */}
-              <div className="flex items-center justify-between mt-3 gap-3 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{armaInfo?.icono}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800 leading-tight">{armaInfo?.nombre}</p>
-                    <p className="text-xs text-gray-500">
-                      {cargador} / {reserva}
-                    </p>
+              {/* HUD inferior (solo escritorio) */}
+              {!esMovil && (
+                <div className="flex items-center justify-between mt-3 gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{armaInfo?.icono}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800 leading-tight">{armaInfo?.nombre}</p>
+                      <p className="text-xs text-gray-500">
+                        {cargador} / {reserva}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-1">
-                  {ORDEN_ARMAS.map((id) => {
-                    const tiene = armasCompradas.includes(id);
-                    const activa = armaActual === id;
-                    return (
-                      <button
-                        key={id}
-                        onClick={() => cambiarArma(id)}
-                        disabled={!tiene}
-                        title={ARMAS[id]?.nombre}
-                        className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center border transition-all ${
-                          activa
-                            ? 'bg-cyan-600 border-cyan-700 text-white'
-                            : tiene
-                              ? 'bg-white border-gray-300 hover:border-cyan-400'
-                              : 'bg-gray-100 border-gray-200 opacity-40'
-                        }`}
-                      >
-                        {tiene ? ARMAS[id]?.icono : '🔒'}
-                      </button>
-                    );
-                  })}
-                </div>
+                  <div className="flex items-center gap-1">
+                    {ORDEN_ARMAS.map((id) => {
+                      const tiene = armasCompradas.includes(id);
+                      const activa = armaActual === id;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => cambiarArma(id)}
+                          disabled={!tiene}
+                          title={ARMAS[id]?.nombre}
+                          className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center border transition-all ${
+                            activa
+                              ? 'bg-cyan-600 border-cyan-700 text-white'
+                              : tiene
+                                ? 'bg-white border-gray-300 hover:border-cyan-400'
+                                : 'bg-gray-100 border-gray-200 opacity-40'
+                          }`}
+                        >
+                          {tiene ? ARMAS[id]?.icono : '🔒'}
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                <button
-                  onClick={recargar}
-                  disabled={recargando}
-                  className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50"
-                >
-                  <Zap className="h-4 w-4" /> Recargar (R)
-                </button>
-              </div>
+                  <button
+                    onClick={recargar}
+                    disabled={recargando}
+                    className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50"
+                  >
+                    <Zap className="h-4 w-4" /> Recargar (R)
+                  </button>
+                </div>
+              )}
 
               {/* Botón de compra para móvil */}
-              {armaCercana && (
+              {esMovil && armaCercana && (
                 <button
                   onClick={() => comprarArma(armaCercana)}
-                  className="mt-3 w-full py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
+                  className="mt-3 w-full py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
                 >
                   <Shield className="h-4 w-4" />
                   {armasCompradas.includes(armaCercana.armaId)
@@ -1690,39 +2002,93 @@ export default function MenteGuerreraGame({ onBack, onGameComplete }: MenteGuerr
 
               <p className="text-center text-sm text-cyan-700 mt-3 font-medium">{mensaje}</p>
 
-              {/* Controles táctiles */}
-              <div className="flex justify-center gap-2 mt-3 md:hidden">
-                <button
-                  onPointerDown={() => teclasRef.current.add('ArrowLeft')}
-                  onPointerUp={() => teclasRef.current.delete('ArrowLeft')}
-                  onPointerLeave={() => teclasRef.current.delete('ArrowLeft')}
-                  className="w-14 h-14 bg-gray-200 rounded-full font-bold text-xl active:bg-gray-300"
-                >
-                  ↺
-                </button>
-                <button
-                  onPointerDown={() => teclasRef.current.add('ArrowUp')}
-                  onPointerUp={() => teclasRef.current.delete('ArrowUp')}
-                  onPointerLeave={() => teclasRef.current.delete('ArrowUp')}
-                  className="w-14 h-14 bg-gray-200 rounded-full font-bold text-xl active:bg-gray-300"
-                >
-                  ↑
-                </button>
-                <button
-                  onClick={disparar}
-                  className="w-14 h-14 bg-cyan-600 text-white rounded-full font-bold text-xl active:bg-cyan-700"
-                >
-                  ✦
-                </button>
-                <button
-                  onPointerDown={() => teclasRef.current.add('ArrowRight')}
-                  onPointerUp={() => teclasRef.current.delete('ArrowRight')}
-                  onPointerLeave={() => teclasRef.current.delete('ArrowRight')}
-                  className="w-14 h-14 bg-gray-200 rounded-full font-bold text-xl active:bg-gray-300"
-                >
-                  ↻
-                </button>
-              </div>
+              {/* ── HUD móvil completo: sticks virtuales + botones de acción ── */}
+              {esMovil && (
+                <div className="mt-3 select-none">
+                  {/* Fila superior: pantalla completa + cambio de arma */}
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <button
+                      onClick={ciclarArma}
+                      className="flex items-center gap-1.5 px-2 py-2 bg-gray-800 text-white rounded-lg text-xs font-semibold active:bg-gray-700 touch-none min-w-0 flex-1"
+                    >
+                      <RefreshCw className="h-4 w-4 flex-shrink-0" />
+                      <span className="text-base leading-none flex-shrink-0">{armaInfo?.icono}</span>
+                      <span className="truncate">{armaInfo?.nombre}</span>
+                    </button>
+                    <button
+                      onClick={alternarPantallaCompleta}
+                      className="flex items-center gap-1.5 px-2 py-2 bg-gray-800 text-white rounded-lg text-xs font-semibold active:bg-gray-700 touch-none flex-shrink-0"
+                    >
+                      {pantallaCompleta ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                      <span>{pantallaCompleta ? 'Salir' : 'Pantalla completa'}</span>
+                    </button>
+                  </div>
+
+                  {/* Sticks virtuales + botones de acción */}
+                  <div className="flex items-end justify-between gap-1 w-full overflow-hidden">
+                    {/* Stick izquierdo: movimiento (WASD) */}
+                    <VirtualJoystick
+                      size={116}
+                      label="MOVER"
+                      color="#06b6d4"
+                      onChange={(v) => {
+                        joystickMovRef.current = v;
+                      }}
+                    />
+
+                    {/* Botones de acción */}
+                    <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={disparar}
+                        className="w-16 h-16 bg-cyan-600 text-white rounded-full font-bold text-2xl active:bg-cyan-700 shadow-lg touch-none"
+                      >
+                        ✦
+                      </button>
+                      <button
+                        onClick={recargar}
+                        disabled={recargando}
+                        className="w-16 py-2 bg-gray-800 text-white rounded-lg text-[10px] font-semibold active:bg-gray-700 disabled:opacity-50 touch-none"
+                      >
+                        {recargando ? 'Recargando…' : 'Recargar'}
+                      </button>
+                    </div>
+
+                    {/* Stick derecho: girar vista */}
+                    <VirtualJoystick
+                      size={116}
+                      label="GIRAR"
+                      color="#8b5cf6"
+                      onChange={(v) => {
+                        joystickGiroRef.current = { x: v.x };
+                      }}
+                    />
+                  </div>
+
+                  {/* Selector de armas móvil */}
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    {ORDEN_ARMAS.map((id) => {
+                      const tiene = armasCompradas.includes(id);
+                      const activa = armaActual === id;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => cambiarArma(id)}
+                          disabled={!tiene}
+                          className={`w-11 h-11 rounded-lg text-xl flex items-center justify-center border-2 transition-all touch-none ${
+                            activa
+                              ? 'bg-cyan-600 border-cyan-700 text-white'
+                              : tiene
+                                ? 'bg-white border-gray-300'
+                                : 'bg-gray-100 border-gray-200 opacity-40'
+                          }`}
+                        >
+                          {tiene ? ARMAS[id]?.icono : '🔒'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

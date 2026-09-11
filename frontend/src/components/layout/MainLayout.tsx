@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
@@ -15,7 +15,9 @@ import {
   LogOut,
   Menu,
   X,
-  Shield
+  Shield,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 interface MainLayoutProps {
@@ -42,6 +44,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme, isMobileMenuOpen, setMobileMenuOpen } = useUIStore();
+
+  // Aplica el tema al <html> para que funcione en cualquier dispositivo
+  // (incluido móvil), no solo dentro del contenedor de la app.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
 
   const handleLogout = async () => {
     const { refreshToken } = useAuthStore.getState();
@@ -122,14 +135,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </aside>
 
         {/* Mobile Header */}
-        <div className="flex-1 flex flex-col md:hidden">
-          <header className="flex items-center justify-between p-4 border-b bg-card">
-            <div>
-              <h1 className="text-xl font-bold text-primary">Wellness Mental</h1>
-              <p className="text-sm text-muted-foreground">{user?.nombre}</p>
+        <div className="flex-1 flex flex-col md:hidden min-w-0">
+          <header className="flex items-center justify-between p-3 border-b bg-card gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg font-bold text-primary truncate">Wellness Mental</h1>
+              <p className="text-xs text-muted-foreground truncate">{user?.nombre}</p>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 flex-shrink-0">
               <button
                 onClick={() => navigate('/perfil')}
                 className="p-2 rounded-lg hover:bg-accent relative"
@@ -145,6 +158,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 className="p-2 rounded-lg hover:bg-accent"
               >
                 <Bell className="h-5 w-5" />
+              </button>
+
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg hover:bg-accent"
+                title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
+              >
+                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
               </button>
               
               <button
@@ -200,7 +221,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           )}
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto p-4">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 min-w-0">
             {children}
           </main>
         </div>
