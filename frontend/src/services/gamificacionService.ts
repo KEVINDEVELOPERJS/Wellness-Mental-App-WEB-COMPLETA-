@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import { Logro, UsuarioLogro, NivelUsuario } from '../types/logro';
+import { Logro, UsuarioLogro, NivelUsuario, PuntosOtorgadosResponse } from '../types/logro';
 
 export const gamificacionService = {
   async getLogros(): Promise<Logro[]> {
@@ -37,8 +37,8 @@ export const gamificacionService = {
     return response.data;
   },
 
-  async addPuntos(puntos: number, tipoJuego: string = 'JUEGO_CALMA_MATCH', combo: number = 0, duracion: number = 0): Promise<any> {
-    const response = await apiClient.post('/gamificacion/puntos', { tipoActividad: tipoJuego, cantidad: puntos, combo, duracion });
+  async addPuntos(puntos: number, tipoJuego: string = 'JUEGO_CALMA_MATCH', combo: number = 0, duracion: number = 0): Promise<PuntosOtorgadosResponse> {
+    const response = await apiClient.post<PuntosOtorgadosResponse>('/gamificacion/puntos', { tipoActividad: tipoJuego, cantidad: puntos, combo, duracion });
     return response.data;
   },
 

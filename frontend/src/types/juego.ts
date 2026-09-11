@@ -15,7 +15,8 @@ export type GameId =
   | 'pop'
   | 'flujo'
   | 'memo'
-  | 'ordena';
+  | 'ordena'
+  | 'mente-guerrera';
 
 /**
  * Tipo de actividad gamificada que el backend espera (prefijo `JUEGO_`).
@@ -30,7 +31,8 @@ export type GameActivityType =
   | 'JUEGO_POP_ESTRES'
   | 'JUEGO_FLUJO_ZEN'
   | 'JUEGO_MEMO_SERENO'
-  | 'JUEGO_ORDENA_ZEN';
+  | 'JUEGO_ORDENA_ZEN'
+  | 'JUEGO_MENTE_GUERRERA';
 
 /**
  * Tipo de elemento de la cuadrícula de juegos de la página principal.
@@ -72,6 +74,7 @@ export const GAME_ID_TO_ACTIVITY: Record<GameId, GameActivityType> = {
   flujo: 'JUEGO_FLUJO_ZEN',
   memo: 'JUEGO_MEMO_SERENO',
   ordena: 'JUEGO_ORDENA_ZEN',
+  'mente-guerrera': 'JUEGO_MENTE_GUERRERA',
 };
 
 /**

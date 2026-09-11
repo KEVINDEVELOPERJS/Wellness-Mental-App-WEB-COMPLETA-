@@ -42,6 +42,14 @@ export default function FlujoZenGame({ onBack, onGameComplete }: FlujoZenGamePro
   const scoreRef = useRef(0);
   const timeRef = useRef(0);
   const gameOverRef = useRef(false);
+  /**
+   * Bandera de "partida en curso" en un ref (no en estado). El bucle de
+   * animación se lanza desde `startGame` dentro del mismo tick en que cambia el
+   * estado de React; si el bucle leyera `gameStarted` del closure, seguiría
+   * viendo el valor antiguo (`false`) y saldría inmediatamente, dejando el
+   * canvas en blanco. Usar un ref garantiza que el bucle vea el valor real.
+   */
+  const runningRef = useRef(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -151,6 +159,7 @@ export default function FlujoZenGame({ onBack, onGameComplete }: FlujoZenGamePro
     scoreRef.current = 0;
     timeRef.current = 0;
     gameOverRef.current = false;
+    runningRef.current = false;
     setScore(0);
     setGameOver(false);
     setSessionDuration(0);
@@ -163,6 +172,7 @@ export default function FlujoZenGame({ onBack, onGameComplete }: FlujoZenGamePro
     setGameStarted(true);
     setGameComplete(false);
     setTimeLeft(DURATION);
+    runningRef.current = true;
 
     const gameSession = {
       type: 'flujo-zen',
@@ -192,13 +202,12 @@ export default function FlujoZenGame({ onBack, onGameComplete }: FlujoZenGamePro
   };
 
   const handleJump = () => {
-    if (!gameStarted || gameComplete || !isMountedRef.current) return;
-    if (gameOverRef.current) return;
+    if (!runningRef.current || gameOverRef.current || !isMountedRef.current) return;
     birdVelocityRef.current = JUMP_FORCE;
   };
 
-  const gameLoop = (_now: number) => {
-    if (!isMountedRef.current || !gameStarted || gameComplete) return;
+  const gameLoop = () => {
+    if (!isMountedRef.current || !runningRef.current || gameOverRef.current) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -269,6 +278,9 @@ export default function FlujoZenGame({ onBack, onGameComplete }: FlujoZenGamePro
 
   const endGame = (crashed: boolean) => {
     if (!isMountedRef.current) return;
+    if (!runningRef.current && gameOverRef.current) return;
+
+    runningRef.current = false;
 
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
@@ -276,8 +288,8 @@ export default function FlujoZenGame({ onBack, onGameComplete }: FlujoZenGamePro
     gameOverRef.current = true;
     setGameOver(crashed);
     const finalScore = scoreRef.current;
-    const duration = DURATION - timeLeft;
-    setSessionDuration(duration);
+    const duration = DURATION - timeRef.current;
+    setSessionDuration(Math.max(0, duration));
     setGameComplete(true);
 
     const gameSession = {
@@ -295,7 +307,7 @@ export default function FlujoZenGame({ onBack, onGameComplete }: FlujoZenGamePro
     if (typeof onGameComplete === 'function') {
       try {
         // Score = obstacles * 10 (combo-style points)
-        onGameComplete(finalScore * 10, 0, 'flujo', duration);
+        onGameComplete(finalScore * 10, 0, 'flujo', Math.max(0, duration));
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }

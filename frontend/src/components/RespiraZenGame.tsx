@@ -45,6 +45,9 @@ export default function RespiraZenGame({ onBack, onGameComplete }: RespiraZenGam
   const phaseRef = useRef<Phase>('inhala');
   const phaseStartRef = useRef(0);
   const currentCycleRef = useRef(0);
+  /** Refs espejo para que `endGame` no lea estado obsoleto del closure. */
+  const scoreRef = useRef(0);
+  const sessionDurationRef = useRef(0);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -141,6 +144,8 @@ export default function RespiraZenGame({ onBack, onGameComplete }: RespiraZenGam
     setSessionDuration(0);
     currentCycleRef.current = 0;
     phaseRef.current = 'inhala';
+    scoreRef.current = 0;
+    sessionDurationRef.current = 0;
 
     const gameSession = {
       type: 'respira-zen',
@@ -162,7 +167,11 @@ export default function RespiraZenGame({ onBack, onGameComplete }: RespiraZenGam
         }
         return newTime;
       });
-      setSessionDuration((prev) => prev + 1);
+      setSessionDuration((prev) => {
+        const next = prev + 1;
+        sessionDurationRef.current = next;
+        return next;
+      });
     }, 1000);
   };
 
@@ -178,7 +187,11 @@ export default function RespiraZenGame({ onBack, onGameComplete }: RespiraZenGam
       const newCycle = currentCycleRef.current + 1;
       currentCycleRef.current = newCycle;
       setCycle(newCycle);
-      setScore((prev) => prev + SCORE_PER_CYCLE);
+      setScore((prev) => {
+        const next = prev + SCORE_PER_CYCLE;
+        scoreRef.current = next;
+        return next;
+      });
 
       if (newCycle >= TOTAL_CYCLES) {
         endGame();
@@ -198,14 +211,15 @@ export default function RespiraZenGame({ onBack, onGameComplete }: RespiraZenGam
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const duration = sessionDuration;
+    const duration = sessionDurationRef.current;
+    const finalScore = scoreRef.current;
     setGameComplete(true);
 
     const gameSession = {
       type: 'respira-zen',
       startTime: new Date().toISOString(),
       endTime: new Date().toISOString(),
-      finalScore: score,
+      finalScore,
       finalCombo: 0,
       duration,
       completed: true,
@@ -215,7 +229,7 @@ export default function RespiraZenGame({ onBack, onGameComplete }: RespiraZenGam
 
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, 0, 'respira', duration);
+        onGameComplete(finalScore, 0, 'respira', duration);
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }

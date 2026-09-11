@@ -40,6 +40,9 @@ export default function MemoSerenoGame({ onBack, onGameComplete }: MemoSerenoGam
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMountedRef = useRef(true);
   const matchedPairsRef = useRef(0);
+  /** Refs espejo para que `endGame` no lea estado obsoleto del closure. */
+  const movesRef = useRef(0);
+  const timeElapsedRef = useRef(0);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -77,6 +80,8 @@ export default function MemoSerenoGame({ onBack, onGameComplete }: MemoSerenoGam
     setTimeElapsed(0);
     setFinalScore(0);
     setIsLocked(false);
+    movesRef.current = 0;
+    timeElapsedRef.current = 0;
 
     const gameSession = {
       type: 'memo-sereno',
@@ -88,7 +93,11 @@ export default function MemoSerenoGame({ onBack, onGameComplete }: MemoSerenoGam
 
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
-      setTimeElapsed((prev) => prev + 1);
+      setTimeElapsed((prev) => {
+        const next = prev + 1;
+        timeElapsedRef.current = next;
+        return next;
+      });
     }, 1000);
   };
 
@@ -108,7 +117,11 @@ export default function MemoSerenoGame({ onBack, onGameComplete }: MemoSerenoGam
     setFlippedIndexes(newFlipped);
 
     if (newFlipped.length === 2) {
-      setMoves((prev) => prev + 1);
+      setMoves((prev) => {
+        const next = prev + 1;
+        movesRef.current = next;
+        return next;
+      });
       checkMatch(newFlipped, newCards);
     }
   };
@@ -162,10 +175,10 @@ export default function MemoSerenoGame({ onBack, onGameComplete }: MemoSerenoGam
 
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const duration = timeElapsed;
+    const duration = timeElapsedRef.current;
     // Score: perfect = 1000, minus moves penalty and time
     const idealMoves = NUM_PAIRS + Math.floor(NUM_PAIRS / 2);
-    const score = Math.max(100, 1000 - Math.max(0, moves - idealMoves) * 20 - Math.floor(duration / 2));
+    const score = Math.max(100, 1000 - Math.max(0, movesRef.current - idealMoves) * 20 - Math.floor(duration / 2));
     setFinalScore(score);
     setGameComplete(true);
 

@@ -57,6 +57,10 @@ export default function OrdenaZenGame({ onBack, onGameComplete }: OrdenaZenGameP
   const itemsRef = useRef<FallingItem[]>([]);
   const missesRef = useRef(0);
   const speedRef = useRef(1);
+  /** Refs espejo para que `endGame` no lea estado obsoleto del closure. */
+  const scoreRef = useRef(0);
+  const comboRef = useRef(0);
+  const timeLeftRef = useRef(DURATION);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -80,6 +84,9 @@ export default function OrdenaZenGame({ onBack, onGameComplete }: OrdenaZenGameP
     missesRef.current = 0;
     setMisses(0);
     speedRef.current = 1;
+    scoreRef.current = 0;
+    comboRef.current = 0;
+    timeLeftRef.current = DURATION;
 
     const gameSession = {
       type: 'ordena-zen',
@@ -93,6 +100,7 @@ export default function OrdenaZenGame({ onBack, onGameComplete }: OrdenaZenGameP
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         const newTime = prev - 1;
+        timeLeftRef.current = Math.max(0, newTime);
         if (newTime <= 0) {
           endGame();
           return 0;
@@ -146,8 +154,16 @@ export default function OrdenaZenGame({ onBack, onGameComplete }: OrdenaZenGameP
 
         if (zoneColor && zoneColor === item.color) {
           // Correct zone - score!
-          setScore((prev) => prev + 20);
-          setCombo((prev) => prev + 1);
+          setScore((prev) => {
+            const next = prev + 20;
+            scoreRef.current = next;
+            return next;
+          });
+          setCombo((prev) => {
+            const next = prev + 1;
+            comboRef.current = next;
+            return next;
+          });
           const el = document.getElementById(`item-${item.id}`);
           if (el) animations.popIn(el);
         } else {
@@ -201,12 +217,21 @@ export default function OrdenaZenGame({ onBack, onGameComplete }: OrdenaZenGameP
     setItems(remaining);
 
     if (target.color === COLOR_KEYS[zoneIndex]) {
-      setScore((prev) => prev + 20);
-      setCombo((prev) => prev + 1);
+      setScore((prev) => {
+        const next = prev + 20;
+        scoreRef.current = next;
+        return next;
+      });
+      setCombo((prev) => {
+        const next = prev + 1;
+        comboRef.current = next;
+        return next;
+      });
     } else {
       missesRef.current += 1;
       setMisses(missesRef.current);
       setCombo(0);
+      comboRef.current = 0;
     }
   };
 
@@ -216,15 +241,17 @@ export default function OrdenaZenGame({ onBack, onGameComplete }: OrdenaZenGameP
     if (timerRef.current) clearInterval(timerRef.current);
     if (spawnRef.current) clearInterval(spawnRef.current);
 
-    const duration = DURATION - timeLeft;
+    const duration = Math.max(0, DURATION - timeLeftRef.current);
+    const finalScore = scoreRef.current;
+    const finalCombo = comboRef.current;
     setGameComplete(true);
 
     const gameSession = {
       type: 'ordena-zen',
       startTime: new Date().toISOString(),
       endTime: new Date().toISOString(),
-      finalScore: score,
-      finalCombo: combo,
+      finalScore,
+      finalCombo,
       duration,
       completed: true,
     };
@@ -233,7 +260,7 @@ export default function OrdenaZenGame({ onBack, onGameComplete }: OrdenaZenGameP
 
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, combo, 'ordena', duration);
+        onGameComplete(finalScore, finalCombo, 'ordena', duration);
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }

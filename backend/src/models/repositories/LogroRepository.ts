@@ -1,6 +1,6 @@
 import prisma from '../../config/database';
 import { Logro, UsuarioLogro, NivelUsuario } from '../entities/Logro';
-import { NIVELES } from '../entities/Logro';
+import { resolverNivel } from '../entities/Logro';
 
 export class LogroRepository {
   static async findAll(): Promise<Logro[]> {
@@ -75,32 +75,76 @@ export class LogroRepository {
     return newlyUnlocked;
   }
 
-  static async calculateNivel(usuarioId: number): Promise<NivelUsuario> {
-    const userLogros = await this.getUserLogros(usuarioId);
-    const puntos = userLogros.reduce((sum, ul) => sum + ul.logro.puntos, 0);
+  /**
+   * Devuelve los puntos de XP acumulados de un usuario.
+   *
+   * Fuente de verdad: tabla `PuntosUsuario`. Si el usuario aún no tiene fila,
+   * se calcula un valor de respaldo sumando sus sesiones de juego y se
+   * materializa la fila para que los siguientes cálculos sean consistentes.
+   */
+  static async getPuntosUsuario(usuarioId: number): Promise<number> {
+    try {
+      const registro = await prisma.puntosUsuario.findUnique({
+        where: { usuarioId },
+      });
 
-    let nivelInfo = NIVELES[0];
-    for (const nivel of NIVELES) {
-      if (puntos >= nivel.minPuntos) {
-        nivelInfo = nivel;
-      } else {
-        break;
+      if (registro) {
+        return registro.puntosTotales;
       }
-    }
 
-    const progreso = nivelInfo.maxPuntos === Infinity 
-      ? 100 
-      : ((puntos - nivelInfo.minPuntos) / (nivelInfo.maxPuntos - nivelInfo.minPuntos)) * 100;
+      // Fallback: derivar de las sesiones de juego existentes.
+      const agregado = await prisma.sesionJuego.aggregate({
+        where: { usuarioId },
+        _sum: { puntos: true },
+      });
+      const puntosDerivados = agregado._sum.puntos ?? 0;
+
+      await prisma.puntosUsuario.create({
+        data: {
+          usuarioId,
+          puntosTotales: puntosDerivados,
+          puntosJuegos: puntosDerivados,
+        },
+      });
+
+      return puntosDerivados;
+    } catch (error: unknown) {
+      const code = (error as { code?: string }).code;
+      if (code === 'P2021') {
+        // Tabla aún no migrada: degradar a la suma de sesiones de juego.
+        console.log('PuntosUsuario table does not exist yet, deriving from SesionJuego');
+        const agregado = await prisma.sesionJuego.aggregate({
+          where: { usuarioId },
+          _sum: { puntos: true },
+        });
+        return agregado._sum.puntos ?? 0;
+      }
+      throw error;
+    }
+  }
+
+  static async calculateNivel(usuarioId: number): Promise<NivelUsuario> {
+    const puntos = await this.getPuntosUsuario(usuarioId);
+    const nivelInfo = resolverNivel(puntos);
+
+    const esNivelMaximo = nivelInfo.maxPuntos === Infinity;
+    const rangoNivel = nivelInfo.maxPuntos - nivelInfo.minPuntos;
+    const progreso = esNivelMaximo || rangoNivel <= 0
+      ? 100
+      : ((puntos - nivelInfo.minPuntos) / rangoNivel) * 100;
 
     return {
       nivel: nivelInfo.nombre,
       puntosActuales: puntos,
-      puntosSiguienteNivel: nivelInfo.maxPuntos === Infinity ? puntos : nivelInfo.maxPuntos,
+      puntosSiguienteNivel: esNivelMaximo ? puntos : nivelInfo.maxPuntos,
       progreso: Math.min(100, Math.max(0, progreso)),
     };
   }
 
   static async otorgarPuntos(usuarioId: number, tipoActividad: string, cantidad: number, combo: number = 0, duracion: number = 0): Promise<void> {
+    // Puntos saneados: nunca negativos, siempre enteros.
+    const puntosGanados = Number.isFinite(cantidad) ? Math.max(0, Math.floor(cantidad)) : 0;
+
     // Store game session in the new SesionJuego table
     const gameTypeMap: Record<string, string> = {
       'JUEGO_CALMA_MATCH': 'calma-match',
@@ -113,6 +157,7 @@ export class LogroRepository {
       'JUEGO_FLUJO_ZEN': 'flujo-zen',
       'JUEGO_MEMO_SERENO': 'memo-sereno',
       'JUEGO_ORDENA_ZEN': 'ordena-zen',
+      'JUEGO_MENTE_GUERRERA': 'mente-guerrera',
     };
 
     const tipoJuego = gameTypeMap[tipoActividad] || tipoActividad.toLowerCase();
@@ -123,17 +168,41 @@ export class LogroRepository {
         data: {
           usuarioId,
           tipoJuego,
-          puntos: cantidad,
+          puntos: puntosGanados,
           combo: combo,
           duracion: duracion,
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If table doesn't exist, log the error but continue with achievement logic
-      if (error.code === 'P2021') {
+      if ((error as { code?: string }).code === 'P2021') {
         console.log('SesionJuego table does not exist yet, skipping session storage');
       } else {
         console.error('Error creating game session:', error);
+      }
+    }
+
+    // --- Acumulación de XP por usuario (fuente de verdad de los niveles) ---
+    // Se usa upsert atómico para evitar condiciones de carrera y asegurar que
+    // TODOS los juegos (incluidos los nuevos) incrementen el nivel del usuario.
+    try {
+      await prisma.puntosUsuario.upsert({
+        where: { usuarioId },
+        create: {
+          usuarioId,
+          puntosTotales: puntosGanados,
+          puntosJuegos: puntosGanados,
+        },
+        update: {
+          puntosTotales: { increment: puntosGanados },
+          puntosJuegos: { increment: puntosGanados },
+        },
+      });
+    } catch (error: unknown) {
+      if ((error as { code?: string }).code === 'P2021') {
+        console.log('PuntosUsuario table does not exist yet, skipping XP accumulation');
+      } else {
+        console.error('Error accumulating user points:', error);
       }
     }
 
@@ -156,7 +225,7 @@ export class LogroRepository {
     }
 
     // Calculate total game points for this user
-    let userTotalPoints = cantidad; // Default to current session points if table doesn't exist
+    let userTotalPoints = puntosGanados; // Default to current session points if table doesn't exist
     
     try {
       const totalGamePoints = await prisma.sesionJuego.aggregate({
@@ -164,15 +233,15 @@ export class LogroRepository {
         _sum: { puntos: true }
       });
 
-      userTotalPoints = totalGamePoints._sum.puntos || cantidad;
-    } catch (error: any) {
+      userTotalPoints = totalGamePoints._sum.puntos ?? puntosGanados;
+    } catch (error: unknown) {
       // If table doesn't exist, use current session points
-      if (error.code === 'P2021') {
+      if ((error as { code?: string }).code === 'P2021') {
         console.log('SesionJuego table does not exist yet, using current session points');
-        userTotalPoints = cantidad;
+        userTotalPoints = puntosGanados;
       } else {
         console.error('Error calculating total game points:', error);
-        userTotalPoints = cantidad;
+        userTotalPoints = puntosGanados;
       }
     }
 
@@ -184,26 +253,16 @@ export class LogroRepository {
       }
     });
 
-    if (existingGameLogro) {
-      // Update the points value by deleting and recreating with new points
-      await prisma.usuarioLogro.delete({
-        where: { id: existingGameLogro.id }
+    if (!existingGameLogro) {
+      // Create the join row once; el valor de `puntos` del logro ya no se
+      // sobrescribe por usuario (antes corrompía el nivel de otros usuarios).
+      await prisma.usuarioLogro.create({
+        data: {
+          usuarioId,
+          logroId: gameLogro.id,
+        }
       });
     }
-
-    // Create new entry with accumulated points
-    await prisma.usuarioLogro.create({
-      data: {
-        usuarioId,
-        logroId: gameLogro.id,
-      }
-    });
-
-    // Update the special game logro points to reflect total game points
-    await prisma.logro.update({
-      where: { id: gameLogro.id },
-      data: { puntos: userTotalPoints }
-    });
 
     // Points are calculated based on achievements, not directly stored
     // This method triggers achievement checking

@@ -40,7 +40,14 @@ export class GamificacionController {
       const userId = (req as any).user?.userId;
       const { tipoActividad, cantidad, combo, duracion } = req.body;
 
+      // Nivel antes de otorgar puntos (para detectar subida de nivel).
+      const nivelAntes = await LogroRepository.calculateNivel(userId);
+
       await LogroRepository.otorgarPuntos(userId, tipoActividad, cantidad, combo, duracion);
+
+      // Nivel después de otorgar puntos.
+      const nivelDespues = await LogroRepository.calculateNivel(userId);
+      const nivelSubido = nivelDespues.nivel !== nivelAntes.nivel;
 
       // Check for newly unlocked achievements
       const userStats = await UsuarioRepository.getStatistics(userId);
@@ -50,6 +57,8 @@ export class GamificacionController {
         message: 'Points awarded',
         nuevosLogros,
         puntosGanados: cantidad,
+        nivelSubido,
+        nivel: nivelDespues,
       });
     } catch (error) {
       throw error;

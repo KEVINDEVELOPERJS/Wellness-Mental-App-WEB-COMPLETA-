@@ -49,6 +49,10 @@ export default function PopEstresGame({ onBack, onGameComplete }: PopEstresGameP
   const isMountedRef = useRef(true);
   const bubblesRef = useRef<Bubble[]>([]);
   const missedRef = useRef(0);
+  /** Refs espejo para que `endGame` no lea estado obsoleto del closure. */
+  const scoreRef = useRef(0);
+  const maxComboRef = useRef(0);
+  const timeLeftRef = useRef(DURATION);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -72,6 +76,9 @@ export default function PopEstresGame({ onBack, onGameComplete }: PopEstresGameP
     bubblesRef.current = [];
     missedRef.current = 0;
     speedRef.current = 1;
+    scoreRef.current = 0;
+    maxComboRef.current = 0;
+    timeLeftRef.current = DURATION;
     setMotivationalPhrase(getMotivationalPhrase(0));
 
     const gameSession = {
@@ -86,6 +93,7 @@ export default function PopEstresGame({ onBack, onGameComplete }: PopEstresGameP
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         const newTime = prev - 1;
+        timeLeftRef.current = Math.max(0, newTime);
         if (newTime <= 0) {
           endGame();
           return 0;
@@ -191,10 +199,18 @@ export default function PopEstresGame({ onBack, onGameComplete }: PopEstresGameP
     if (bubble.type === 'estres') {
       // Popping stress = good (cathartic)
       const points = 10 * (combo + 1);
-      setScore((prev) => prev + points);
+      setScore((prev) => {
+        const next = prev + points;
+        scoreRef.current = next;
+        return next;
+      });
       setCombo((prev) => {
         const newCombo = prev + 1;
-        setMaxCombo((current) => Math.max(current, newCombo));
+        setMaxCombo((current) => {
+          const nextMax = Math.max(current, newCombo);
+          maxComboRef.current = nextMax;
+          return nextMax;
+        });
         return newCombo;
       });
       setMotivationalPhrase(getMotivationalPhrase(combo + 1));
@@ -209,7 +225,11 @@ export default function PopEstresGame({ onBack, onGameComplete }: PopEstresGameP
       }
     } else {
       // Popping calm = bonus, resets combo (avoid spamming)
-      setScore((prev) => prev + 25);
+      setScore((prev) => {
+        const next = prev + 25;
+        scoreRef.current = next;
+        return next;
+      });
       setCombo(0);
       setMotivationalPhrase('¡Calma restaurada! +25');
       const comboElement = document.getElementById('combo-display');
@@ -225,15 +245,17 @@ export default function PopEstresGame({ onBack, onGameComplete }: PopEstresGameP
     if (timerRef.current) clearInterval(timerRef.current);
     if (spawnRef.current) clearInterval(spawnRef.current);
 
-    const duration = DURATION - timeLeft;
+    const duration = Math.max(0, DURATION - timeLeftRef.current);
+    const finalScore = scoreRef.current;
+    const finalCombo = maxComboRef.current;
     setGameComplete(true);
 
     const gameSession = {
       type: 'pop-estres',
       startTime: new Date().toISOString(),
       endTime: new Date().toISOString(),
-      finalScore: score,
-      finalCombo: maxCombo,
+      finalScore,
+      finalCombo,
       duration,
       completed: true,
     };
@@ -242,7 +264,7 @@ export default function PopEstresGame({ onBack, onGameComplete }: PopEstresGameP
 
     if (typeof onGameComplete === 'function') {
       try {
-        onGameComplete(score, maxCombo, 'pop', duration);
+        onGameComplete(finalScore, finalCombo, 'pop', duration);
       } catch (error) {
         console.error('Error in onGameComplete:', error);
       }

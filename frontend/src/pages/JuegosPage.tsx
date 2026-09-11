@@ -13,6 +13,7 @@ import PopEstresGame from '../components/PopEstresGame';
 import FlujoZenGame from '../components/FlujoZenGame';
 import MemoSerenoGame from '../components/MemoSerenoGame';
 import OrdenaZenGame from '../components/OrdenaZenGame';
+import MenteGuerreraGame from '../components/MenteGuerreraGame';
 import { resolveActivityType } from '../types/juego';
 import { 
   Trophy, 
@@ -33,7 +34,8 @@ import {
   CircleDot,
   Feather,
   Brain,
-  Layers
+  Layers,
+  Crosshair
 } from 'lucide-react';
 
 export default function JuegosPage() {
@@ -209,6 +211,14 @@ export default function JuegosPage() {
       color: 'bg-teal-500',
       unlocked: (nivel?.puntosActuales || 0) >= 200,
     },
+    {
+      id: 'mente-guerrera',
+      name: 'Mente Guerrera 3D',
+      description: 'Shooter zen en primera persona',
+      icon: Crosshair,
+      color: 'bg-cyan-600',
+      unlocked: (nivel?.puntosActuales || 0) >= 300,
+    },
   ], [nivel?.puntosActuales]);
 
   if (selectedGame === 'calma-match') {
@@ -295,6 +305,15 @@ export default function JuegosPage() {
   if (selectedGame === 'ordena') {
     return (
       <OrdenaZenGame
+        onBack={() => setSelectedGame(null)}
+        onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
+      />
+    );
+  }
+
+  if (selectedGame === 'mente-guerrera') {
+    return (
+      <MenteGuerreraGame
         onBack={() => setSelectedGame(null)}
         onGameComplete={(score, combo, gameType, duration) => handleGameComplete(score, combo, gameType, duration)}
       />
