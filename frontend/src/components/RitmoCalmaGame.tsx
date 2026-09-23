@@ -30,9 +30,17 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
   const tapZoneRef = useRef(0); // 0-100 position
   const lastTapTimeRef = useRef(0);
   const isMountedRef = useRef(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
+    
+    // Initialize audio context on first user interaction
+    const initAudio = () => {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+    };
     
     // Initialize canvas when component mounts
     const canvas = canvasRef.current;
@@ -62,15 +70,52 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
       }
     }
     
+    // Initialize audio on mount for better UX
+    initAudio();
+    
     return () => {
       isMountedRef.current = false;
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
     };
   }, []);
 
+  const playComboSound = (comboLevel: number) => {
+    if (!audioContextRef.current) return;
+    
+    const ctx = audioContextRef.current;
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    // Different pitches based on combo level
+    const baseFreq = 440; // A4
+    const multiplier = 1 + (comboLevel * 0.1); // Increase pitch with combo
+    oscillator.frequency.setValueAtTime(baseFreq * multiplier, ctx.currentTime);
+    
+    // Satisfying sound envelope
+    oscillator.type = 'sine';
+    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.3);
+  };
+
   const startGame = () => {
     if (!isMountedRef.current) return;
+    
+    // Initialize audio context if not already done
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
     
     setGameStarted(true);
     setTimeLeft(DURATION);
@@ -162,12 +207,29 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
     const centerY = CANVAS_SIZE / 2;
     const radius = CANVAS_SIZE * 0.32;
     
-    // Draw tap zone
+    // Draw tap zone (green zone) - more visible and thicker
     const zoneAngle = (tapZoneRef.current / 100) * 2 * Math.PI - Math.PI / 2;
+    const zoneWidth = 0.4; // Wider zone for better visibility
+    
+    // Draw outer glow for tap zone
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, zoneAngle - 0.3, zoneAngle + 0.3);
+    ctx.arc(centerX, centerY, radius + 8, zoneAngle - zoneWidth, zoneAngle + zoneWidth);
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
+    ctx.lineWidth = 20;
+    ctx.stroke();
+    
+    // Draw main tap zone
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, zoneAngle - zoneWidth, zoneAngle + zoneWidth);
     ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 16;
+    ctx.lineWidth = 20;
+    ctx.stroke();
+    
+    // Draw tap zone highlight (inner)
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius - 8, zoneAngle - zoneWidth, zoneAngle + zoneWidth);
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+    ctx.lineWidth = 8;
     ctx.stroke();
     
     // Draw main circle
@@ -177,16 +239,29 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
     ctx.lineWidth = 4;
     ctx.stroke();
     
-    // Draw indicator
+    // Draw indicator (blue dot) - will rotate continuously
     const indicatorX = centerX + Math.cos(indicatorAngleRef.current) * radius;
     const indicatorY = centerY + Math.sin(indicatorAngleRef.current) * radius;
     
+    // Draw indicator glow
+    ctx.beginPath();
+    ctx.arc(indicatorX, indicatorY, 16, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+    ctx.fill();
+    
+    // Draw main indicator
     ctx.beginPath();
     ctx.arc(indicatorX, indicatorY, 12, 0, 2 * Math.PI);
     ctx.fillStyle = '#6366f1';
     ctx.fill();
     
-    // Update indicator angle
+    // Draw indicator highlight
+    ctx.beginPath();
+    ctx.arc(indicatorX - 3, indicatorY - 3, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fill();
+    
+    // Update indicator angle - continuous rotation
     indicatorAngleRef.current += (speedRef.current * Math.PI) / 180;
     if (indicatorAngleRef.current > 2 * Math.PI) {
       indicatorAngleRef.current -= 2 * Math.PI;
@@ -224,6 +299,10 @@ export default function RitmoCalmaGame({ onBack, onGameComplete }: RitmoCalmaGam
       setCombo(prev => {
         const newCombo = prev + 1;
         setMaxCombo(current => Math.max(current, newCombo));
+        
+        // Play combo sound for new combo level
+        playComboSound(newCombo);
+        
         return newCombo;
       });
       
