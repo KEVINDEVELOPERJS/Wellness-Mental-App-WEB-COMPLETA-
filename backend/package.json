@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node --transpile-only src/app.ts",
     "build": "npx prisma generate && npx prisma db push",
-    "start": "npx prisma db push && ts-node --transpile-only src/app.ts",
+    "start": "npx prisma db push && npx prisma db seed && ts-node --transpile-only src/app.ts",
     "generate:prisma": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
