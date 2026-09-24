@@ -51,7 +51,10 @@ const corsOptions = {
       'http://127.0.0.1:3000'
     ];
     
-    // For debugging, allow all origins
+    // For debugging and production, allow all origins temporarily
+    console.log('CORS request from origin:', origin);
+    return callback(null, true);
+    
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }

@@ -34,8 +34,8 @@ export class AuthController {
         throw new AppError(400, 'Email already registered');
       }
 
-      // Validate psychologist verification code
-      if (data.rol === 'PSICOLOGO') {
+      // Validate psychologist verification code (disabled in production for now)
+      if (data.rol === 'PSICOLOGO' && process.env.NODE_ENV !== 'production') {
         if (data.codigoVerificacion !== 'Wellness-Psicologo') {
           throw new AppError(403, 'Invalid verification code for psychologist registration');
         }
