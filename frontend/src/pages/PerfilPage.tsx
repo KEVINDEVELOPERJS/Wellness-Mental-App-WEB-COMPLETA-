@@ -382,7 +382,7 @@ export default function PerfilPage() {
           <div>
             <h1 className="text-2xl font-bold">{user?.nombre || 'Usuario'}</h1>
             <p className="text-white/90">{user?.email}</p>
-            <p className="text-white/80 text-sm">{user?.grado} • Usuario</p>
+            <p className="text-white/80 text-sm">Usuario</p>
           </div>
         </div>
       </div>

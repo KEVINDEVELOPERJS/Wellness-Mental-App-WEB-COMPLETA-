@@ -270,7 +270,7 @@ export default function InformePadresPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">Nivel de Riesgo: {informe?.nivelRiesgo}</h2>
-            <p className="text-white/90 mt-1">Evaluación de bienestar estudiantil</p>
+            <p className="text-white/90 mt-1">Evaluación de bienestar de los usuarios</p>
           </div>
           <div className="text-4xl">
             {informe?.nivelRiesgo === 'ALTO' ? '🔴' :
@@ -334,7 +334,7 @@ export default function InformePadresPage() {
       {/* Disclaimer */}
       <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
         <p className="text-xs text-gray-600">
-          <strong>Aviso:</strong> Este informe es confidencial y está destinado exclusivamente para los padres/tutores del estudiante. 
+          <strong>Aviso:</strong> Este informe es confidencial y está destinado exclusivamente para los padres/tutores del usuario. 
           La información presentada no constituye un diagnóstico médico y debe ser utilizada como referencia para discusiones con profesionales de salud mental.
         </p>
       </div>

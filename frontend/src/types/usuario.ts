@@ -16,7 +16,7 @@ export interface UsuarioDTO {
   email: string;
   password: string;
   edad: number;
-  grado: string;
+  grado?: string;
   telefono?: string;
   rol?: 'ESTUDIANTE' | 'PSICOLOGO';
   codigoVerificacion?: string;

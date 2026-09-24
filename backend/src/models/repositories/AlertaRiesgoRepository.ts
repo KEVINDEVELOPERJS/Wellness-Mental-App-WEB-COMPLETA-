@@ -34,6 +34,18 @@ export class AlertaRiesgoRepository {
             grado: true,
           },
         },
+        resultado: {
+          select: {
+            id: true,
+            puntaje: true,
+            prediagnostico: true,
+            nivelRiesgo: true,
+            fechaEvaluacion: true,
+            cuestionario: {
+              select: { titulo: true },
+            },
+          },
+        },
       },
     });
   }
@@ -59,6 +71,18 @@ export class AlertaRiesgoRepository {
             nombre: true,
             email: true,
             grado: true,
+          },
+        },
+        resultado: {
+          select: {
+            id: true,
+            puntaje: true,
+            prediagnostico: true,
+            nivelRiesgo: true,
+            fechaEvaluacion: true,
+            cuestionario: {
+              select: { titulo: true },
+            },
           },
         },
       },
@@ -156,10 +180,14 @@ export class AlertaRiesgoRepository {
       console.error('Failed to send socket notification:', error);
     }
 
-    // Send automatic email notification to ALL registered psychologists (async, non-blocking)
+    // Send automatic email notification to ALL registered psychologists for HIGH risk only (async, non-blocking)
     // This runs in background and doesn't block the API response
     setImmediate(async () => {
       try {
+        if (resultado.nivelRiesgo !== 'ALTO') {
+          console.log('📧 Email skipped for non-ALTO risk level:', resultado.nivelRiesgo);
+          return;
+        }
         if (estudiante) {
           const psicologos = await prisma.usuario.findMany({
             where: { rol: 'PSICOLOGO', estado: 'ACTIVO' },

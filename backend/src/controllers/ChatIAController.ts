@@ -64,13 +64,13 @@ export class ChatIAController {
       const nivelRiesgoFinal = nivelRiesgo === 'ALTO' || nivelRiesgoPorSentimiento === 'ALTO' ? 'ALTO' :
                             nivelRiesgo === 'MODERADO' || nivelRiesgoPorSentimiento === 'MODERADO' ? 'MODERADO' : 'BAJO';
 
-      // Generate alert if high or moderate risk
+      // Generate alert if high or medium risk
       if (nivelRiesgoFinal === 'ALTO' || nivelRiesgoFinal === 'MODERADO') {
         const alerta = await AlertaRiesgoRepository.generarAlertaChat(
           session.id,
           userId,
           contenido.substring(0, 50),
-          nivelRiesgoFinal === 'ALTO' ? 'ALTO' : 'MODERADO'
+          nivelRiesgoFinal === 'ALTO' ? 'ALTO' : 'MEDIO'
         );
 
         if (alerta) {

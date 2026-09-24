@@ -3,33 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
 import { alertaService } from '../services/alertaService';
+import { AlertaRiesgo } from '../types/alerta';
 import { 
   AlertTriangle, 
   Users, 
   TrendingUp, 
-  Clock,
   Shield,
   Activity,
   CheckCircle,
   AlertCircle,
   Bell
 } from 'lucide-react';
-
-interface AlertaRiesgo {
-  id: number;
-  nivelRiesgo: 'ALTO' | 'MEDIO' | 'BAJO';
-  estado: 'PENDIENTE' | 'ATENDIDA' | 'EN_SEGUIMIENTO' | 'DERIVADA';
-  estudiante: {
-    id: number;
-    nombre: string;
-    grado: string;
-  };
-  evaluacion?: {
-    puntaje: number;
-    prediagnostico?: string;
-  };
-  fechaCreacion: string;
-}
 
 interface DashboardStats {
   totalAlertas: number;
@@ -116,8 +100,12 @@ export default function DashboardPsicologoPage() {
     }
   };
 
-  const recentAlertas = Array.isArray(alertas) ? alertas.slice(0, 5) : [];
   const highRiskAlertas = Array.isArray(alertas) ? alertas.filter(a => a.nivelRiesgo === 'ALTO' && a.estado === 'PENDIENTE').slice(0, 3) : [];
+  const recentEvaluaciones = Array.isArray(alertas)
+    ? alertas
+        .filter(a => a.tipo === 'evaluacion' && a.resultado)
+        .slice(0, 5)
+    : [];
 
   if (isLoading) {
     return (
@@ -156,7 +144,7 @@ export default function DashboardPsicologoPage() {
           Bienvenido, {user?.nombre || 'Psicólogo'} 👋
         </h1>
         <p className="text-white/90">
-          Panel de monitoreo de bienestar estudiantil
+          Panel de monitoreo de bienestar de los usuarios
         </p>
       </div>
 
@@ -228,15 +216,22 @@ export default function DashboardPsicologoPage() {
                         <AlertTriangle className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="font-medium">{alerta.estudiante.nombre}</p>
-                        <p className="text-xs text-muted-foreground">{alerta.estudiante.grado}</p>
+                        <p className="font-medium">{alerta.estudiante?.nombre || 'Usuario'}</p>
+                        <p className="text-xs text-muted-foreground">{alerta.estudiante?.email}</p>
                       </div>
                     </div>
                     <span className="text-xs px-2 py-1 bg-red-200 text-red-700 rounded-full">
                       {alerta.estado}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">{alerta.evaluacion?.prediagnostico || 'Sin prediagnóstico'}</p>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600">{alerta.resultado?.prediagnostico || 'Sin prediagnóstico'}</p>
+                    {alerta.resultado && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Puntaje: {alerta.resultado.puntaje}
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -280,20 +275,82 @@ export default function DashboardPsicologoPage() {
                           <AlertCircle className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="font-medium">{alerta.estudiante.nombre}</p>
-                          <p className="text-xs text-muted-foreground">{alerta.estudiante.grado}</p>
+                          <p className="font-medium">{alerta.estudiante?.nombre || 'Usuario'}</p>
+                          <p className="text-xs text-muted-foreground">{alerta.estudiante?.email}</p>
                         </div>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded-full ${getEstadoColor(alerta.estado)}`}>
                         {alerta.estado}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">{alerta.evaluacion?.prediagnostico || 'Sin prediagnóstico'}</p>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600">{alerta.resultado?.prediagnostico || 'Sin prediagnóstico'}</p>
+                      {alerta.resultado && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Puntaje: {alerta.resultado.puntaje}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
             </div>
           )}
         </div>
+      </div>
+
+      {/* Recent Evaluations */}
+      <div className="bg-card rounded-xl p-6 border">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold flex items-center space-x-2">
+            <Activity className="h-5 w-5 text-primary" />
+            <span>Evaluaciones Recientes</span>
+          </h2>
+          <button
+            onClick={() => navigate('/alertas-psicologo')}
+            className="text-sm text-primary hover:text-primary/80"
+          >
+            Ver más
+          </button>
+        </div>
+
+        {recentEvaluaciones.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Activity className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+            <p>Aún no hay evaluaciones registradas por los usuarios</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentEvaluaciones.map((alerta) => (
+              <div
+                key={alerta.id}
+                className="p-4 bg-secondary/50 rounded-lg border"
+                onClick={() => navigate('/alertas-psicologo')}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`h-8 w-8 rounded-full ${getRiskColor(alerta.nivelRiesgo)} flex items-center justify-center text-white`}>
+                      <Activity className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{alerta.estudiante?.nombre || 'Usuario'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {alerta.resultado?.cuestionario?.titulo || 'Evaluación'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                    Puntaje: {alerta.resultado?.puntaje ?? '-'}
+                  </span>
+                </div>
+                {alerta.resultado?.prediagnostico && (
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                    {alerta.resultado.prediagnostico}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Status Overview */}

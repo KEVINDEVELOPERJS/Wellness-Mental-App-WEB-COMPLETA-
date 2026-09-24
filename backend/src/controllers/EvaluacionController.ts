@@ -247,32 +247,29 @@ export class EvaluacionController {
         return;
       }
 
-      // Generate alert if high risk (async, non-blocking)
-      if (nivelRiesgo === 'ALTO') {
-        console.log('🚨 HIGH RISK DETECTED - Generating alert for resultado:', resultado.id, 'user:', userId);
+      // Generar alerta para TODOS los niveles de riesgo (ALTO, MEDIO, BAJO)
+      // para que los psicólogos puedan ver y atender las enviadas por el usuario
+      console.log('📊 Generando alerta para nivel de riesgo:', nivelRiesgo);
         
-        // Generate alert in background
-        setImmediate(async () => {
-          try {
-            const alerta = await AlertaRiesgoRepository.generarAlertaEvaluacion(
-              resultado.id,
-              userId
-            );
+      // Generate alert in background (async, non-blocking)
+      setImmediate(async () => {
+        try {
+          const alerta = await AlertaRiesgoRepository.generarAlertaEvaluacion(
+            resultado.id,
+            userId
+          );
 
-            if (alerta) {
-              console.log('✅ Alert generated successfully, ID:', alerta.id);
-              // Notify psychologists via Socket.io
-              SocketService.sendToPsychologists('nueva_alerta', alerta);
-            } else {
-              console.warn('⚠️ Alert generation returned null');
-            }
-          } catch (error) {
-            console.error('❌ Error generating alert:', error);
+          if (alerta) {
+            console.log('✅ Alert generated successfully, ID:', alerta.id, 'Risk:', alerta.nivelRiesgo);
+            // Notify psychologists via Socket.io
+            SocketService.sendToPsychologists('nueva_alerta', alerta);
+          } else {
+            console.warn('⚠️ Alert generation returned null');
           }
-        });
-      } else {
-        console.log('ℹ️ Risk level:', nivelRiesgo, '- No alert generated');
-      }
+        } catch (error) {
+          console.error('❌ Error generating alert:', error);
+        }
+      });
 
       res.json({
         resultado: {

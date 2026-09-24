@@ -16,7 +16,6 @@ export default function RegistroPage() {
     password: '',
     confirmPassword: '',
     edad: '',
-    grado: '',
     telefono: '',
     rol: 'ESTUDIANTE',
   });
@@ -29,7 +28,6 @@ export default function RegistroPage() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [consentimiento, setConsentimiento] = useState(false);
-  const [showPsicologoFields, setShowPsicologoFields] = useState(false);
 
   const validateEmail = async (email: string) => {
     if (email.length < 3) return;
@@ -84,7 +82,7 @@ export default function RegistroPage() {
       return;
     }
 
-    // Validaciones para estudiantes
+    // Validaciones para usuarios
     if (formData.rol === 'ESTUDIANTE') {
       const edad = parseInt(formData.edad);
       if (edad < 13 || edad > 18) {
@@ -115,7 +113,7 @@ export default function RegistroPage() {
         email: formData.email,
         password: formData.password,
         edad: formData.rol === 'PSICOLOGO' ? 25 : parseInt(formData.edad),
-        grado: formData.rol === 'PSICOLOGO' ? 'PROFESIONAL' : formData.grado,
+        grado: 'GENERAL',
         telefono: formData.telefono || undefined,
         rol: formData.rol as 'ESTUDIANTE' | 'PSICOLOGO',
       });
@@ -183,19 +181,18 @@ export default function RegistroPage() {
                 name="rol"
                 value={formData.rol}
                 onChange={(e) => {
-                  handleChange(e);
-                  setShowPsicologoFields(e.target.value === 'PSICOLOGO');
+                  setFormData(prev => ({ ...prev, rol: e.target.value }));
                 }}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors bg-white"
               >
-                <option value="ESTUDIANTE">👨‍🎓 Estudiante (13-18 años)</option>
+                <option value="ESTUDIANTE">🙋 Usuario (13-18 años)</option>
                 <option value="PSICOLOGO">👨‍⚕️ Psicólogo (Profesional)</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">
                 {formData.rol === 'PSICOLOGO' 
                   ? 'Registro para profesionales de la salud mental' 
-                  : 'Registro para estudiantes de secundaria'}
+                  : 'Registro para usuarios de la aplicación'}
               </p>
             </div>
 
@@ -298,48 +295,24 @@ export default function RegistroPage() {
               )}
             </div>
 
-            {/* Campos específicos para estudiantes */}
+            {/* Campos específicos para usuarios */}
             {formData.rol === 'ESTUDIANTE' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="edad" className="block text-sm font-medium text-gray-700 mb-2">
-                    Edad
-                  </label>
-                  <input
-                    id="edad"
-                    name="edad"
-                    type="number"
-                    min="13"
-                    max="18"
-                    value={formData.edad}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                    placeholder="13-18"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="grado" className="block text-sm font-medium text-gray-700 mb-2">
-                    Grado
-                  </label>
-                  <select
-                    id="grado"
-                    name="grado"
-                    value={formData.grado}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="1° Secundaria">1° Secundaria</option>
-                    <option value="2° Secundaria">2° Secundaria</option>
-                    <option value="3° Secundaria">3° Secundaria</option>
-                    <option value="4° Secundaria">4° Secundaria</option>
-                    <option value="5° Secundaria">5° Secundaria</option>
-                    <option value="6° Secundaria">6° Secundaria</option>
-                  </select>
-                </div>
+              <div>
+                <label htmlFor="edad" className="block text-sm font-medium text-gray-700 mb-2">
+                  Edad
+                </label>
+                <input
+                  id="edad"
+                  name="edad"
+                  type="number"
+                  min="13"
+                  max="18"
+                  value={formData.edad}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                  placeholder="13-18"
+                />
               </div>
             )}
 
@@ -358,7 +331,7 @@ export default function RegistroPage() {
               />
             </div>
 
-            {/* Consentimiento solo para estudiantes menores de 16 */}
+            {/* Consentimiento solo para usuarios menores de 16 */}
             {formData.rol === 'ESTUDIANTE' && parseInt(formData.edad) < 16 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <label className="flex items-start space-x-3">

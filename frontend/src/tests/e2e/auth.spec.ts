@@ -53,7 +53,6 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[name="password"]', 'Password123');
     await page.fill('input[name="confirmPassword"]', 'Password123');
     await page.fill('input[name="edad"]', '16');
-    await page.selectOption('select[name="grado"]', '3° Secundaria');
     
     // Submit form (will fail in test environment without backend)
     await page.click('button[type="submit"]');

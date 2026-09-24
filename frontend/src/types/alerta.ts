@@ -5,7 +5,6 @@ export interface AlertaRiesgo {
     id: number;
     nombre: string;
     email: string;
-    grado: string;
   };
   tipo: string;
   nivelRiesgo: 'BAJO' | 'MEDIO' | 'ALTO';
@@ -20,6 +19,16 @@ export interface AlertaRiesgo {
   evaluacion?: {
     puntaje: number;
     prediagnostico?: string;
+  };
+  resultado?: {
+    id: number;
+    puntaje: number;
+    prediagnostico: string;
+    nivelRiesgo: 'BAJO' | 'MEDIO' | 'ALTO';
+    fechaEvaluacion: string;
+    cuestionario?: {
+      titulo: string;
+    };
   };
 }
 

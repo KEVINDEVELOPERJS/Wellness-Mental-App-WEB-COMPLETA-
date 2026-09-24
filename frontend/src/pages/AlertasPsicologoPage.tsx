@@ -8,7 +8,6 @@ import {
   Clock, 
   Filter, 
   RefreshCw,
-  Loader2,
   User,
   Mail,
   Phone,
@@ -133,7 +132,7 @@ export default function AlertasPsicologoPage() {
         <div>
           <h1 className="text-3xl font-bold mb-2">Alertas de Riesgo</h1>
           <p className="text-muted-foreground">
-            Monitoreo y gestión de alertas de bienestar estudiantil
+            Monitoreo y gestión de alertas de bienestar de los usuarios
           </p>
         </div>
         <button
@@ -216,16 +215,17 @@ export default function AlertasPsicologoPage() {
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Estudiante</p>
+                  <p className="text-sm text-muted-foreground">Usuario</p>
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-primary" />
                     <p className="font-medium">{selectedAlerta.estudiante?.nombre}</p>
                   </div>
-                </div>
-
-                <div>
-                  <p className="text-sm text-muted-foreground">Grado</p>
-                  <p className="font-medium">{selectedAlerta.estudiante?.grado}</p>
+                  {selectedAlerta.estudiante?.email && (
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">{selectedAlerta.estudiante.email}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -257,6 +257,21 @@ export default function AlertasPsicologoPage() {
                   <p className="text-sm text-muted-foreground">Extracto</p>
                   <p className="text-sm bg-secondary p-2 rounded">{selectedAlerta.extracto}</p>
                 </div>
+
+                {selectedAlerta.resultado && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Evaluación</p>
+                    <div className="bg-secondary p-2 rounded space-y-1">
+                      <p className="text-sm font-medium">
+                        {selectedAlerta.resultado.cuestionario?.titulo || 'Evaluación de bienestar'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Puntaje: {selectedAlerta.resultado.puntaje} • Nivel: {selectedAlerta.resultado.nivelRiesgo}
+                      </p>
+                      <p className="text-sm">{selectedAlerta.resultado.prediagnostico}</p>
+                    </div>
+                  </div>
+                )}
 
                 {selectedAlerta.notas && (
                   <div>
@@ -375,7 +390,7 @@ function AlertaCard({ alerta, isSelected, onSelect }: any) {
           </div>
           <div>
             <p className="font-medium">{alerta.estudiante?.nombre}</p>
-            <p className="text-xs text-muted-foreground">{alerta.estudiante?.grado}</p>
+            <p className="text-xs text-muted-foreground">{alerta.estudiante?.email}</p>
           </div>
         </div>
         <span className={`text-xs px-2 py-1 rounded-full ${getEstadoColor(alerta.estado)}`}>
