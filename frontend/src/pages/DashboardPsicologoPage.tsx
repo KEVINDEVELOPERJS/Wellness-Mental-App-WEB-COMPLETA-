@@ -225,7 +225,7 @@ export default function DashboardPsicologoPage() {
                     </span>
                   </div>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-600">{alerta.resultado?.prediagnostico || 'Sin prediagnóstico'}</p>
+                    <p className="text-sm text-gray-600 break-words">{alerta.resultado?.prediagnostico || 'Sin prediagnóstico'}</p>
                     {alerta.resultado && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Puntaje: {alerta.resultado.puntaje}
@@ -284,7 +284,7 @@ export default function DashboardPsicologoPage() {
                       </span>
                     </div>
                     <div className="mt-2">
-                      <p className="text-sm text-gray-600">{alerta.resultado?.prediagnostico || 'Sin prediagnóstico'}</p>
+                      <p className="text-sm text-gray-600 break-words">{alerta.resultado?.prediagnostico || 'Sin prediagnóstico'}</p>
                       {alerta.resultado && (
                         <p className="text-xs text-muted-foreground mt-1">
                           Puntaje: {alerta.resultado.puntaje}
@@ -343,7 +343,7 @@ export default function DashboardPsicologoPage() {
                   </span>
                 </div>
                 {alerta.resultado?.prediagnostico && (
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-2 break-words">
                     {alerta.resultado.prediagnostico}
                   </p>
                 )}

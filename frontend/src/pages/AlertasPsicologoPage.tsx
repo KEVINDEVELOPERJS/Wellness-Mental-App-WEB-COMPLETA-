@@ -255,7 +255,7 @@ export default function AlertasPsicologoPage() {
 
                 <div>
                   <p className="text-sm text-muted-foreground">Extracto</p>
-                  <p className="text-sm bg-secondary p-2 rounded">{selectedAlerta.extracto}</p>
+                  <p className="text-sm bg-secondary p-2 rounded break-words">{selectedAlerta.extracto}</p>
                 </div>
 
                 {selectedAlerta.resultado && (
@@ -268,7 +268,7 @@ export default function AlertasPsicologoPage() {
                       <p className="text-xs text-muted-foreground">
                         Puntaje: {selectedAlerta.resultado.puntaje} • Nivel: {selectedAlerta.resultado.nivelRiesgo}
                       </p>
-                      <p className="text-sm">{selectedAlerta.resultado.prediagnostico}</p>
+                      <p className="text-sm break-words">{selectedAlerta.resultado.prediagnostico}</p>
                     </div>
                   </div>
                 )}
@@ -418,7 +418,7 @@ function AlertaCard({ alerta, isSelected, onSelect }: any) {
       </div>
 
       <div className="mt-3 pt-3 border-t">
-        <p className="text-xs text-muted-foreground line-clamp-2">{alerta.extracto}</p>
+        <p className="text-xs text-muted-foreground line-clamp-2 break-words">{alerta.extracto}</p>
       </div>
     </div>
   );

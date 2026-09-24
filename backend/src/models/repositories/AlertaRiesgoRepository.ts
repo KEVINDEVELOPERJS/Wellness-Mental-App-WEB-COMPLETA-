@@ -4,6 +4,7 @@ import { EstadoAlerta } from '@prisma/client';
 import { EmailService } from '../../services/EmailService';
 import { WebPushService } from '../../services/WebPushService';
 import { SocketService } from '../../services/SocketService';
+import { EncryptionService } from '../../services/EncryptionService';
 
 export class AlertaRiesgoRepository {
   static async create(alertaDTO: AlertaDTO, ip?: string, userAgent?: string): Promise<AlertaRiesgo> {
@@ -22,8 +23,25 @@ export class AlertaRiesgoRepository {
     });
   }
 
+  /**
+   * El prediagnostico se almacena encriptado en la base de datos (ver
+   * CuestionarioRepository.guardarResultado). Las alertas deben devolverlo
+   * descifrado para que el panel del psicólogo muestre el diagnóstico real y
+   * no el texto encriptado (que parece un token y desborda las tarjetas).
+   */
+  private static decryptPrediagnostico<T extends { resultado?: { prediagnostico: string } | null } | null>(alerta: T): T {
+    if (alerta?.resultado?.prediagnostico) {
+      try {
+        alerta.resultado.prediagnostico = EncryptionService.decrypt(alerta.resultado.prediagnostico);
+      } catch {
+        // Mantener el valor original en caso de datos legacy ya en texto plano
+      }
+    }
+    return alerta;
+  }
+
   static async findById(id: number): Promise<AlertaRiesgo | null> {
-    return prisma.alertaRiesgo.findUnique({
+    const alerta = await prisma.alertaRiesgo.findUnique({
       where: { id },
       include: {
         estudiante: {
@@ -48,6 +66,8 @@ export class AlertaRiesgoRepository {
         },
       },
     });
+
+    return this.decryptPrediagnostico(alerta);
   }
 
   static async findAll(filters?: {
@@ -59,7 +79,7 @@ export class AlertaRiesgoRepository {
     const { estado, nivelRiesgo, page = 1, limit = 20 } = filters || {};
     const skip = (page - 1) * limit;
 
-    return prisma.alertaRiesgo.findMany({
+    const alertas = await prisma.alertaRiesgo.findMany({
       where: {
         estado: estado || undefined,
         nivelRiesgo: nivelRiesgo as any || undefined,
@@ -90,6 +110,8 @@ export class AlertaRiesgoRepository {
       skip,
       take: limit,
     });
+
+    return alertas.map((alerta) => this.decryptPrediagnostico(alerta));
   }
 
   static async getPendingAlerts(): Promise<AlertaRiesgo[]> {
