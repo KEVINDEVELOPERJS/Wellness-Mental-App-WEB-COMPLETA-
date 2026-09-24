@@ -5,10 +5,12 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Starting seed...');
 
-  // Crear ejercicios de respiración
+  // Crear ejercicios de respiración (upsert para idempotencia)
   const ejercicios = await Promise.all([
-    prisma.ejercicio.create({
-      data: {
+    prisma.ejercicio.upsert({
+      where: { titulo: 'Respiración 4-7-8' },
+      update: {},
+      create: {
         titulo: 'Respiración 4-7-8',
         descripcion: 'Técnica de respiración relajante para reducir ansiedad',
         tipo: TipoEjercicio.RESPIRACION,
@@ -19,8 +21,10 @@ async function main() {
         imagenUrl: '/images/respiracion.jpg',
       },
     }),
-    prisma.ejercicio.create({
-      data: {
+    prisma.ejercicio.upsert({
+      where: { titulo: 'Respiración de Caja' },
+      update: {},
+      create: {
         titulo: 'Respiración de Caja',
         descripcion: 'Técnica de respiración equilibrante',
         tipo: TipoEjercicio.RESPIRACION,
@@ -31,8 +35,10 @@ async function main() {
         imagenUrl: '/images/caja.jpg',
       },
     }),
-    prisma.ejercicio.create({
-      data: {
+    prisma.ejercicio.upsert({
+      where: { titulo: 'Respiración Coherente' },
+      update: {},
+      create: {
         titulo: 'Respiración Coherente',
         descripcion: 'Sincroniza tu respiración con tu ritmo cardíaco',
         tipo: TipoEjercicio.RESPIRACION,
@@ -43,8 +49,10 @@ async function main() {
         imagenUrl: '/images/coherente.jpg',
       },
     }),
-    prisma.ejercicio.create({
-      data: {
+    prisma.ejercicio.upsert({
+      where: { titulo: 'Meditación Guiada' },
+      update: {},
+      create: {
         titulo: 'Meditación Guiada',
         descripcion: 'Meditación de atención plena para principiantes',
         tipo: TipoEjercicio.MEDITACION,
@@ -55,8 +63,10 @@ async function main() {
         imagenUrl: '/images/meditacion.jpg',
       },
     }),
-    prisma.ejercicio.create({
-      data: {
+    prisma.ejercicio.upsert({
+      where: { titulo: 'Relajación Muscular Progresiva' },
+      update: {},
+      create: {
         titulo: 'Relajación Muscular Progresiva',
         descripcion: 'Relaja cada grupo muscular de tu cuerpo',
         tipo: TipoEjercicio.RELAJACION,
@@ -71,10 +81,12 @@ async function main() {
 
   console.log(`Created ${ejercicios.length} exercises`);
 
-  // Crear logros
+  // Crear logros (upsert para idempotencia)
   const logros = await Promise.all([
-    prisma.logro.create({
-      data: {
+    prisma.logro.upsert({
+      where: { nombre: 'Primer Chat' },
+      update: {},
+      create: {
         nombre: 'Primer Chat',
         descripcion: 'Inicia tu primera conversación con el asistente de IA',
         puntos: 200,
@@ -82,8 +94,10 @@ async function main() {
         icono: '💬',
       },
     }),
-    prisma.logro.create({
-      data: {
+    prisma.logro.upsert({
+      where: { nombre: '7 Días Seguidos' },
+      update: {},
+      create: {
         nombre: '7 Días Seguidos',
         descripcion: 'Completa ejercicios durante 7 días consecutivos',
         puntos: 300,
@@ -91,8 +105,10 @@ async function main() {
         icono: '🔥',
       },
     }),
-    prisma.logro.create({
-      data: {
+    prisma.logro.upsert({
+      where: { nombre: '5 Ejercicios' },
+      update: {},
+      create: {
         nombre: '5 Ejercicios',
         descripcion: 'Completa 5 ejercicios de respiración',
         puntos: 250,
@@ -100,8 +116,10 @@ async function main() {
         icono: '🧘',
       },
     }),
-    prisma.logro.create({
-      data: {
+    prisma.logro.upsert({
+      where: { nombre: 'Explorador' },
+      update: {},
+      create: {
         nombre: 'Explorador',
         descripcion: 'Completa tu primera evaluación psicológica',
         puntos: 500,
@@ -109,8 +127,10 @@ async function main() {
         icono: '🧭',
       },
     }),
-    prisma.logro.create({
-      data: {
+    prisma.logro.upsert({
+      where: { nombre: 'Apoyo Compartido' },
+      update: {},
+      create: {
         nombre: 'Apoyo Compartido',
         descripcion: 'Publica tu primer mensaje en la comunidad',
         puntos: 150,
@@ -118,8 +138,10 @@ async function main() {
         icono: '🤝',
       },
     }),
-    prisma.logro.create({
-      data: {
+    prisma.logro.upsert({
+      where: { nombre: 'Maestro de la Calma' },
+      update: {},
+      create: {
         nombre: 'Maestro de la Calma',
         descripcion: 'Alcanza el nivel de Maestro',
         puntos: 1000,
@@ -131,9 +153,11 @@ async function main() {
 
   console.log(`Created ${logros.length} achievements`);
 
-  // Crear cuestionarios predefinidos (GAD-7, PHQ-9, PSS-10)
-  const cuestionarioGAD7 = await prisma.cuestionario.create({
-    data: {
+  // Crear cuestionarios predefinidos (GAD-7, PHQ-9, PSS-10) - upsert para idempotencia
+  const cuestionarioGAD7 = await prisma.cuestionario.upsert({
+    where: { titulo: 'Escala de Ansiedad GAD-7' },
+    update: {},
+    create: {
       titulo: 'Escala de Ansiedad GAD-7',
       descripcion: 'Cuestionario para evaluar el nivel de ansiedad',
       instrucciones: 'Responde pensando en las últimas dos semanas. Selecciona la opción que mejor describa tu situación.',
@@ -194,10 +218,12 @@ async function main() {
       },
     },
   });
-  console.log(`Created GAD-7 questionnaire with ID: ${cuestionarioGAD7.id}`);
+  console.log(`GAD-7 questionnaire ensured with ID: ${cuestionarioGAD7.id}`);
 
-  const cuestionarioPHQ9 = await prisma.cuestionario.create({
-    data: {
+  const cuestionarioPHQ9 = await prisma.cuestionario.upsert({
+    where: { titulo: 'Cuestionario de Salud Paciente PHQ-9' },
+    update: {},
+    create: {
       titulo: 'Cuestionario de Salud Paciente PHQ-9',
       descripcion: 'Evaluación de síntomas depresivos',
       instrucciones: 'Responde pensando en las últimas dos semanas. Selecciona la opción que mejor describa tu situación.',
@@ -272,10 +298,12 @@ async function main() {
       },
     },
   });
-  console.log(`Created PHQ-9 questionnaire with ID: ${cuestionarioPHQ9.id}`);
+  console.log(`PHQ-9 questionnaire ensured with ID: ${cuestionarioPHQ9.id}`);
 
-  const cuestionarioPSS10 = await prisma.cuestionario.create({
-    data: {
+  const cuestionarioPSS10 = await prisma.cuestionario.upsert({
+    where: { titulo: 'Escala de Estrés Percibido PSS-10' },
+    update: {},
+    create: {
       titulo: 'Escala de Estrés Percibido PSS-10',
       descripcion: 'Medición del nivel de estrés percibido',
       instrucciones: 'Responde pensando en el último mes. Indica con qué frecuencia ha pensado o se ha sentido de esa manera.',
@@ -357,16 +385,18 @@ async function main() {
       },
     },
   });
-  console.log(`Created PSS-10 questionnaire with ID: ${cuestionarioPSS10.id}`);
+  console.log(`PSS-10 questionnaire ensured with ID: ${cuestionarioPSS10.id}`);
 
   console.log('Created questionnaires: GAD-7, PHQ-9, PSS-10');
 
-  // Crear usuario psicólogo por defecto
+  // Crear usuario psicólogo por defecto (solo si no existe)
   const bcrypt = require('bcrypt');
   const passwordHash = await bcrypt.hash('admin123', 12);
   
-  const psicologo = await prisma.usuario.create({
-    data: {
+  const psicologo = await prisma.usuario.upsert({
+    where: { email: 'psicologo@wellness.com' },
+    update: {},
+    create: {
       nombre: 'Dr. Psicólogo',
       email: 'psicologo@wellness.com',
       passwordHash,
@@ -378,7 +408,7 @@ async function main() {
       telefono: '+1234567890',
     },
   });
-  console.log(`Created psychologist user with ID: ${psicologo.id}`);
+  console.log(`Psychologist user ensured with ID: ${psicologo.id}`);
 
   console.log('Seed completed successfully!');
 }
