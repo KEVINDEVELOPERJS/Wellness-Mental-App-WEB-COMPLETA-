@@ -5,9 +5,20 @@ import { EncryptionService } from '../../services/EncryptionService';
 
 export class CuestionarioRepository {
   static async findAll(): Promise<Cuestionario[]> {
-    return prisma.cuestionario.findMany({
+    const cuestionarios = await prisma.cuestionario.findMany({
       where: { estado: 'publicado' },
       orderBy: { fechaCreacion: 'desc' },
+    });
+
+    // Seeds anteriores se ejecutaban sin restricción única en `titulo`, por lo que
+    // se acumularon copias duplicadas de GAD-7, PHQ-9 y PSS-10. Deduplicamos por
+    // título para devolver únicamente un cuestionario por evaluación.
+    const seen = new Set<string>();
+    return cuestionarios.filter((cuestionario) => {
+      const key = cuestionario.titulo.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
   }
 

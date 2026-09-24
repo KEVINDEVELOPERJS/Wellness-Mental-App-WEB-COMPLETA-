@@ -364,31 +364,47 @@ async function main() {
 
   const cuestionarios = [];
   for (const cuestionarioData of cuestionariosData) {
-    try {
-      const cuestionario = await prisma.cuestionario.create({
-        data: {
-          ...cuestionarioData,
-          preguntas: {
-            create: cuestionarioData.preguntas
-          }
-        }
-      });
-      cuestionarios.push(cuestionario);
-      console.log(`Created ${cuestionarioData.titulo} with ID: ${cuestionario.id}`);
-    } catch (error: any) {
-      if (error.code === 'P2002') {
-        // Unique constraint violation - cuestionario ya existe
-        console.log(`Cuestionario "${cuestionarioData.titulo}" ya existe, skipping...`);
-        // Buscar el cuestionario existente
-        const existing = await prisma.cuestionario.findFirst({
-          where: { titulo: cuestionarioData.titulo },
-          include: { preguntas: true }
-        });
-        if (existing) cuestionarios.push(existing);
-      } else {
-        throw error;
-      }
+    // Comprobar existencia por título en lugar de depender de un constraint
+    // único (no existe sobre `titulo`), lo que garantiza idempotencia aunque
+    // el seed se ejecute muchas veces.
+    const existing = await prisma.cuestionario.findFirst({
+      where: { titulo: cuestionarioData.titulo },
+      include: { preguntas: true }
+    });
+
+    if (existing) {
+      cuestionarios.push(existing);
+      console.log(`Cuestionario "${cuestionarioData.titulo}" ya existe (ID ${existing.id}), skipping...`);
+      continue;
     }
+
+    const cuestionario = await prisma.cuestionario.create({
+      data: {
+        ...cuestionarioData,
+        preguntas: {
+          create: cuestionarioData.preguntas
+        }
+      }
+    });
+    cuestionarios.push(cuestionario);
+    console.log(`Created ${cuestionarioData.titulo} with ID: ${cuestionario.id}`);
+  }
+
+  // Limpieza de duplicados acumulados por seeds anteriores: elimina solo las
+  // copias repetidas que no tengan resultados asociados (evita violar FKs).
+  const publicados = await prisma.cuestionario.findMany({
+    where: { estado: 'publicado' },
+    orderBy: { fechaCreacion: 'desc' },
+    include: { _count: { select: { resultados: true } } },
+  });
+  const seenTitulos = new Set<string>();
+  for (const cuestionario of publicados) {
+    const key = cuestionario.titulo.trim().toLowerCase();
+    if (seenTitulos.has(key) && cuestionario._count.resultados === 0) {
+      await prisma.cuestionario.delete({ where: { id: cuestionario.id } });
+      console.log(`🗑️ Duplicado sin resultados eliminado: "${cuestionario.titulo}" (ID ${cuestionario.id})`);
+    }
+    seenTitulos.add(key);
   }
 
   console.log('Created questionnaires: GAD-7, PHQ-9, PSS-10');
