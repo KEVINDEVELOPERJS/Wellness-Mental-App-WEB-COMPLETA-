@@ -117,12 +117,13 @@ export class AlertaRiesgoRepository {
       include: { cuestionario: true },
     });
 
-    if (!resultado || resultado.nivelRiesgo !== 'ALTO') {
-      console.log('⚠️ No alert generated - resultado null or not high risk. Resultado:', resultado?.nivelRiesgo);
+    if (!resultado) {
+      console.log('⚠️ No alert generated - resultado null');
       return null;
     }
 
-    console.log('✅ High risk detected, creating alert for:', resultado.nivelRiesgo);
+    // Generate alerts for all risk levels, not just ALTO
+    console.log('✅ Creating alert for risk level:', resultado.nivelRiesgo);
 
     // Get student information for email before creating alert
     const estudiante = await prisma.usuario.findUnique({
