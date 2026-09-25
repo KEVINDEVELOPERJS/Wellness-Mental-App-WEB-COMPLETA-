@@ -1,3 +1,4 @@
+import 'express-async-errors';
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -159,6 +160,14 @@ process.on('SIGINT', () => {
   server.close(() => {
     console.log('HTTP server closed');
   });
+});
+
+// Red de seguridad: Express 4 no captura rechazos de handlers async por sí solo
+// (express-async-errors ya cubre las rutas). Si cualquier otra promesa sin manejar
+// se rechaza (sockets, servicios en background, Redis...), la registramos y
+// seguimos viv@s en lugar de que Node aborte el proceso y Render reinicie en loop.
+process.on('unhandledRejection', (reason) => {
+  console.error('⚠️ Unhandled promise rejection (proceso continúa):', reason);
 });
 
 export default app;
