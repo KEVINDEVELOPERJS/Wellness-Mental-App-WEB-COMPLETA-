@@ -61,22 +61,38 @@ async function main() {
 
   const ejercicios = [];
   for (const ejercicioData of ejerciciosData) {
-    try {
-      const ejercicio = await prisma.ejercicio.create({ data: ejercicioData });
-      ejercicios.push(ejercicio);
-    } catch (error: any) {
-      if (error.code === 'P2002') {
-        // Unique constraint violation - ejercicio ya existe
-        console.log(`Ejercicio "${ejercicioData.titulo}" ya existe, skipping...`);
-        // Buscar el ejercicio existente
-        const existing = await prisma.ejercicio.findFirst({
-          where: { titulo: ejercicioData.titulo }
-        });
-        if (existing) ejercicios.push(existing);
-      } else {
-        throw error;
-      }
+    // Comprobar existencia por título en lugar de depender de un constraint
+    // único (no existe sobre `titulo`), garantizando idempotencia real.
+    const existing = await prisma.ejercicio.findFirst({
+      where: { titulo: ejercicioData.titulo }
+    });
+
+    if (existing) {
+      ejercicios.push(existing);
+      console.log(`Ejercicio "${ejercicioData.titulo}" ya existe (ID ${existing.id}), skipping...`);
+      continue;
     }
+
+    const ejercicio = await prisma.ejercicio.create({ data: ejercicioData });
+    ejercicios.push(ejercicio);
+    console.log(`Created ${ejercicioData.titulo} with ID: ${ejercicio.id}`);
+  }
+
+  // Limpieza de duplicados acumulados por seeds anteriores: elimina solo las
+  // copias repetidas sin progreso asociado (ProgresoEjercicio no tiene
+  // onDelete: Cascade, así que los duplicados con progreso se conservan).
+  const ejerciciosEnDb = await prisma.ejercicio.findMany({
+    orderBy: { id: 'asc' },
+    include: { _count: { select: { progresos: true } } },
+  });
+  const seenEjercicios = new Set<string>();
+  for (const ejercicio of ejerciciosEnDb) {
+    const key = ejercicio.titulo.trim().toLowerCase();
+    if (seenEjercicios.has(key) && ejercicio._count.progresos === 0) {
+      await prisma.ejercicio.delete({ where: { id: ejercicio.id } });
+      console.log(`🗑️ Ejercicio duplicado sin progreso eliminado: "${ejercicio.titulo}" (ID ${ejercicio.id})`);
+    }
+    seenEjercicios.add(key);
   }
 
   console.log(`Created ${ejercicios.length} exercises`);
@@ -129,22 +145,37 @@ async function main() {
 
   const logros = [];
   for (const logroData of logrosData) {
-    try {
-      const logro = await prisma.logro.create({ data: logroData });
-      logros.push(logro);
-    } catch (error: any) {
-      if (error.code === 'P2002') {
-        // Unique constraint violation - logro ya existe
-        console.log(`Logro "${logroData.nombre}" ya existe, skipping...`);
-        // Buscar el logro existente
-        const existing = await prisma.logro.findFirst({
-          where: { nombre: logroData.nombre }
-        });
-        if (existing) logros.push(existing);
-      } else {
-        throw error;
-      }
+    // Comprobar existencia por nombre (la tabla Logro no tiene @unique en
+    // `nombre`), garantizando idempotencia real del seed.
+    const existing = await prisma.logro.findFirst({
+      where: { nombre: logroData.nombre }
+    });
+
+    if (existing) {
+      logros.push(existing);
+      console.log(`Logro "${logroData.nombre}" ya existe (ID ${existing.id}), skipping...`);
+      continue;
     }
+
+    const logro = await prisma.logro.create({ data: logroData });
+    logros.push(logro);
+    console.log(`Created logro ${logroData.nombre} with ID: ${logro.id}`);
+  }
+
+  // Limpieza de logros duplicados: solo copias que ningún usuario tenga
+  // asignadas (UsuarioLogro no tiene onDelete: Cascade).
+  const logrosEnDb = await prisma.logro.findMany({
+    orderBy: { id: 'asc' },
+    include: { _count: { select: { usuarios: true } } },
+  });
+  const seenLogros = new Set<string>();
+  for (const logro of logrosEnDb) {
+    const key = logro.nombre.trim().toLowerCase();
+    if (seenLogros.has(key) && logro._count.usuarios === 0) {
+      await prisma.logro.delete({ where: { id: logro.id } });
+      console.log(`🗑️ Logro duplicado sin usuarios eliminado: "${logro.nombre}" (ID ${logro.id})`);
+    }
+    seenLogros.add(key);
   }
 
   console.log(`Created ${logros.length} achievements`);

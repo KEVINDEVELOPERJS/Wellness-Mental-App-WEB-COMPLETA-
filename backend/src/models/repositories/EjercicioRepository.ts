@@ -3,8 +3,19 @@ import { Ejercicio, ProgresoEjercicio, ProgresoDTO } from '../entities/Ejercicio
 
 export class EjercicioRepository {
   static async findAll(): Promise<Ejercicio[]> {
-    return prisma.ejercicio.findMany({
+    const ejercicios = await prisma.ejercicio.findMany({
       orderBy: { tipo: 'asc' },
+    });
+
+    // Seeds anteriores se ejecutaban sin restricción única en `titulo`, por lo
+    // que se acumularon copias duplicadas de los ejercicios de respiración.
+    // Deduplicamos por título para devolver un ejercicio por técnica.
+    const seen = new Set<string>();
+    return ejercicios.filter((ejercicio) => {
+      const key = ejercicio.titulo.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
   }
 

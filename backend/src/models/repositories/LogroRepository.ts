@@ -4,8 +4,18 @@ import { resolverNivel } from '../entities/Logro';
 
 export class LogroRepository {
   static async findAll(): Promise<Logro[]> {
-    return prisma.logro.findMany({
+    const logros = await prisma.logro.findMany({
       orderBy: { puntos: 'desc' },
+    });
+
+    // Los seeds anteriores duplicaron logros (no existe constraint único en
+    // `nombre`). Deduplicamos para que cada logro aparezca una sola vez en la UI.
+    const seen = new Set<string>();
+    return logros.filter((logro) => {
+      const key = logro.nombre.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
   }
 
@@ -37,6 +47,16 @@ export class LogroRepository {
     const userLogros = await this.getUserLogros(usuarioId);
     const unlockedIds = new Set(userLogros.map(ul => ul.logroId));
 
+    // Puntos totales reales del usuario (fuente de verdad: tabla PuntosUsuario,
+    // con respaldo en la suma de sesiones de juego). Si no se pueden obtener,
+    // se asume 0 para no bloquear el resto del flujo.
+    let puntosTotales = 0;
+    try {
+      puntosTotales = await this.getPuntosUsuario(usuarioId);
+    } catch (error: unknown) {
+      console.error('Error obteniendo puntos del usuario para logros:', error);
+    }
+
     const newlyUnlocked: Logro[] = [];
 
     for (const logro of allLogros) {
@@ -61,9 +81,29 @@ export class LogroRepository {
         case 'primer_post':
           shouldUnlock = userStats.postsComunidad > 0;
           break;
-        case 'nivel':
-          shouldUnlock = userStats.nivel === criterio.nivel;
+        case 'nivel': {
+          // El nivel se resuelve con los puntos reales acumulados del usuario,
+          // no con la cadena de otro helper (antes nunca coincidía con MAESTRO).
+          const nivelInfo = resolverNivel(puntosTotales);
+          const normalizar = (texto: string) =>
+            texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+          shouldUnlock = normalizar(nivelInfo.nombre) === normalizar(String(criterio.nivel || ''));
           break;
+        }
+        case 'puntos':
+        case 'puntos_juegos':
+          // Logros cuyo desbloqueo depende de un umbral de puntos.
+          shouldUnlock = puntosTotales >= (typeof criterio.puntos === 'number' ? criterio.puntos : logro.puntos);
+          break;
+        default:
+          break;
+      }
+
+      // Reconocimiento por puntos: si el usuario ya acumula al menos los puntos
+      // del logro, se desbloquea igualmente (la UI muestra cada logro como
+      // desbloqueado o no según si el usuario tiene más o menos puntos).
+      if (!shouldUnlock && puntosTotales >= logro.puntos) {
+        shouldUnlock = true;
       }
 
       if (shouldUnlock) {

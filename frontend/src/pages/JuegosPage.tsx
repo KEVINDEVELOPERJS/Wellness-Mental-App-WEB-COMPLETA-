@@ -102,6 +102,19 @@ export default function JuegosPage() {
     loadData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Al entrar a la página se re-evalúan los logros: los basados en puntos se
+  // desbloquean con los puntos que el usuario ya tiene, sin necesidad de
+  // terminar un juego primero.
+  useEffect(() => {
+    gamificacionService
+      .verificarLogros()
+      .then(() => gamificacionService.getUserLogros())
+      .then((updatedLogros) => {
+        setLogros(Array.isArray(updatedLogros) ? updatedLogros : []);
+      })
+      .catch(() => undefined);
+  }, []);
+
   const handleGameComplete = (gameScore: number, gameCombo?: number, gameType?: string, gameDuration?: number) => {
     // Update gamification stats
     const pointsEarned = Math.floor(gameScore / 10);
@@ -541,7 +554,7 @@ export default function JuegosPage() {
             allLogros
               .filter(logro => !logros.find(ul => ul.logroId === logro.id))
               .map((logro, index) => (
-                <AchievementCard key={logro.id || index} logro={logro} locked />
+                <AchievementCard key={logro.id || index} logro={logro} locked userPoints={nivel?.puntosActuales || 0} />
               ))
           )}
         </div>
@@ -588,16 +601,19 @@ const GameCard = React.memo(function GameCard({ game, onSelect }: any) {
   );
 });
 
-function AchievementCard({ logro, locked }: any) {
+function AchievementCard({ logro, locked, userPoints = 0 }: any) {
   if (!logro) return null;
-  
+
+  const puntosNecesarios = logro.puntos || logro.points || 0;
+  const faltanPuntos = Math.max(0, puntosNecesarios - userPoints);
+
   return (
     <div className={`bg-card rounded-xl p-3 md:p-4 border ${locked ? 'opacity-60' : ''}`}>
       <div className="flex items-center space-x-3 mb-3">
         <div className="text-xl md:text-2xl flex-shrink-0">{logro.icon || logro.emoji || '🏆'}</div>
         <div className="min-w-0">
           <h4 className="font-semibold text-sm md:text-base truncate">{logro.nombre || logro.name || 'Logro'}</h4>
-          <p className="text-xs text-muted-foreground">+{logro.puntos || logro.points || 0} puntos</p>
+          <p className="text-xs text-muted-foreground">+{puntosNecesarios} puntos</p>
         </div>
       </div>
       <p className="text-xs text-muted-foreground line-clamp-2 md:line-clamp-none" style={{
@@ -609,7 +625,11 @@ function AchievementCard({ logro, locked }: any) {
       {locked && (
         <div className="mt-2 flex items-center space-x-1 text-xs text-muted-foreground">
           <Lock className="h-3 w-3" />
-          <span>Bloqueado</span>
+          <span>
+            {faltanPuntos > 0
+              ? `Te faltan ${faltanPuntos} puntos para desbloquear`
+              : 'Se desbloquea al completar su actividad'}
+          </span>
         </div>
       )}
     </div>
