@@ -186,8 +186,7 @@ export default function VideosPage() {
           <h2 className="text-lg md:text-xl font-semibold mb-4">Videos Relacionados</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {Array.isArray(videos) && videos
-              .filter(v => v.id !== selectedVideo.id && v.categoria === selectedVideo.categoria)
-              .slice(0, 3)
+              .filter(v => v.id !== selectedVideo.id)
               .map(video => (
                 <VideoCard
                   key={video.id}
@@ -371,7 +370,13 @@ function VideoCard({ video, onClick, onOpenForum }: { video: Video; onClick: () 
       onClick={onClick}
     >
       <div className="relative aspect-video bg-black">
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+        <img
+          src={video.thumbnail}
+          alt={video.titulo}
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="bg-white/20 rounded-full p-4">
             <Play className="h-8 w-8 text-white" />
           </div>
