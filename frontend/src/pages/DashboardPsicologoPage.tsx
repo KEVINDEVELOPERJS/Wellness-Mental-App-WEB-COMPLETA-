@@ -6,7 +6,6 @@ import { alertaService } from '../services/alertaService';
 import { AlertaRiesgo } from '../types/alerta';
 import { 
   AlertTriangle, 
-  Users, 
   TrendingUp, 
   Shield,
   Activity,
@@ -377,7 +376,7 @@ export default function DashboardPsicologoPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 gap-4">
         <button
           onClick={() => navigate('/alertas-psicologo')}
           className="p-6 bg-card rounded-xl border hover:border-primary transition-colors text-left"
@@ -402,32 +401,6 @@ export default function DashboardPsicologoPage() {
             <span className="font-semibold">Crear Cuestionario</span>
           </div>
           <p className="text-sm text-muted-foreground">Diseñar nuevos cuestionarios de evaluación</p>
-        </button>
-
-        <button
-          onClick={() => navigate('/chat-ia')}
-          className="p-6 bg-card rounded-xl border hover:border-primary transition-colors text-left"
-        >
-          <div className="flex items-center space-x-3 mb-2">
-            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <Users className="h-5 w-5 text-purple-500" />
-            </div>
-            <span className="font-semibold">Chat IA</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Interactuar con el asistente de IA</p>
-        </button>
-
-        <button
-          onClick={() => navigate('/test-gemini')}
-          className="p-6 bg-card rounded-xl border hover:border-primary transition-colors text-left"
-        >
-          <div className="flex items-center space-x-3 mb-2">
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <Activity className="h-5 w-5 text-green-500" />
-            </div>
-            <span className="font-semibold">Probar Configuración Gemini</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Verificar que la API key esté configurada correctamente</p>
         </button>
       </div>
     </div>
